@@ -52,6 +52,7 @@ public class DestructibleObject : MonoBehaviour
 
             if (rb != null)
             {
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 Vector3 dir = (frag.transform.position - collision.transform.position).normalized;
 
                 if (dir == Vector3.zero)
