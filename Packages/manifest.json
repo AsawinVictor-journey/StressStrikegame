@@ -3,6 +3,7 @@
     "com.cdm.figma": "https://github.com/cdmvision/unity-figma-importer.git#1.9.0",
     "com.cdm.figma.ui": "https://github.com/cdmvision/unity-figma-importer.git#1.9.0-ugui",
     "com.community.antigravity-unity": "https://github.com/usmanbutt-dev/antigravity-unity.git",
+    "com.cqf.urpvolumetricfog": "https://github.com/CristianQiu/Unity-URP-Volumetric-Light.git",
     "com.gamelovers.mcp-unity": "https://github.com/CoderGamester/mcp-unity.git",
     "com.unity.ai.navigation": "2.0.9",
     "com.unity.cloud.gltfast": "6.19.0",
