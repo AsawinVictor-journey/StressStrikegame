@@ -9,6 +9,7 @@ public class PunchCollider : MonoBehaviour
 
     private Rigidbody rb;
     private CombatHudController combatHud;
+    private ScoreManager scoreManager;
     private float lastImpactTime = 0f;
     private float impactCooldown = 0.3f; // Prevent rapid-fire hits on single punch
 
@@ -16,6 +17,7 @@ public class PunchCollider : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         combatHud = FindObjectOfType<CombatHudController>();
+        scoreManager = FindObjectOfType<ScoreManager>();
     }
 
     void OnCollisionEnter(Collision collision)
@@ -38,10 +40,8 @@ public class PunchCollider : MonoBehaviour
                 if (combatHud != null)
                 {
                     combatHud.DrainOpponentHealth(damageDealt);
-                    combatHud.DrainPlayerStamina(5f); // Optional: drain stamina on physical hit
-                    
-                    // Call RegisterPunch for special ability meter manually since we bypassed animation controller
-                    // Wait, we can just update the special bar directly if needed, or leave it for now.
+                    if (scoreManager != null) scoreManager.RegisterHit(damageDealt);
+                    combatHud.DrainPlayerStamina(5f);
                 }
 
                 // Add physical punch reaction to dummy

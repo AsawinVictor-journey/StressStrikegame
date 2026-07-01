@@ -8,61 +8,41 @@ public class ShopItemUI : MonoBehaviour
     public string itemID;
     public int itemPrice;
 
-    [Header("UI Elements (Auto-assigned at runtime)")]
+    [Header("UI Elements (drag these in manually)")]
     public GameObject buyButtonObj;
     public GameObject equipButtonObj;
     public GameObject equippedButtonObj;
-    
+
     private const string UNLOCK_SAVE_KEY_PREFIX = "UnlockedItem_";
-
-    private void Awake()
-    {
-        // Since this script is attached to the Buy button, this.gameObject IS the buy button.
-        buyButtonObj = this.gameObject;
-
-        // Look inside our own parent group to find the Equip and Equipped buttons!
-        Transform parentGroup = transform.parent;
-        if (parentGroup != null)
-        {
-            // We search through the parent's children. 
-            // We use a loop so it's not strictly case-sensitive and ignores whitespace.
-            foreach (Transform child in parentGroup)
-            {
-                string childName = child.name.ToLower();
-                if (childName.Contains("equip") && !childName.Contains("equipped"))
-                {
-                    equipButtonObj = child.gameObject;
-                }
-                else if (childName.Contains("equipped"))
-                {
-                    equippedButtonObj = child.gameObject;
-                }
-            }
-        }
-    }
 
     private void Start()
     {
-        // Add Button Listeners automatically
-        if (buyButtonObj != null)
-        {
-            Button buyBtn = buyButtonObj.GetComponent<Button>();
-            if (buyBtn == null) buyBtn = buyButtonObj.AddComponent<Button>();
-            buyBtn.onClick.AddListener(OnBuyClicked);
-        }
+        // Wire each button's click. Each object must already have a Button component.
+        WireButton(buyButtonObj, OnBuyClicked, "Buy");
+        WireButton(equipButtonObj, OnEquipClicked, "Equip");
 
-        if (equipButtonObj != null)
-        {
-            Button equipBtn = equipButtonObj.GetComponent<Button>();
-            if (equipBtn == null) equipBtn = equipButtonObj.AddComponent<Button>();
-            equipBtn.onClick.AddListener(OnEquipClicked);
-        }
-        
-        // We no longer need to force position snaps because the Layout Group / Anchors 
-        // should now handle it correctly since they share the same parent!
-
-        // Load Save State
+        // Set the initial visible state from saved data.
         RefreshUIState();
+    }
+
+    // Finds the Button on the dragged object and registers its click handler.
+    private void WireButton(GameObject obj, UnityEngine.Events.UnityAction handler, string label)
+    {
+        if (obj == null)
+        {
+            Debug.LogError($"[ShopItemUI:{itemID}] {label} button GameObject is not assigned in the Inspector.", this);
+            return;
+        }
+
+        Button btn = obj.GetComponent<Button>();
+        if (btn == null)
+        {
+            Debug.LogError($"[ShopItemUI:{itemID}] '{obj.name}' has no Button component — add one in the Inspector.", obj);
+            return;
+        }
+
+        btn.onClick.RemoveListener(handler); // guard against double-registration
+        btn.onClick.AddListener(handler);
     }
 
     private void Update()
@@ -83,14 +63,14 @@ public class ShopItemUI : MonoBehaviour
 
         if (isUnlocked)
         {
-            // Already bought! Show equip.
+            // Already bought! Show Equip.
             if (buyButtonObj != null) buyButtonObj.SetActive(false);
             if (equipButtonObj != null) equipButtonObj.SetActive(true);
             if (equippedButtonObj != null) equippedButtonObj.SetActive(false);
         }
         else
         {
-            // Not bought yet. Show buy.
+            // Not bought yet. Show Buy.
             if (buyButtonObj != null) buyButtonObj.SetActive(true);
             if (equipButtonObj != null) equipButtonObj.SetActive(false);
             if (equippedButtonObj != null) equippedButtonObj.SetActive(false);
@@ -99,17 +79,15 @@ public class ShopItemUI : MonoBehaviour
 
     private void OnBuyClicked()
     {
-        // Assuming CoinManager exists. If not, it will just bypass the check if you remove it.
-        // For now we keep your CoinManager logic intact:
         if (CoinManager.Instance != null && CoinManager.Instance.HasEnoughCoins(itemPrice))
         {
             CoinManager.Instance.SpendCoins(itemPrice);
-            
+
             PlayerPrefs.SetInt(UNLOCK_SAVE_KEY_PREFIX + itemID, 1);
             PlayerPrefs.Save();
-            
-            Debug.Log("Purchased item successfully!");
-            RefreshUIState();
+
+            Debug.Log("Purchased item successfully: " + itemID);
+            RefreshUIState(); // Buy -> Equip
         }
         else
         {
@@ -120,7 +98,7 @@ public class ShopItemUI : MonoBehaviour
     private void OnEquipClicked()
     {
         Debug.Log("Equipped item: " + itemID);
-        
+
         // Switch UI from Equip -> Equipped
         if (equipButtonObj != null) equipButtonObj.SetActive(false);
         if (equippedButtonObj != null) equippedButtonObj.SetActive(true);

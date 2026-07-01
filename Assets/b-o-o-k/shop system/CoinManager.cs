@@ -60,7 +60,7 @@ public class CoinManager : MonoBehaviour
     {
         if (coinTextUI != null)
         {
-            coinTextUI.text = "Coins: " + currentCoins.ToString();
+            coinTextUI.text = currentCoins.ToString();
         }
     }
 
