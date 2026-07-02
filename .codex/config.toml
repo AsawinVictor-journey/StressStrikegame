@@ -1,6 +1,6 @@
 [mcp_servers.mcp-unity]
 command = "node"
-args = ["Library/PackageCache/com.gamelovers.mcp-unity@cce8b57de9cb/Server~/build/index.js"]
+args = ["Library/PackageCache/com.gamelovers.mcp-unity@c523d75b086d/Server~/build/index.js"]
 
 [mcp_servers.mcp-unity.tools.get_scene_info]
 approval_mode = "approve"
