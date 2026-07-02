@@ -160,6 +160,4 @@ public class PhysicsHandController : MonoBehaviour
         joint.projectionMode = JointProjectionMode.None;
     }
 
-    // No FixedUpdate. The joint is a PhysX constraint, not a control script.
-    // It runs inside the solver every physics step automatically.
 }

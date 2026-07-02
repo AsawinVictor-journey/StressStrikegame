@@ -4,6 +4,12 @@ public class DestructibleObject : MonoBehaviour
 {
     public float Health = 5f;
 
+    [Header("Damage")]
+    [Tooltip("Power curve applied to impact speed. 2 = damage scales with speed² so fast hits deal disproportionately more damage than slow ones.")]
+    public float damageExponent = 2f;
+    [Tooltip("Multiplier on the final damage value. Lower this when using exponent > 1 to rebalance.")]
+    public float damageMultiplier = 0.3f;
+
     [Header("Destruction Settings")]
     public GameObject fragmentPrefab;
     public int minPieces = 5;
@@ -23,7 +29,7 @@ public class DestructibleObject : MonoBehaviour
 
         if (!collision.gameObject.CompareTag("Hand")) return;
 
-        float impact = collision.relativeVelocity.magnitude;
+        float impact = Mathf.Pow(collision.relativeVelocity.magnitude, damageExponent) * damageMultiplier;
         Health -= impact;
 
         if (Health <= 0)
