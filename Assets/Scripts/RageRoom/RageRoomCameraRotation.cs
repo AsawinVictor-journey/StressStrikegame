@@ -3,17 +3,19 @@ using UnityEngine;
 public class RageRoomCameraRotation : MonoBehaviour
 {
     [Header("References")]
-    public HandPosition leftHand;
-    public HandPosition rightHand;
+    // Point these at the hand GameObjects (LeftHand / RightHand) —
+    // the same objects that were wired up before the refactor.
+    public PhysicsHandController leftHand;
+    public PhysicsHandController rightHand;
 
     [Header("Edge Zone")]
     [Range(0f, 1f)]
-    public float edgeFraction = 0.45f;  // outer 45% of hand range triggers rotation
+    public float edgeFraction = 0.45f;
 
     [Header("Rotation")]
     public float maxRotateSpeed = 120f;
     [Range(1f, 4f)]
-    public float speedCurve  = 2f;   // 1 = linear, 2 = quadratic — higher gives more precision near the edge boundary
+    public float speedCurve  = 2f;
     public float accelSmooth = 10f;
     public float decelSmooth = 22f;
 
@@ -28,22 +30,25 @@ public class RageRoomCameraRotation : MonoBehaviour
         transform.Rotate(0f, currentSpeed * Time.deltaTime, 0f, Space.World);
     }
 
-    float EvaluateHand(HandPosition hand)
+    float EvaluateHand(PhysicsHandController hand)
     {
-        if (hand == null || hand.origin == null) return 0f;
+        if (hand == null) return 0f;
 
-        float x          = hand.origin.InverseTransformPoint(hand.transform.position).x;
-        float rightStart =  hand.maxRight * (1f - edgeFraction);
-        float leftStart  = -hand.maxLeft  * (1f - edgeFraction);
+        // TargetLocalPosition is forwarded from HandTarget — it is where the player
+        // INTENDS the hand to be, not where physics placed it.  This means camera
+        // rotation responds to player input, not to collision knockback.
+        float x          =  hand.TargetLocalPosition.x;
+        float rightStart =  hand.MaxRight * (1f - edgeFraction);
+        float leftStart  = -hand.MaxLeft  * (1f - edgeFraction);
 
         if (x > rightStart)
         {
-            float t = Mathf.InverseLerp(rightStart, hand.maxRight, x);
+            float t = Mathf.InverseLerp(rightStart, hand.MaxRight, x);
             return Mathf.Pow(t, speedCurve);
         }
         if (x < leftStart)
         {
-            float t = Mathf.InverseLerp(leftStart, -hand.maxLeft, x);
+            float t = Mathf.InverseLerp(leftStart, -hand.MaxLeft, x);
             return -Mathf.Pow(t, speedCurve);
         }
 
