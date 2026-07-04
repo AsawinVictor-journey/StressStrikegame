@@ -205,7 +205,7 @@ Material:
     - _EnvironmentalLightingIntensity: 1
     - _FarDistanceMaxWidth: 10
     - _GIFlatShade: 0
-    - _GIShadeThreshold: 0.978
+    - _GIShadeThreshold: 1
     - _GlossColorPower: 10
     - _GlossIntensity: 0.015
     - _GlossMapScale: 0
@@ -217,18 +217,18 @@ Material:
     - _Glossiness: 0.228
     - _GlossyReflections: 0
     - _Glow_Edge_Width: 1
-    - _HighlightColorPower: 0.63
+    - _HighlightColorPower: 2.03
     - _LigIgnoYNorDir: 0
     - _LightAffectOutlineColor: 0
     - _LightAffectRimLightColor: 0
     - _LightAffectShadow: 1
     - _LightFalloffAffectShadowT: 0
-    - _LightFalloffSoftness: 0.39
+    - _LightFalloffSoftness: 0.442
     - _LightIntensity: -1
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
-    - _MaiColPo: 2.75
+    - _MaiColPo: 4
     - _MainColorAffectTexture: 0
     - _MaxFadDistance: 2
     - _Metallic: 0
@@ -277,7 +277,7 @@ Material:
     - _OutlineWidth: 0.015
     - _OutlineWidthAffectedByViewDistance: 0
     - _OutlineZPostionInCamera: 0
-    - _OverallShadowColorPower: 1.12
+    - _OverallShadowColorPower: 2.7
     - _PSGLOTEX: 0
     - _PTexturePower: 1
     - _Parallax: 0.005
@@ -357,7 +357,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlossColor: {r: 1, g: 0.7830189, b: 0.7830189, a: 1}
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
-    - _HighlightColor: {r: 1, g: 0, b: 0, a: 1}
+    - _HighlightColor: {r: 1, g: 0.18867922, b: 0.18867922, a: 1}
     - _MainColor: {r: 0.8117647, g: 0.5803922, b: 0.6249438, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
