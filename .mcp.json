@@ -8,6 +8,10 @@
       "env": {
         "UNITY_PORT": "8091"
       }
+    },
+    "ai-game-developer": {
+      "type": "http",
+      "url": "http://localhost:23088"
     }
   }
 }
