@@ -3,6 +3,7 @@
 public class RingColor : MonoBehaviour
 {
     Renderer rd;
+    public GameObject hitVFX; // 👈 ลาก prefab VFX มาใส่ตรงนี้
 
     void Start()
     {
@@ -16,6 +17,9 @@ public class RingColor : MonoBehaviour
         {
             Debug.Log("Perfect");
             rd.material.color = Color.green;
+
+            // 💥 สร้าง VFX ตอนชน
+            Instantiate(hitVFX, transform.position, Quaternion.identity);
         }
     }
 
