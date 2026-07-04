@@ -74,17 +74,31 @@ public class DeformableMesh : MonoBehaviour
 
         for (int i = 0; i < vertices.Length; i++)
         {
-            float distSqr = (vertices[i] - localPoint).sqrMagnitude;
+            // Falloff distance measured from the REST-POSE vertex instead of
+            // the current/deformed vertex, so the influence neighbourhood is
+            // fixed in rest space rather than drifting as the vertex sinks.
+            float distSqr = (originalVertices[i] - localPoint).sqrMagnitude;
             if (distSqr >= radiusSqr) continue;
 
-            float   t         = 1f - (distSqr / radiusSqr);
-            Vector3 candidate = vertices[i] + localDir * (dentDepth * t * t);
+            float t = 1f - (distSqr / radiusSqr);
 
-            Vector3 totalDisp = candidate - originalVertices[i];
-            if (totalDisp.sqrMagnitude > maxDentDepth * maxDentDepth)
-                candidate = originalVertices[i] + totalDisp.normalized * maxDentDepth;
+            // Increment-clamped accumulation instead of clamping the
+            // reprojected total. currentDepth is the magnitude already
+            // accumulated (read-only, no new storage). thisHitCap is this
+            // hit's own falloff-derived ceiling. headroom is whatever's left
+            // between them, floored at zero so a smaller ceiling from an
+            // off-center later hit can only stop further growth, never claw
+            // back displacement that a previous, better-centered hit already
+            // earned. The increment actually applied is clamped, then added
+            // directly to vertices[i] - the existing accumulated vector is
+            // never rescaled or reprojected against originalVertices[i].
+            float currentDepth    = (vertices[i] - originalVertices[i]).magnitude;
+            float thisHitCap       = maxDentDepth * t * t;
+            float headroom         = Mathf.Max(0f, thisHitCap - currentDepth);
+            float desiredIncrement = dentDepth * t * t;
+            float actualIncrement  = Mathf.Min(desiredIncrement, headroom);
 
-            vertices[i] = candidate;
+            vertices[i] += localDir * actualIncrement;
             anyChanged   = true;
         }
 
