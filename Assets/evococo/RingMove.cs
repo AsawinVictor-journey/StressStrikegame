@@ -2,22 +2,29 @@ using UnityEngine;
 
 public class RingMove : MonoBehaviour
 {
-    private Transform hitPoint;
-    public float speed = 3f;
+    public float speed = 2f;
+
+    Transform player;
 
     void Start()
     {
-        hitPoint = GameObject.Find("HitPoint").transform;
+        player = Camera.main.transform;
     }
 
     void Update()
     {
-        if (hitPoint == null) return;
+        if (player == null) return;
 
         transform.position = Vector3.MoveTowards(
             transform.position,
-            hitPoint.position,
+            player.position,
             speed * Time.deltaTime
         );
+
+        // ???????????????????
+        if (Vector3.Distance(transform.position, player.position) < 0.2f)
+        {
+            Destroy(gameObject);
+        }
     }
 }

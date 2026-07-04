@@ -3,10 +3,9 @@ using UnityEngine;
 public class RingSpawner : MonoBehaviour
 {
     public GameObject ringPrefab;
-    public Transform spawnPoint;
-    public Transform hitPoint;
 
-    public float spawnInterval = 2f;
+    public float spawnDistance = 5f;
+    public float spawnInterval = 3f;
 
     float timer;
 
@@ -18,15 +17,28 @@ public class RingSpawner : MonoBehaviour
         {
             timer = 0;
 
-            GameObject ring =
-                Instantiate(ringPrefab,
-                            spawnPoint.position,
-                            spawnPoint.rotation);
+            Camera cam = Camera.main;
 
-            RingMove move = ring.GetComponent<RingMove>();
+            if (cam == null) return;
 
-            if (move != null)
-                move.hitPoint = hitPoint;
+            float randomX = Random.Range(-0.8f, 0.8f);
+            float randomY = Random.Range(-0.5f, 0.5f);
+
+            Vector3 spawnPos =
+                cam.transform.position +
+                cam.transform.forward * spawnDistance +
+                cam.transform.right * randomX +
+                cam.transform.up * randomY;
+
+            Quaternion rot =
+                Quaternion.LookRotation(-cam.transform.forward) *
+                Quaternion.Euler(90, 0, 0);
+
+            Instantiate(
+                ringPrefab,
+                spawnPos,
+                rot
+            );
         }
     }
 }
