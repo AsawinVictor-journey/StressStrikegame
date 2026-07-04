@@ -186,7 +186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Health: 150
   damageExponent: 2
-  damageMultiplier: 0.3
+  damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
   minPieces: 7
   maxPieces: 15
@@ -783,7 +783,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Health: 150
   damageExponent: 2
-  damageMultiplier: 0.3
+  damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
   minPieces: 7
   maxPieces: 15
@@ -1316,55 +1316,6 @@ MonoBehaviour:
   speedCurve: 2
   accelSmooth: 10
   decelSmooth: 22
---- !u!1 &1232285038
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1232285040}
-  - component: {fileID: 1232285039}
-  m_Layer: 0
-  m_Name: Global Volume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1232285039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1232285038}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 1ae26127759f5564e8da091dcde4861c, type: 2}
---- !u!4 &1232285040
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1232285038}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.416807, y: -1.4098898, z: -3.2087896}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1330077284 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -7146521406498821007, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
@@ -1391,6 +1342,55 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.2713373, y: 15.564931, z: 1.9503489}
   m_Center: {x: 0.13566847, y: 7.4455705, z: 0.02482571}
+--- !u!1 &1349957063
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1349957065}
+  - component: {fileID: 1349957064}
+  m_Layer: 0
+  m_Name: Global Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1349957064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349957063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: 3a21f2b945a507844880d183be1b0203, type: 2}
+--- !u!4 &1349957065
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349957063}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1490529392
 GameObject:
   m_ObjectHideFlags: 0
@@ -1883,7 +1883,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4504409719310791647, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_Name
-      value: Chair
+      value: Chair1
       objectReference: {fileID: 0}
     - target: {fileID: 4504409719310791647, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -3204,9 +3204,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 10
+  Health: 150
   damageExponent: 2
-  damageMultiplier: 0.3
+  damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2287188301885227932, guid: 93291ea0345084b46ab1775a92a961cb, type: 3}
   minPieces: 5
   maxPieces: 10
@@ -3691,7 +3691,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Health: 150
   damageExponent: 2
-  damageMultiplier: 0.3
+  damageMultiplier: 0.1
   fragmentPrefab: {fileID: 1843036316886344235, guid: c7aae0a6ed14a0043be9de2c29219c4f, type: 3}
   minPieces: 7
   maxPieces: 15
@@ -3823,7 +3823,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Health: 300
   damageExponent: 2
-  damageMultiplier: 0.3
+  damageMultiplier: 0.1
   fragmentPrefab: {fileID: 8596415664769589966, guid: fe49d118871c02c4f9c02c0bb907fb60, type: 3}
   minPieces: 10
   maxPieces: 15
@@ -3861,7 +3861,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 1
-  maxDentDepth: -1.5
+  maxDentDepth: -1
   minImpactSpeed: 2
   maxImpactSpeed: 14
   updateCollider: 1
@@ -4500,7 +4500,7 @@ SceneRoots:
   - {fileID: 2008748636}
   - {fileID: 1082533433}
   - {fileID: 1490529395}
-  - {fileID: 1232285040}
+  - {fileID: 1349957065}
   - {fileID: 1515272775}
   - {fileID: 1570242843}
   - {fileID: 2766465337434966947}
