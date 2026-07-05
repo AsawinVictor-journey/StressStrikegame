@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Hand
+  - Glove
   layers:
   - Default
   - TransparentFX
