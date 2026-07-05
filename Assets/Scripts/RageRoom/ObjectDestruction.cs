@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using UnityEngine;
 
 public class DestructibleObject : MonoBehaviour
@@ -17,21 +18,39 @@ public class DestructibleObject : MonoBehaviour
 
     public float minScale = 0.2f;
     public float maxScale = 1.0f;
+    public float hitCooldown = 0.15f;
 
     public float explosionForce = 6f;
     public float explosionRadius = 2f;
 
     private bool isBroken = false;
+    private ObjectScore objectScore;
+    private float lastHitTime;
 
+    void Awake()
+    {
+        objectScore = GetComponent<ObjectScore>();
+    }
     private void OnCollisionEnter(Collision collision)
     {
         if (isBroken) return;
 
         if (!collision.gameObject.CompareTag("Hand")) return;
 
+        float velocity = collision.relativeVelocity.magnitude;
+
+        if (velocity < 7f) return;
+
+        if (Time.time - lastHitTime < hitCooldown)
+            return;
+        lastHitTime = Time.time;
+
+        ScoreSystem.Instance.AddHit(velocity);
+
         float impact = Mathf.Pow(collision.relativeVelocity.magnitude, damageExponent) * damageMultiplier;
         Health -= impact;
 
+        UnityEngine.Debug.Log($"impact: {impact}");
         if (Health <= 0)
         {
             BreakObject(collision);
@@ -42,6 +61,11 @@ public class DestructibleObject : MonoBehaviour
     {
         isBroken = true;
 
+        if (objectScore != null)
+        {
+            ScoreSystem.Instance.AddScore(objectScore.score);
+        }
+
         int pieces = Random.Range(minPieces, maxPieces);
 
         for (int i = 0; i < pieces; i++)
@@ -50,7 +74,6 @@ public class DestructibleObject : MonoBehaviour
 
             GameObject frag = Instantiate(fragmentPrefab, spawnPos, Random.rotation);
 
-            // random size
             float scale = Random.Range(minScale, maxScale);
             frag.transform.localScale = Vector3.one * scale;
 
