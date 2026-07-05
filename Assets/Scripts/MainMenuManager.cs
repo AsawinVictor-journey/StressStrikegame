@@ -10,8 +10,9 @@ public class MainMenuManager : MonoBehaviour
     public GameObject levelSelectorCanvas;
     public GameObject shopMenuCanvas;
     public GameObject settingsCanvas;
+    public GameObject modeCarouselCanvas;
 
-    private enum MenuState { Main, Arena, Level, Shop }
+    private enum MenuState { Main, Arena, Level, Shop, Carousel }
     private MenuState currentState = MenuState.Main;
 
     private void Start()
@@ -23,6 +24,7 @@ public class MainMenuManager : MonoBehaviour
         if (levelSelectorCanvas == null) levelSelectorCanvas = GameObject.Find("Level");
         if (shopMenuCanvas == null) shopMenuCanvas = GameObject.Find("ShopMenu");
         if (settingsCanvas == null) settingsCanvas = GameObject.Find("Settings");
+        if (modeCarouselCanvas == null) modeCarouselCanvas = GameObject.Find("ModeCarousel");
 
         // Hook up buttons ONLY inside our known canvases!
         if (mainMenuCanvas != null) HookUpButtons(mainMenuCanvas.transform);
@@ -30,6 +32,7 @@ public class MainMenuManager : MonoBehaviour
         if (levelSelectorCanvas != null) HookUpButtons(levelSelectorCanvas.transform);
         if (shopMenuCanvas != null) HookUpButtons(shopMenuCanvas.transform);
         if (settingsCanvas != null) HookUpButtons(settingsCanvas.transform);
+        if (modeCarouselCanvas != null) HookUpButtons(modeCarouselCanvas.transform);
 
         // Set initial state
         if (mainMenuCanvas != null) mainMenuCanvas.SetActive(true);
@@ -37,6 +40,7 @@ public class MainMenuManager : MonoBehaviour
         if (levelSelectorCanvas != null) levelSelectorCanvas.SetActive(false);
         if (shopMenuCanvas != null) shopMenuCanvas.SetActive(false);
         if (settingsCanvas != null) settingsCanvas.SetActive(false);
+        if (modeCarouselCanvas != null) modeCarouselCanvas.SetActive(false);
         currentState = MenuState.Main;
     }
 
@@ -83,8 +87,17 @@ public class MainMenuManager : MonoBehaviour
     private void OnPlayClicked()
     {
         if (mainMenuCanvas != null) mainMenuCanvas.SetActive(false);
-        if (arenaMenuCanvas != null) arenaMenuCanvas.SetActive(true);
-        currentState = MenuState.Arena;
+        if (modeCarouselCanvas != null)
+        {
+            modeCarouselCanvas.SetActive(true);
+            currentState = MenuState.Carousel;
+        }
+        else if (arenaMenuCanvas != null)
+        {
+            // Fallback to legacy Arena picker if carousel isn't wired yet
+            arenaMenuCanvas.SetActive(true);
+            currentState = MenuState.Arena;
+        }
     }
 
     private void OnOptionsClicked()
@@ -139,6 +152,12 @@ public class MainMenuManager : MonoBehaviour
         else if (currentState == MenuState.Arena)
         {
             if (arenaMenuCanvas != null) arenaMenuCanvas.SetActive(false);
+            if (mainMenuCanvas != null) mainMenuCanvas.SetActive(true);
+            currentState = MenuState.Main;
+        }
+        else if (currentState == MenuState.Carousel)
+        {
+            if (modeCarouselCanvas != null) modeCarouselCanvas.SetActive(false);
             if (mainMenuCanvas != null) mainMenuCanvas.SetActive(true);
             currentState = MenuState.Main;
         }

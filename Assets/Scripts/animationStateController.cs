@@ -23,6 +23,9 @@ public class animationStateController : MonoBehaviour
     private int punchCount = 0;
     private int requiredPunchesForSpecial = 5;
 
+    public bool IsBlocking => isValidSetup && animator.GetBool(isBlockHash);
+    public bool IsLeftBlocking => isValidSetup && animator.GetBool(isLeftBlockHash);
+
     void Start()
     {
         animator = GetComponent<Animator>();
