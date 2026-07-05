@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 150
+  Health: 100
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
@@ -859,6 +859,7 @@ GameObject:
   - component: {fileID: 279817983}
   - component: {fileID: 279817985}
   - component: {fileID: 279817984}
+  - component: {fileID: 279817986}
   m_Layer: 5
   m_Name: Result
   m_TagString: Untagged
@@ -926,6 +927,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 279817982}
   m_CullTransparentMesh: 1
+--- !u!225 &279817986
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 279817982}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!4 &294504182 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1925532539302776439, guid: 5d99032999c9c8c43bd6781f974032ab, type: 3}
@@ -1251,7 +1264,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 150
+  Health: 100
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
@@ -2215,8 +2228,8 @@ MonoBehaviour:
   m_enableVertexGradient: 1
   m_colorMode: 2
   m_fontColorGradient:
-    topLeft: {r: 1, g: 0.91764706, b: 0, a: 1}
-    topRight: {r: 1, g: 0.91764706, b: 0, a: 1}
+    topLeft: {r: 1, g: 0.8598435, b: 0, a: 1}
+    topRight: {r: 1, g: 0.8598435, b: 0, a: 1}
     bottomLeft: {r: 1, g: 0.6156863, b: 0, a: 1}
     bottomRight: {r: 1, g: 0.6156863, b: 0, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
@@ -2782,6 +2795,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1106176904}
   - component: {fileID: 1106176903}
+  - component: {fileID: 1106176905}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -2818,6 +2832,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1106176905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1106176902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abda2829aff9aea42b43762502720ffe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  resultGroup: {fileID: 279817986}
+  fadeDuration: 0.5
 --- !u!4 &1124343070 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1925532539302776439, guid: 5d99032999c9c8c43bd6781f974032ab, type: 3}
@@ -3347,9 +3375,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   streak: 0
   score: 0
+  highestStreak: 0
+  coin: 0
   streakResetTime: 2
   scoreText: {fileID: 1479147079}
   streakText: {fileID: 1348991883}
+  resultPanel: {fileID: 279817982}
+  resultScoreText: {fileID: 355655878}
+  resultHighestStreakText: {fileID: 242295765}
+  resultCoinsEarned: {fileID: 926522454}
 --- !u!4 &1553732077
 Transform:
   m_ObjectHideFlags: 0
@@ -5648,7 +5682,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 150
+  Health: 100
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 1843036316886344235, guid: c7aae0a6ed14a0043be9de2c29219c4f, type: 3}
@@ -5794,7 +5828,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 300
+  Health: 200
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 8596415664769589966, guid: fe49d118871c02c4f9c02c0bb907fb60, type: 3}

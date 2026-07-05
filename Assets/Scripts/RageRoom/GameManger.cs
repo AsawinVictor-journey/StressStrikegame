@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -19,6 +18,7 @@ public class GameManager : MonoBehaviour
     {
         objectsRemaining = FindObjectsOfType<DestructibleObject>().Length;
     }
+
     void Update()
     {
         if (gameEnded) return;
@@ -33,12 +33,18 @@ public class GameManager : MonoBehaviour
 
     public void ObjectDestroyed()
     {
-        objectsRemaining--;
+        objectsRemaining = Mathf.Max(0, objectsRemaining - 1);
     }
 
     void EndGame()
     {
         gameEnded = true;
-        UnityEngine.Debug.Log("Game Ended");
+        timer = 0f;
+
+        FindFirstObjectByType<UIFade>()?.ShowResult();
+
+        ScoreSystem.Instance?.ShowResults();
+
+        Debug.Log("Game Ended");
     }
 }
