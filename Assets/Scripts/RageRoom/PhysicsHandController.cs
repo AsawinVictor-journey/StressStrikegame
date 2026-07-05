@@ -142,16 +142,25 @@ public class PhysicsHandController : MonoBehaviour
         // the solver as a constraint budget, not clipped by a script.
         // When contact resistance exceeds maximumForce, the solver lets the
         // contact win and the hand stalls — naturally, without code logic.
-        var drive = new JointDrive
+        // X/Y behave normally.
+        var xyDrive = new JointDrive
         {
             positionSpring = positionSpring,
             positionDamper = positionDamper,
             maximumForce   = maximumForce
         };
-        joint.xDrive = drive;
-        joint.yDrive = drive;
-        joint.zDrive = drive;
 
+        // Z is much stiffer so objects can't easily push the hand backward.
+        var zDrive = new JointDrive
+        {
+            positionSpring = positionSpring * 8f,
+            positionDamper = positionDamper * 3f,
+            maximumForce   = maximumForce * 8f
+        };
+
+        joint.xDrive = xyDrive;
+        joint.yDrive = xyDrive;
+        joint.zDrive = zDrive;
         joint.targetPosition = Vector3.zero;
 
         // Never teleport the hand to the anchor. The gap between hand and anchor

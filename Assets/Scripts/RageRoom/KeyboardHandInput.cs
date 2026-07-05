@@ -84,9 +84,6 @@ public class KeyboardHandInput : HandInputProvider
             currentSpikeAccel = Mathf.Lerp(minPunchAccel, maxPunchAccel, chargeT);
             punchTimer        = punchSpikeDuration;
             pressStartTime    = -1f;
-
-            Debug.Log($"[Punch] {name}: released after {heldTime:F2}s hold -> " +
-                      $"charge={chargeT:F2}, accel={currentSpikeAccel:F0}", this);
         }
     }
 

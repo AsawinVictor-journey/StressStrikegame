@@ -74,7 +74,6 @@ public class PunchController : MonoBehaviour
 
         // Timed out without landing a hit — still retract, a thrown punch
         // always comes back whether it connected or not.
-        Debug.Log($"[Punch] {name}: hitbox window timed out with no hit, retracting anyway", this);
         hitbox.enabled = false;
         hitboxPending  = false;
 
@@ -84,8 +83,6 @@ public class PunchController : MonoBehaviour
 
     void HandlePunch(float strength)
     {
-        Debug.Log($"[Punch] {name}: HandlePunch strength={strength:F2}, lunging + opening hitbox", this);
-
         if (handTarget != null)
         {
             prePunchLocalPos = handTarget.LocalPosition;

@@ -96,6 +96,7 @@ public class DestructibleObject : MonoBehaviour
                 rb.AddForce(dir * Random.Range(1f, 4f), ForceMode.Impulse);
             }
         }
+        GameManager.Instance.ObjectDestroyed();
 
         Destroy(gameObject);
     }

@@ -102,7 +102,6 @@ public class HandTarget : MonoBehaviour
              "punch should retract on a predictable timer, not coast back at " +
              "the mercy of damping.")]
     public float retractDuration = 0.12f;
-
     // Read by RageRoomCameraRotation (forwarded through PhysicsHandController).
     public Vector3 LocalPosition => localPos;
 
@@ -217,7 +216,6 @@ public class HandTarget : MonoBehaviour
                 }
             }
         }
-
         rb.MovePosition(worldPos);
     }
 
@@ -237,7 +235,7 @@ public class HandTarget : MonoBehaviour
     /// landed hit, or on timeout if the hitbox window closes without one).
     /// </summary>
     public void BeginPunch(float strength)
-    {
+    {   
         float speed = Mathf.Lerp(minPunchSpeed, punchSpeed, strength);
 
         extendFrom     = localPos;
@@ -246,6 +244,9 @@ public class HandTarget : MonoBehaviour
         extendElapsed  = 0f;
         extending      = true;
         velocity.Velocity = Vector3.zero;
+        Debug.Log($"Punch distance = {punchDistance}");
+        Debug.Log($"From = {localPos}");
+        Debug.Log($"To = {extendTo}");
     }
 
     /// <summary>

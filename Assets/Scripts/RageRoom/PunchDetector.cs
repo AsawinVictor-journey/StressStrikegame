@@ -57,7 +57,6 @@ public class PunchDetector : MonoBehaviour
 
         armed         = false;
         cooldownTimer = cooldown;
-        Debug.Log($"[Punch] {name}: PunchDetector fired, mag={mag:F1}", this);
         OnPunch?.Invoke(Mathf.Clamp01(mag / fullStrengthAccel));
     }
 }
