@@ -206,15 +206,15 @@ Material:
     - _FarDistanceMaxWidth: 10
     - _GIFlatShade: 0
     - _GIShadeThreshold: 1
-    - _GlossColorPower: 10
-    - _GlossIntensity: 0.015
+    - _GlossColorPower: 11.06
+    - _GlossIntensity: 0.05
     - _GlossMapScale: 0
-    - _GlossSoftness: 1
+    - _GlossSoftness: 0.985
     - _GlossTextureFollowLight: 0
     - _GlossTextureFollowObjectRotation: 0
     - _GlossTextureRotate: 0
     - _GlossTextureSoftness: 0
-    - _Glossiness: 0.228
+    - _Glossiness: 0.198
     - _GlossyReflections: 0
     - _Glow_Edge_Width: 1
     - _HighlightColorPower: 2.03
@@ -223,7 +223,7 @@ Material:
     - _LightAffectRimLightColor: 0
     - _LightAffectShadow: 1
     - _LightFalloffAffectShadowT: 0
-    - _LightFalloffSoftness: 0.442
+    - _LightFalloffSoftness: 0.367
     - _LightIntensity: -1
     - _MCIALO: 0
     - _MCapIntensity: 1
