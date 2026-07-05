@@ -1,23 +1,34 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class HandTarget : MonoBehaviour
 {
-    public Transform hand;      // มือผู้เล่น
-    public Renderer target;     // Renderer ของ Sphere
+    private Renderer rd;
 
-    public float hitDistance = 0.10f;
-
-    void Update()
+    void Start()
     {
-        float distance = Vector3.Distance(hand.position, transform.position);
+        rd = GetComponentInChildren<Renderer>();
 
-        if (distance <= hitDistance)
+        if (rd != null)
+            rd.material.color = Color.red;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.GetComponent<MouseHand>() != null)
         {
-            target.material.color = Color.green;
+            if (rd != null)
+                rd.material.color = Color.green;
+
+            Debug.Log(name + " OK");
         }
-        else
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.GetComponent<MouseHand>() != null)
         {
-            target.material.color = Color.red;
+            if (rd != null)
+                rd.material.color = Color.red;
         }
     }
 }

@@ -2,7 +2,7 @@
 
 public class MouseHand : MonoBehaviour
 {
-    public float distance = 5f;
+    public float distance = 8f;
 
     Camera cam;
 
@@ -13,18 +13,13 @@ public class MouseHand : MonoBehaviour
 
     void Update()
     {
-        if (cam == null)
-            return;
-
-        if (!Application.isFocused)
-            return;
+        if (cam == null) return;
 
         Vector3 mouse = Input.mousePosition;
 
-        if (mouse.x < 0 ||
-            mouse.y < 0 ||
-            mouse.x > Screen.width ||
-            mouse.y > Screen.height)
+        // ถ้าเมาส์อยู่นอก Game View ไม่ทำงาน
+        if (mouse.x < 0 || mouse.x > Screen.width ||
+            mouse.y < 0 || mouse.y > Screen.height)
             return;
 
         Ray ray = cam.ScreenPointToRay(mouse);
