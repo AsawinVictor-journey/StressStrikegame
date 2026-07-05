@@ -12,21 +12,30 @@ public class TargetHit : MonoBehaviour
     private float timer = 0f;
 
     [Header("References")]
-    private Transform hand;
+    private Transform leftHand;
+    private Transform rightHand;
     private Renderer ringRenderer;
-    public ParticleSystem hitVFX; // Placeholder for VFX
-    public AudioSource hitAudio; // Placeholder for Sound
+    public ParticleSystem hitVFX; 
+    public AudioSource hitAudio; 
     
     public UnityAction<bool> OnTargetResolved; // true = Hit, false = Miss
 
     void Start()
     {
-        // Try to find the MouseHand first for testing, otherwise it could be the physical hand
-        GameObject handObj = GameObject.Find("MouseHand");
-        if(handObj != null) hand = handObj.transform;
+        FindHands();
 
         ringRenderer = GetComponent<Renderer>();
         if(ringRenderer != null) ringRenderer.material.color = Color.gray; // Default inactive
+    }
+
+    private void FindHands()
+    {
+        var sim = Object.FindAnyObjectByType<DualHandSimulator>();
+        if (sim != null)
+        {
+            leftHand = sim.leftHand;
+            rightHand = sim.rightHand;
+        }
     }
 
     public void ActivateTarget()
@@ -34,6 +43,7 @@ public class TargetHit : MonoBehaviour
         currentState = HitState.Active;
         timer = activeDuration;
         if(ringRenderer != null) ringRenderer.material.color = Color.red; // Active but not hit
+        FindHands();
     }
 
     void Update()
@@ -44,16 +54,14 @@ public class TargetHit : MonoBehaviour
         {
             timer -= Time.deltaTime;
 
-            if (hand != null)
-            {
-                float d = Vector3.Distance(hand.position, transform.position);
+            bool hitLeft = leftHand != null && Vector3.Distance(leftHand.position, transform.position) <= hitDistance;
+            bool hitRight = rightHand != null && Vector3.Distance(rightHand.position, transform.position) <= hitDistance;
 
-                if (d <= hitDistance)
-                {
-                    // Correct hand placement
-                    if(ringRenderer != null) ringRenderer.material.color = Color.green;
-                    RegisterHit(true);
-                }
+            if (hitLeft || hitRight)
+            {
+                // Correct hand placement
+                if(ringRenderer != null) ringRenderer.material.color = Color.green;
+                RegisterHit(true);
             }
         }
         else

@@ -9,26 +9,37 @@ public class MeditationSessionManager : MonoBehaviour
 
     [Header("UI References")]
     public MeditationHUD meditationHUD;
-    public ScoreManager scoreManager; // Assume existing ScoreManager handles general scoring/coins
+    public ScoreManager scoreManager; 
 
     [Header("Settings")]
     public float targetSpawnInterval = 2f;
-    public List<TargetHit> targetSequence; // Drag targets from scene here
+    
+    // We can use a combined list of GameObjects that are either TargetHit or ObstacleWall
+    public List<GameObject> spawnSequence; 
 
-    private int currentTargetIndex = 0;
+    private int currentIndex = 0;
     private int correctHits = 0;
-    private int totalTargets = 0;
+    private int totalEvents = 0;
+    
+    // Combo
+    private int currentCombo = 0;
+    private int maxCombo = 0;
 
     void Start()
     {
-        if(targetSequence != null)
+        if(spawnSequence != null)
         {
-            totalTargets = targetSequence.Count;
-            // Ensure all are hidden at start
-            foreach(var target in targetSequence)
+            totalEvents = spawnSequence.Count;
+            foreach(var obj in spawnSequence)
             {
-                target.gameObject.SetActive(false);
-                target.OnTargetResolved += HandleTargetResolved;
+                if (obj == null) continue;
+                obj.SetActive(false);
+                
+                var target = obj.GetComponent<TargetHit>();
+                if(target != null) target.OnTargetResolved += HandleEventResolved;
+                
+                var wall = obj.GetComponent<ObstacleWall>();
+                if(wall != null) wall.OnWallResolved += HandleEventResolved;
             }
         }
     }
@@ -43,44 +54,61 @@ public class MeditationSessionManager : MonoBehaviour
     {
         currentState = SessionState.Countdown;
         
-        // 3, 2, 1, Go!
         if (meditationHUD != null)
         {
             yield return meditationHUD.PlayCountdown();
         }
         else
         {
-            yield return new WaitForSeconds(3f); // Fallback
+            yield return new WaitForSeconds(3f);
         }
 
         currentState = SessionState.Playing;
-        currentTargetIndex = 0;
+        currentIndex = 0;
         correctHits = 0;
+        currentCombo = 0;
 
-        while(currentTargetIndex < targetSequence.Count)
+        while(currentIndex < spawnSequence.Count)
         {
-            TargetHit nextTarget = targetSequence[currentTargetIndex];
-            nextTarget.gameObject.SetActive(true);
-            nextTarget.ActivateTarget();
+            GameObject nextObj = spawnSequence[currentIndex];
+            if (nextObj != null)
+            {
+                nextObj.SetActive(true);
+                
+                var target = nextObj.GetComponent<TargetHit>();
+                if(target != null) target.ActivateTarget();
+                
+                var wall = nextObj.GetComponent<ObstacleWall>();
+                if(wall != null) wall.ActivateObstacle();
+            }
 
             yield return new WaitForSeconds(targetSpawnInterval);
-            currentTargetIndex++;
+            currentIndex++;
         }
 
-        // Wait a bit for the last target to resolve if missed
-        yield return new WaitForSeconds(2f);
-        
+        yield return new WaitForSeconds(3f);
         FinishSession();
     }
 
-    private void HandleTargetResolved(bool isHit)
+    private void HandleEventResolved(bool isSuccess)
     {
-        if (isHit) correctHits++;
+        if (isSuccess)
+        {
+            correctHits++;
+            currentCombo++;
+            if (currentCombo > maxCombo) maxCombo = currentCombo;
+        }
+        else
+        {
+            currentCombo = 0; // Combo Miss!
+        }
         
         if (meditationHUD != null)
         {
-            float accuracy = (float)correctHits / totalTargets * 100f;
+            float accuracy = (totalEvents > 0) ? ((float)correctHits / totalEvents) * 100f : 0f;
             meditationHUD.UpdateAccuracy(accuracy);
+            meditationHUD.UpdateCombo(currentCombo);
+            meditationHUD.ShowGrade(isSuccess);
         }
     }
 
@@ -88,14 +116,11 @@ public class MeditationSessionManager : MonoBehaviour
     {
         currentState = SessionState.Finished;
         
-        // Calculate currency based on accuracy
-        float accuracy = (totalTargets > 0) ? ((float)correctHits / totalTargets) : 0f;
-        int coinsEarned = Mathf.RoundToInt(accuracy * 100f); // e.g., 100% = 100 coins
+        float accuracy = (totalEvents > 0) ? ((float)correctHits / totalEvents) : 0f;
+        int coinsEarned = Mathf.RoundToInt(accuracy * 100f) + (maxCombo * 2); 
 
-        // Hook into existing CoinManager or ScoreManager here
-        // CoinManager.Instance.AddCoins(coinsEarned);
-        Debug.Log($"Session Finished! Accuracy: {accuracy*100}%. Earned {coinsEarned} coins.");
+        Debug.Log($"Session Finished! Accuracy: {accuracy*100}%. Max Combo: {maxCombo}. Earned {coinsEarned} coins.");
         
-        if (meditationHUD != null) meditationHUD.ShowEndScreen(accuracy * 100f, coinsEarned);
+        if (meditationHUD != null) meditationHUD.ShowEndScreen(accuracy * 100f, coinsEarned, maxCombo);
     }
 }
