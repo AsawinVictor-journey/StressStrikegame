@@ -1,15 +1,15 @@
-using UnityEngine;
+    using UnityEngine;
 
-public class BreakWall : MonoBehaviour
+public class PoseWall : MonoBehaviour
 {
-    public GameObject brokenWall;
+        public GameObject brokenWall;
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Glove"))
+        private void OnTriggerEnter(Collider other)
         {
-            Instantiate(brokenWall, transform.position, transform.rotation);
-            Destroy(gameObject);
+            if (other.CompareTag("Glove"))
+            {
+                Instantiate(brokenWall, transform.position, transform.rotation);
+                Destroy(gameObject);
+            }
         }
     }
-}
