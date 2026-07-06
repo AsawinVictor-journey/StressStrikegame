@@ -6,24 +6,25 @@ using System;
 public class OpenAIService : MonoBehaviour
 {
     private string apiKey;
-    private const string ApiEndpoint = "https://api.openai.com/v1/chat/completions";
+    private const string ApiEndpoint = "https://api.anthropic.com/v1/messages";
+    private const string ModelId = "claude-opus-4-8";
 
     private void Start()
     {
-        apiKey = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        apiKey = System.Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
         if (string.IsNullOrEmpty(apiKey))
         {
-            Debug.LogError("OPENAI_API_KEY environment variable not set!");
+            Debug.LogError("ANTHROPIC_API_KEY environment variable not set!");
         }
     }
 
     public IEnumerator Ask(string prompt, System.Action<string> onSuccess, System.Action<string> onError = null)
     {
-        var requestBody = new ChatCompletionRequest
+        var requestBody = new MessageRequest
         {
-            model = "gpt-4",
-            messages = new[] { new Message { role = "user", content = prompt } },
-            response_format = new ResponseFormat { type = "json_object" }
+            model = ModelId,
+            max_tokens = 1024,
+            messages = new[] { new Message { role = "user", content = prompt } }
         };
 
         string jsonBody = JsonUtility.ToJson(requestBody);
@@ -34,16 +35,24 @@ public class OpenAIService : MonoBehaviour
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("Authorization", "Bearer " + apiKey);
+            request.SetRequestHeader("x-api-key", apiKey);
+            request.SetRequestHeader("anthropic-version", "2023-06-01");
 
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string responseText = request.downloadHandler.text;
-                var response = JsonUtility.FromJson<ChatCompletionResponse>(responseText);
-                string messageContent = response.choices[0].message.content;
-                onSuccess?.Invoke(messageContent);
+                var response = JsonUtility.FromJson<MessageResponse>(responseText);
+                if (response.content != null && response.content.Length > 0)
+                {
+                    string messageContent = response.content[0].text;
+                    onSuccess?.Invoke(messageContent);
+                }
+                else
+                {
+                    onError?.Invoke("Empty response from Claude API");
+                }
             }
             else
             {
@@ -62,28 +71,23 @@ public class OpenAIService : MonoBehaviour
     }
 
     [System.Serializable]
-    private class ResponseFormat
-    {
-        public string type = "json_object";
-    }
-
-    [System.Serializable]
-    private class ChatCompletionRequest
+    private class MessageRequest
     {
         public string model;
+        public int max_tokens;
         public Message[] messages;
-        public ResponseFormat response_format;
     }
 
     [System.Serializable]
-    private class ChatCompletionResponse
+    private class MessageResponse
     {
-        public Choice[] choices;
+        public ContentBlock[] content;
     }
 
     [System.Serializable]
-    private class Choice
+    private class ContentBlock
     {
-        public Message message;
+        public string type;
+        public string text;
     }
 }
