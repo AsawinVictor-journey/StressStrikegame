@@ -1,16 +1,18 @@
-using UnityEngine;
+using System;
 
-public class FeedbackRecord : MonoBehaviour
+[Serializable]
+public class FeedbackRecord
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public string playerId;
+    public long timestamp;
+    public string workHappening;
+    public int workStress;
+    public string ventText;
+    public string jobType;
+    public ExerciseBlocker blocker;
+    public float caloriesBurned;
+    public float hrv;
 }
+
+[Serializable]
+public enum ExerciseBlocker { None, Motivation, NoTime, Injury }
