@@ -104,17 +104,15 @@ public class FeedbackManager : MonoBehaviour
 
     private string BuildPrompt(FeedbackRecord r)
     {
-        return $@"You are a health coach for a stress relief boxing game. The player has provided:
-- Work situation: {r.workHappening}
-- Stress level: {r.workStress}/10
-- What to vent about: {r.ventText}
-- Job type: {r.jobType}
-- Exercise blocker: {r.blocker}
+        return $@"You are a health coach for a boxing game. Player info:
+Work: {r.workHappening}
+Stress: {r.workStress}/10
+Vent: {r.ventText}
+Job: {r.jobType}
+Blocker: {r.blocker}
 
-Respond with ONLY valid JSON (no markdown, no explanation, just the JSON object):
-{{"focus": "One motivational sentence for their session", "outline": ["activity1", "activity2"]}}
-
-The outline array should have 1-3 activities matching their stress level and blocker (e.g., "heavy_bag" for high stress, "speed_bag" for motivation issues).";
+Output ONLY JSON, no other text:
+{{"focus": "Short motivational sentence", "outline": ["activity1", "activity2"]}}";
     }
 
     private void ShowOutline(AIAdvice advice)
