@@ -111,8 +111,7 @@ Vent: {r.ventText}
 Job: {r.jobType}
 Blocker: {r.blocker}
 
-Output ONLY JSON, no other text:
-{{"focus": "Short motivational sentence", "outline": ["activity1", "activity2"]}}";
+Output ONLY valid JSON with 'focus' (string) and 'outline' (array of strings).";
     }
 
     private void ShowOutline(AIAdvice advice)
