@@ -272,7 +272,7 @@ public class CombatHudController : MonoBehaviour
     {
         if (_isMatchOver) return;
 
-        if (ScoreManager.Instance != null) ScoreManager.Instance.ResetCombo();
+        if (StressStrike.ScoreManager.Instance != null) StressStrike.ScoreManager.Instance.ResetCombo();
 
         _playerCurrentHealth = Mathf.Max(_playerCurrentHealth - amount, 0f);
         float ratio = _playerCurrentHealth / _playerMaxHealth;
@@ -448,12 +448,12 @@ public class CombatHudController : MonoBehaviour
 
         int finalScore = 0, coinsAwarded = 0;
         bool isNewHighScore = false;
-        if (ScoreManager.Instance != null)
+        if (StressStrike.ScoreManager.Instance != null)
         {
-            ScoreManager.Instance.FinalizeMatch(out finalScore, out coinsAwarded, out isNewHighScore);
+            StressStrike.ScoreManager.Instance.FinalizeMatch(out finalScore, out coinsAwarded, out isNewHighScore);
         }
         string scoreSummary = $"Score: {finalScore}\nCoins Earned: +{coinsAwarded}" +
-                               (isNewHighScore ? "\nNEW HIGH SCORE!" : $"\nBest: {ScoreManager.Instance?.highScore ?? 0}");
+                               (isNewHighScore ? "\nNEW HIGH SCORE!" : $"\nBest: {StressStrike.ScoreManager.Instance?.highScore ?? 0}");
 
         if (_koScreenPanel != null)
         {
@@ -462,7 +462,7 @@ public class CombatHudController : MonoBehaviour
 
             if (_koScoreText != null) _koScoreText.text = $"Score: {finalScore}";
             if (_koCoinsEarnedText != null) _koCoinsEarnedText.text = $"Coins Earned: +{coinsAwarded}";
-            if (_koHighScoreText != null) _koHighScoreText.text = isNewHighScore ? "NEW HIGH SCORE!" : $"Best: {ScoreManager.Instance?.highScore ?? 0}";
+            if (_koHighScoreText != null) _koHighScoreText.text = isNewHighScore ? "NEW HIGH SCORE!" : $"Best: {StressStrike.ScoreManager.Instance?.highScore ?? 0}";
 
             if (_koScoreText == null && _koCoinsEarnedText == null && _koHighScoreText == null && _koWinnerText != null)
             {

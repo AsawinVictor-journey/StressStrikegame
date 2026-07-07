@@ -49,7 +49,7 @@ public class Bno055HandInput : HandInputProvider
     /// <summary>True once a matching physical glove is connected.</summary>
     public bool IsConnected => device != null;
 
-    public override bool ProvidesOrientation => true;
+    public override bool ProvidesOrientation => IsConnected;
 
     ESP32Glove device;
     Quaternion zeroOffset = Quaternion.identity;

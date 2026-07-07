@@ -379,7 +379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 1082533433}
-  input: {fileID: 125392736}
+  input: {fileID: 125392734}
   velocity:
     deadzone: 0.5
     smoothing: 1
@@ -2171,7 +2171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b03896ebaa64214ca3e3f1b9ad39af2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {fileID: 1875450674}
+  input: {fileID: 1875450671}
   punchThreshold: 60
   fullStrengthAccel: 150
   cooldown: 0.25
@@ -4539,7 +4539,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b03896ebaa64214ca3e3f1b9ad39af2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {fileID: 125392736}
+  input: {fileID: 125392734}
   punchThreshold: 60
   fullStrengthAccel: 150
   cooldown: 0.25
@@ -5250,7 +5250,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 1082533433}
-  input: {fileID: 1875450674}
+  input: {fileID: 1875450671}
   velocity:
     deadzone: 0.5
     smoothing: 1

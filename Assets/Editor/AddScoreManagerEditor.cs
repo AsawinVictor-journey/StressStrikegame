@@ -22,8 +22,8 @@ public class AddScoreManager {
             }
             
             // Add ScoreManager component if not present
-            if (scoreManagerGO.GetComponent<ScoreManager>() == null) {
-                scoreManagerGO.AddComponent<ScoreManager>();
+            if (scoreManagerGO.GetComponent<StressStrike.ScoreManager>() == null) {
+                scoreManagerGO.AddComponent<StressStrike.ScoreManager>();
             }
             
             // Save the scene
