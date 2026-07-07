@@ -9,7 +9,7 @@ public class PunchCollider : MonoBehaviour
 
     private Rigidbody rb;
     private CombatHudController combatHud;
-    private ScoreManager scoreManager;
+    private StressStrike.ScoreManager scoreManager;
     private float lastImpactTime = 0f;
     private float impactCooldown = 0.3f; // Prevent rapid-fire hits on single punch
 
@@ -17,7 +17,7 @@ public class PunchCollider : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         combatHud = FindObjectOfType<CombatHudController>();
-        scoreManager = FindObjectOfType<ScoreManager>();
+        scoreManager = FindObjectOfType<StressStrike.ScoreManager>();
     }
 
     void OnCollisionEnter(Collision collision)

@@ -9,7 +9,7 @@ public class MeditationSessionManager : MonoBehaviour
 
     [Header("UI References")]
     public MeditationHUD meditationHUD;
-    public ScoreManager scoreManager; 
+    public StressStrike.ScoreManager scoreManager;
 
     [Header("Settings")]
     public float targetSpawnInterval = 2f;

@@ -63,7 +63,7 @@ using UnityEngine;
 public class PhysicsHandController : MonoBehaviour
 {
     [Header("References")]
-    public HandTarget target;
+    public RageRoom.HandTarget target;
 
     [Header("Joint Drive")]
     [Tooltip("Spring stiffness (N/m). Higher = faster free-air tracking. Safe range: 2000–5000.")]

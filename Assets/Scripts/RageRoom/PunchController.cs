@@ -27,7 +27,7 @@ public class PunchController : MonoBehaviour
 {
     [Header("References")]
     public PunchDetector punchDetector;
-    public HandTarget    handTarget;
+    public RageRoom.HandTarget handTarget;
 
     [Tooltip("Collider enabled only while a punch is active. Should be tagged " +
              "'Hand' so DestructibleObject/ImpactReaction/DeformableMesh detect it. " +

@@ -1,6 +1,9 @@
 using UnityEngine;
 using TMPro;
 
+namespace StressStrike
+{
+
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
@@ -112,4 +115,5 @@ public class ScoreManager : MonoBehaviour
     {
         highScore = PlayerPrefs.HasKey(HIGH_SCORE_KEY) ? PlayerPrefs.GetInt(HIGH_SCORE_KEY) : 0;
     }
+}
 }

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace RageRoom
+{
+
 /// <summary>
 /// Kinematic anchor — the target that PhysicsHandController's ConfigurableJoint chases.
 ///
@@ -275,4 +278,5 @@ public class HandTarget : MonoBehaviour
         l.z = Mathf.Clamp(l.z, -maxBackward, maxForward);
         return l;
     }
+}
 }

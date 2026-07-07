@@ -11,7 +11,7 @@ public class animationStateController : MonoBehaviour
     int isLeftBlockHash;
 
     private CombatHudController combatHud;
-    private ScoreManager scoreManager;
+    private StressStrike.ScoreManager scoreManager;
 
     [Header("Audio Settings")]
     public AudioClip specialAbilitySound;
@@ -51,7 +51,7 @@ public class animationStateController : MonoBehaviour
         
         // This confirms everything is set up before allowing Update to run
         combatHud = FindObjectOfType<CombatHudController>();
-        scoreManager = FindObjectOfType<ScoreManager>();
+        scoreManager = FindObjectOfType<StressStrike.ScoreManager>();
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
