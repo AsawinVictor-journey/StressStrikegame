@@ -1,10 +1,10 @@
 using UnityEngine;
 
 /// <summary>
-/// PC stand-in for the BNO055 IMU. Produces the same signal shape a real
-/// sensor would: a small sustained acceleration while a movement key is held
-/// (like tilting/pushing the sensor), plus a punch spike layered on top when
-/// the punch button is released.
+/// Simulated IMU signal from keyboard/mouse input: a small sustained
+/// acceleration while a movement key is held (like tilting/pushing a real
+/// sensor), plus a punch spike layered on top when the punch button is
+/// released.
 ///
 /// Sustained movement only ever covers left/right and up/down (local X/Y).
 /// Forward/back (local Z) has no held-key control at all — the fist can't be
@@ -20,10 +20,6 @@ using UnityEngine;
 /// punch with a spike magnitude between minPunchAccel and maxPunchAccel
 /// based on how long it was held, capped at chargeMaxTime. A quick tap
 /// still throws a punch — just a weak one.
-///
-/// Swap this component for Bno055HandInput later. Nothing downstream
-/// (HandTarget, PunchDetector) needs to change — they only ever talk to
-/// GetAcceleration() through the HandInputProvider base type.
 /// </summary>
 public class KeyboardHandInput : HandInputProvider
 {

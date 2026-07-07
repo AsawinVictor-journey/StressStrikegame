@@ -1,7 +1,7 @@
 // This file is intentionally empty.
 // HandPosition has been replaced by the following scripts:
 //
-//   KeyboardHandInput.cs      — PC IMU simulator (replace with Bno055HandInput later)
+//   KeyboardHandInput.cs      — PC IMU simulator
 //   ImuVelocityIntegrator.cs  — acceleration → damped velocity (plain class, owned by HandTarget)
 //   HandTarget.cs             — workspace-bounded target Transform the player controls
 //   PhysicsHandController.cs  — Rigidbody that chases the target

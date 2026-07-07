@@ -343,7 +343,6 @@ GameObject:
   - component: {fileID: 125392734}
   - component: {fileID: 125392733}
   - component: {fileID: 125392735}
-  - component: {fileID: 125392736}
   m_Layer: 0
   m_Name: Target
   m_TagString: Untagged
@@ -444,22 +443,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &125392736
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 125392731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcff8ce4f57a99f4aa5a6329720bccf3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  side: 0
-  convertToLeftHanded: 1
-  allowKeyboardRecenter: 1
-  recenterKey: 1
 --- !u!1 &130077269
 GameObject:
   m_ObjectHideFlags: 0
@@ -2121,7 +2104,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 2133746658}
-  input: {fileID: 1875450674}
+  input: {fileID: 0}
   sensitivity: 7
   smooth: 2.5
   pitchClamp: 80
@@ -4489,7 +4472,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 2133746658}
-  input: {fileID: 125392736}
+  input: {fileID: 0}
   sensitivity: 10
   smooth: 5
   pitchClamp: 80
@@ -5195,7 +5178,6 @@ GameObject:
   - component: {fileID: 1875450671}
   - component: {fileID: 1875450672}
   - component: {fileID: 1875450673}
-  - component: {fileID: 1875450674}
   m_Layer: 0
   m_Name: Target
   m_TagString: Untagged
@@ -5296,22 +5278,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &1875450674
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1875450669}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcff8ce4f57a99f4aa5a6329720bccf3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  side: 1
-  convertToLeftHanded: 1
-  allowKeyboardRecenter: 1
-  recenterKey: 1
 --- !u!1001 &1924543514
 PrefabInstance:
   m_ObjectHideFlags: 0
