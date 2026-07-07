@@ -243,7 +243,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2685314672437264650
 RectTransform:
   m_ObjectHideFlags: 0
@@ -331,7 +331,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &5833935923098593707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1527,7 +1527,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f87975672693b3445b830bce2670d7fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemData: {fileID: 0}
+  itemID: 
+  itemPrice: 0
   buyButtonObj: {fileID: 5652019673001977105}
   equipButtonObj: {fileID: 2498916278399243022}
   equippedButtonObj: {fileID: 0}
@@ -1694,7 +1695,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f87975672693b3445b830bce2670d7fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemData: {fileID: 0}
+  itemID: 
+  itemPrice: 0
   buyButtonObj: {fileID: 6607784363317443952}
   equipButtonObj: {fileID: 2498916278399243022}
   equippedButtonObj: {fileID: 0}
