@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace Evococo
+{
 public class HandTarget : MonoBehaviour
 {
     private Renderer rd;
@@ -31,4 +33,5 @@ public class HandTarget : MonoBehaviour
                 rd.material.color = Color.red;
         }
     }
+}
 }

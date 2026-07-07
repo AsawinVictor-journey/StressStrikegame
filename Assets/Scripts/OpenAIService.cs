@@ -5,58 +5,49 @@ using System;
 
 public class OpenAIService : MonoBehaviour
 {
-    private string apiKey;
-    private const string ApiEndpoint = "https://api.anthropic.com/v1/messages";
-    private const string ModelId = "claude-opus-4-8";
+    private const string OllamaEndpoint = "http://localhost:11434/api/generate";
+    private const string DefaultModel = "mistral";
+    private string modelId = DefaultModel;
 
     private void Start()
     {
-        apiKey = System.Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
-        if (string.IsNullOrEmpty(apiKey))
+        string envModel = System.Environment.GetEnvironmentVariable("OLLAMA_MODEL");
+        if (!string.IsNullOrEmpty(envModel))
         {
-            Debug.LogError("ANTHROPIC_API_KEY environment variable not set!");
+            modelId = envModel;
         }
     }
 
     public IEnumerator Ask(string prompt, System.Action<string> onSuccess, System.Action<string> onError = null)
     {
-        var requestBody = new MessageRequest
+        var requestBody = new OllamaRequest
         {
-            model = ModelId,
-            max_tokens = 1024,
-            messages = new[] { new Message { role = "user", content = prompt } }
+            model = modelId,
+            prompt = prompt,
+            stream = false
         };
 
         string jsonBody = JsonUtility.ToJson(requestBody);
         byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
 
-        using (UnityWebRequest request = new UnityWebRequest(ApiEndpoint, "POST"))
+        using (UnityWebRequest request = new UnityWebRequest(OllamaEndpoint, "POST"))
         {
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("x-api-key", apiKey);
-            request.SetRequestHeader("anthropic-version", "2023-06-01");
+            request.timeout = 60;
 
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string responseText = request.downloadHandler.text;
-                var response = JsonUtility.FromJson<MessageResponse>(responseText);
-                if (response.content != null && response.content.Length > 0)
-                {
-                    string messageContent = response.content[0].text;
-                    onSuccess?.Invoke(messageContent);
-                }
-                else
-                {
-                    onError?.Invoke("Empty response from Claude API");
-                }
+                var response = JsonUtility.FromJson<OllamaResponse>(responseText);
+                onSuccess?.Invoke(response.response);
             }
             else
             {
-                string error = $"API Error: {request.error}";
+                string error = $"Ollama Error: {request.error}\nMake sure Ollama is running on localhost:11434";
                 Debug.LogError(error);
                 onError?.Invoke(error);
             }
@@ -64,30 +55,16 @@ public class OpenAIService : MonoBehaviour
     }
 
     [System.Serializable]
-    private class Message
-    {
-        public string role;
-        public string content;
-    }
-
-    [System.Serializable]
-    private class MessageRequest
+    private class OllamaRequest
     {
         public string model;
-        public int max_tokens;
-        public Message[] messages;
+        public string prompt;
+        public bool stream;
     }
 
     [System.Serializable]
-    private class MessageResponse
+    private class OllamaResponse
     {
-        public ContentBlock[] content;
-    }
-
-    [System.Serializable]
-    private class ContentBlock
-    {
-        public string type;
-        public string text;
+        public string response;
     }
 }
