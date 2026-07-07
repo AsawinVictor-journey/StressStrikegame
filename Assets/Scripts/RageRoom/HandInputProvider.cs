@@ -30,4 +30,13 @@ public abstract class HandInputProvider : MonoBehaviour
     /// BNO055 will return its fused quaternion here.
     /// </summary>
     public virtual Quaternion GetOrientation() => Quaternion.identity;
+
+    /// <summary>
+    /// Whether GetOrientation() is a real, driven signal for this provider.
+    /// False (the default) means "no orientation data" rather than "identity
+    /// orientation" — HandRotation uses this to decide whether to trust
+    /// GetOrientation() or fall back to its own mouse-driven rotation,
+    /// instead of guessing from whatever value GetOrientation() returns.
+    /// </summary>
+    public virtual bool ProvidesOrientation => false;
 }

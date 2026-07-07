@@ -3,6 +3,13 @@ using UnityEngine;
 public class HandRotation : MonoBehaviour
 {
     public Transform origin;
+
+    [Tooltip("Optional. When assigned and ProvidesOrientation is true (e.g. " +
+             "Bno055HandInput), rotation is driven from GetOrientation() " +
+             "instead of the mouse. Leave unassigned to keep today's " +
+             "mouse-driven behavior (e.g. for KeyboardHandInput testing).")]
+    public HandInputProvider input;
+
     public float sensitivity = 5f;
     public float smooth     = 15f;
     public float pitchClamp = 90f;
@@ -22,6 +29,13 @@ public class HandRotation : MonoBehaviour
 
     void Update()
     {
+        if (input != null && input.ProvidesOrientation)
+        {
+            Quaternion providerTarget = origin.rotation * input.GetOrientation();
+            transform.rotation = Quaternion.Slerp(transform.rotation, providerTarget, Time.deltaTime * smooth);
+            return;
+        }
+
         accYaw   += Input.GetAxis("Mouse X") * sensitivity;
         accPitch -= Input.GetAxis("Mouse Y") * sensitivity;
         accPitch  = Mathf.Clamp(accPitch, -pitchClamp, pitchClamp);
