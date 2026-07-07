@@ -1,6 +1,8 @@
 using TMPro;
 using UnityEngine;
 
+namespace Evococo
+{
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance;
@@ -24,4 +26,5 @@ public class ScoreManager : MonoBehaviour
     {
         resultText.text = "";
     }
+}
 }
