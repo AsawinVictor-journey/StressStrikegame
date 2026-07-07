@@ -217,7 +217,7 @@ Material:
     - _Glossiness: 0.198
     - _GlossyReflections: 0
     - _Glow_Edge_Width: 1
-    - _HighlightColorPower: 2.03
+    - _HighlightColorPower: 1.56
     - _LigIgnoYNorDir: 0
     - _LightAffectOutlineColor: 0
     - _LightAffectRimLightColor: 0
@@ -228,7 +228,7 @@ Material:
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
-    - _MaiColPo: 4
+    - _MaiColPo: 4.88
     - _MainColorAffectTexture: 0
     - _MaxFadDistance: 2
     - _Metallic: 0
