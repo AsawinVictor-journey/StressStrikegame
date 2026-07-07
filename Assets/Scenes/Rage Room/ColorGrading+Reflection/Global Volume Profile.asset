@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 1
   shadows:
     m_OverrideState: 1
-    m_Value: {x: 1, y: 0.9503429, z: 0.81829554, w: -0.18292694}
+    m_Value: {x: 1, y: 0.9503429, z: 0.81829554, w: -0.90063024}
   midtones:
     m_OverrideState: 1
     m_Value: {x: 1, y: 1, z: 1, w: 0.22126684}
@@ -34,7 +34,7 @@ MonoBehaviour:
   highlightsEnd:
     m_OverrideState: 0
     m_Value: 1
---- !u!114 &-4150746316283231239
+--- !u!114 &-1102884694352843378
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -55,10 +55,10 @@ MonoBehaviour:
     m_Value: {x: 0.5, y: 0.5}
   intensity:
     m_OverrideState: 1
-    m_Value: 0.45
+    m_Value: 0.418
   smoothness:
     m_OverrideState: 1
-    m_Value: 0.33
+    m_Value: 0.2
   rounded:
     m_OverrideState: 0
     m_Value: 0
@@ -78,9 +78,9 @@ MonoBehaviour:
   - {fileID: 5472004242314318787}
   - {fileID: 162605344297256588}
   - {fileID: -7424331319158770295}
-  - {fileID: -4150746316283231239}
   - {fileID: 3864519064074363660}
   - {fileID: 516130382879291330}
+  - {fileID: -1102884694352843378}
 --- !u!114 &162605344297256588
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -258,7 +258,7 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   hueShift:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   saturation:
     m_OverrideState: 1
