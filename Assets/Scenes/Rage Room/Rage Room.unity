@@ -407,8 +407,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8ee2bf854e238d46b1c70f26c949067, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   side: 0
   moveAccel: 20
   punchKey: 323
@@ -416,6 +416,10 @@ MonoBehaviour:
   maxPunchAccel: 200
   chargeMaxTime: 1
   punchSpikeDuration: 0.15
+  gloveSide: 0
+  convertToLeftHanded: 1
+  allowRecenter: 1
+  recenterKey: 32
 --- !u!54 &125392735
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2104,7 +2108,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 2133746658}
-  input: {fileID: 0}
+  input: {fileID: 1875450671}
   sensitivity: 7
   smooth: 2.5
   pitchClamp: 80
@@ -4472,7 +4476,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   origin: {fileID: 2133746658}
-  input: {fileID: 0}
+  input: {fileID: 125392734}
   sensitivity: 10
   smooth: 5
   pitchClamp: 80
@@ -5210,9 +5214,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8ee2bf854e238d46b1c70f26c949067, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   side: 1
+  gloveSide: 1
+  convertToLeftHanded: 1
+  allowRecenter: 1
+  recenterKey: 32
   moveAccel: 20
   punchKey: 324
   minPunchAccel: 70

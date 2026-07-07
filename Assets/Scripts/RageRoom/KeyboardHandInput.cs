@@ -1,25 +1,26 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
-/// Simulated IMU signal from keyboard/mouse input: a small sustained
-/// acceleration while a movement key is held (like tilting/pushing a real
-/// sensor), plus a punch spike layered on top when the punch button is
-/// released.
+/// Keyboard/mouse IMU simulator, with an optional ESP32Glove (BNO055) layered
+/// on top when one is connected. Both sources stay live at the same time:
 ///
-/// Sustained movement only ever covers left/right and up/down (local X/Y).
-/// Forward/back (local Z) has no held-key control at all — the fist can't be
-/// steered toward or away from a target by hand, it can only get there by
-/// throwing a punch. That's the one and only source of Z-axis motion.
+///   Rotation — HandRotation already prefers GetOrientation() whenever
+///   ProvidesOrientation is true, and falls back to mouse-look otherwise.
+///   ProvidesOrientation here just tracks whether a matching glove is
+///   connected, so rotation is glove-driven when a glove is present and
+///   mouse-driven when it isn't — no manual switching required.
 ///
-/// This still reports ONLY acceleration — never position. HandTarget is the
-/// one place that turns this into a bounded, damped position; nothing here
-/// tracks where the hand "really" is.
+///   Punching — the existing hold-to-charge mouse/keyboard click still
+///   works unchanged. The glove's combined force reading is added on top of
+///   the same Z-axis acceleration signal, so a real punch from the glove
+///   triggers PunchDetector exactly like a mouse click would, and either one
+///   (or both at once) can throw a punch.
 ///
-/// Punch strength is hold-to-charge: holding the punch button down winds
-/// the fist back (further hold = more "cocked"), and releasing throws the
-/// punch with a spike magnitude between minPunchAccel and maxPunchAccel
-/// based on how long it was held, capped at chargeMaxTime. A quick tap
-/// still throws a punch — just a weak one.
+/// Sustained left/right and up/down movement (local X/Y) always comes from
+/// the keyboard — the glove hardware has no axes for that (see ESP32Glove /
+/// VRGloveProcessor remarks), only fused orientation and a two-axis force
+/// reading used here for punches.
 /// </summary>
 public class KeyboardHandInput : HandInputProvider
 {
@@ -58,9 +59,45 @@ public class KeyboardHandInput : HandInputProvider
     [Range(0.1f, 0.2f)]
     public float punchSpikeDuration = 0.15f;
 
+    [Header("Glove (optional — used automatically when connected)")]
+    [Tooltip("Which glove this instance should bind to when more than one " +
+             "ESP32Glove is connected. Matched by connection order. " +
+             "Irrelevant with a single glove connected.")]
+    public Side gloveSide = Side.Left;
+
+    [Tooltip("Enable only if the physical glove's axes don't match Unity's " +
+             "coordinate system.")]
+    public bool convertToLeftHanded = true;
+
+    [Tooltip("Lets a key re-zero the glove's \"forward\" orientation. A " +
+             "runtime reference-frame offset only, not a sensor calibration.")]
+    public bool allowRecenter = true;
+    public KeyCode recenterKey = KeyCode.Space;
+
+    /// <summary>True once a matching physical glove is connected.</summary>
+    public bool IsConnected => device != null;
+
+    public override bool ProvidesOrientation => IsConnected;
+
     float punchTimer;
     float currentSpikeAccel;
     float pressStartTime = -1f;
+
+    ESP32Glove device;
+    Quaternion zeroOffset = Quaternion.identity;
+    Quaternion lastValidOrientation = Quaternion.identity;
+
+    void OnEnable()
+    {
+        InputSystem.onDeviceChange += OnDeviceChange;
+        TryAcquireDevice();
+    }
+
+    void OnDisable()
+    {
+        InputSystem.onDeviceChange -= OnDeviceChange;
+        device = null;
+    }
 
     void Update()
     {
@@ -81,12 +118,53 @@ public class KeyboardHandInput : HandInputProvider
             punchTimer        = punchSpikeDuration;
             pressStartTime    = -1f;
         }
+
+        if (allowRecenter && Input.GetKeyDown(recenterKey))
+            RecenterOrientation();
     }
 
     void FixedUpdate()
     {
         if (punchTimer > 0f)
             punchTimer = Mathf.Max(0f, punchTimer - Time.fixedDeltaTime);
+    }
+
+    void OnDeviceChange(InputDevice changedDevice, InputDeviceChange change)
+    {
+        var glove = changedDevice as ESP32Glove;
+        if (glove == null) return;
+
+        switch (change)
+        {
+            case InputDeviceChange.Added:
+            case InputDeviceChange.Reconnected:
+                if (device == null) TryAcquireDevice();
+                break;
+
+            case InputDeviceChange.Removed:
+            case InputDeviceChange.Disconnected:
+                if (ReferenceEquals(glove, device)) device = null;
+                break;
+        }
+    }
+
+    void TryAcquireDevice()
+    {
+        int matchIndex = (int)gloveSide;
+        int seen = 0;
+
+        foreach (var d in InputSystem.devices)
+        {
+            var glove = d as ESP32Glove;
+            if (glove == null) continue;
+
+            if (seen == matchIndex)
+            {
+                device = glove;
+                return;
+            }
+            seen++;
+        }
     }
 
     public override Vector3 GetAcceleration()
@@ -114,11 +192,65 @@ public class KeyboardHandInput : HandInputProvider
 
         Vector3 accel = dir.normalized * moveAccel;
 
-        // The only forward/back (Z) motion the hand ever gets is the punch
-        // spike — thrown, not steered.
+        // Mouse/keyboard hold-to-charge punch spike.
         if (punchTimer > 0f)
             accel += Vector3.forward * currentSpikeAccel;
 
+        // Glove punch: raw combined force magnitude, added on top so either
+        // source can trigger PunchDetector independently (or both at once).
+        if (device != null)
+        {
+            float forceY = device.forceY.ReadValue();
+            float forceZ = device.forceZ.ReadValue();
+
+            if (!float.IsNaN(forceY) && !float.IsNaN(forceZ))
+                accel += Vector3.forward * new Vector2(forceY, forceZ).magnitude;
+        }
+
         return accel;
+    }
+
+    public override Quaternion GetOrientation()
+    {
+        if (!TryReadRawOrientation(out Quaternion raw)) return lastValidOrientation;
+
+        lastValidOrientation = Quaternion.Inverse(zeroOffset) * raw;
+        return lastValidOrientation;
+    }
+
+    /// <summary>
+    /// Re-zeroes "forward" to whatever orientation the glove is currently
+    /// reporting. A runtime reference-frame offset only — does not touch the
+    /// sensor's own onboard fusion calibration.
+    /// </summary>
+    public void RecenterOrientation()
+    {
+        if (TryReadRawOrientation(out Quaternion raw))
+            zeroOffset = raw;
+    }
+
+    bool TryReadRawOrientation(out Quaternion raw)
+    {
+        raw = Quaternion.identity;
+        if (device == null) return false;
+
+        float qX = device.x.ReadValue();
+        float qY = device.y.ReadValue();
+        float qZ = device.z.ReadValue();
+        float qW = device.w.ReadValue();
+
+        raw = convertToLeftHanded
+            ? new Quaternion(-qY, -qZ, qX, qW)
+            : new Quaternion(qX, qY, qZ, qW);
+
+        // A zero (or corrupt) packet would make normalization divide by zero
+        // and silently produce NaN, which then corrupts the hand transform
+        // permanently. Guard against that here rather than trust the sensor
+        // never sends one.
+        float sqrMag = raw.x * raw.x + raw.y * raw.y + raw.z * raw.z + raw.w * raw.w;
+        if (sqrMag < 0.0001f) return false;
+
+        raw = raw.normalized;
+        return true;
     }
 }
