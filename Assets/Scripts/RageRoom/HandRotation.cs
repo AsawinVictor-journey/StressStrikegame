@@ -4,10 +4,10 @@ public class HandRotation : MonoBehaviour
 {
     public Transform origin;
 
-    [Tooltip("Optional. When assigned and ProvidesOrientation is true (e.g. " +
-             "Bno055HandInput), rotation is driven from GetOrientation() " +
-             "instead of the mouse. Leave unassigned to keep today's " +
-             "mouse-driven behavior (e.g. for KeyboardHandInput testing).")]
+    [Tooltip("Optional. When assigned and ProvidesOrientation is true, " +
+             "rotation is driven from GetOrientation() instead of the mouse. " +
+             "Leave unassigned to keep today's mouse-driven behavior " +
+             "(e.g. for KeyboardHandInput testing).")]
     public HandInputProvider input;
 
     public float sensitivity = 5f;

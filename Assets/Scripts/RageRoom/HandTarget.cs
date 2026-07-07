@@ -20,7 +20,7 @@ namespace RageRoom
 ///   never a reconstruction of "where the real hand is in the room."
 ///
 /// ── Signal chain ─────────────────────────────────────────────────────────
-///   Input provider (keyboard / BNO055)
+///   Input provider (keyboard)
 ///     → acceleration = GetAcceleration(), m/s², local axes — left/right and
 ///       up/down sustained movement only; NO forward/back. Punching is the
 ///       only thing that ever moves the hand along that axis.

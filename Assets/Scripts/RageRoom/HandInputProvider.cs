@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Abstract input layer. Swap this for a BNO055 implementation without
-/// touching the motion, movement, or punch layers.
+/// Abstract input layer. Lets the motion, movement, and punch layers stay
+/// agnostic to where the acceleration/orientation signal actually comes from.
 ///
 /// This reports only what a real IMU can actually measure — linear
 /// acceleration and orientation. It never reports position. Nothing
@@ -12,7 +12,6 @@ using UnityEngine;
 /// by this signal, not reconstructed from it.
 ///
 /// Keyboard implementation: KeyboardHandInput.cs
-/// BNO055 implementation:   Bno055HandInput.cs  (create when hardware is ready)
 /// </summary>
 public abstract class HandInputProvider : MonoBehaviour
 {
