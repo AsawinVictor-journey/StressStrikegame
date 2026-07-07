@@ -11,6 +11,7 @@ public class animationStateController : MonoBehaviour
     int isLeftBlockHash;
 
     private CombatHudController combatHud;
+    private ScoreManager scoreManager;
 
     [Header("Audio Settings")]
     public AudioClip specialAbilitySound;
@@ -21,6 +22,9 @@ public class animationStateController : MonoBehaviour
 
     private int punchCount = 0;
     private int requiredPunchesForSpecial = 5;
+
+    public bool IsBlocking => isValidSetup && animator.GetBool(isBlockHash);
+    public bool IsLeftBlocking => isValidSetup && animator.GetBool(isLeftBlockHash);
 
     void Start()
     {
@@ -47,6 +51,7 @@ public class animationStateController : MonoBehaviour
         
         // This confirms everything is set up before allowing Update to run
         combatHud = FindObjectOfType<CombatHudController>();
+        scoreManager = FindObjectOfType<ScoreManager>();
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
@@ -93,6 +98,7 @@ public class animationStateController : MonoBehaviour
         {
             if (combatHud != null) combatHud.DrainPlayerStamina(jabStaminaCost);
             if (combatHud != null) combatHud.DrainOpponentHealth(15f);
+            if (scoreManager != null) scoreManager.RegisterHit(15f);
             RegisterPunch();
         }
 
@@ -109,7 +115,8 @@ public class animationStateController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.K) && canAct)
         {
             if (combatHud != null) combatHud.DrainPlayerStamina(hookStaminaCost);
-            if (combatHud != null) combatHud.DrainOpponentHealth(15f); // Example damage
+            if (combatHud != null) combatHud.DrainOpponentHealth(15f);
+            if (scoreManager != null) scoreManager.RegisterHit(15f);
             RegisterPunch();
         }
         
@@ -127,6 +134,7 @@ public class animationStateController : MonoBehaviour
         {
             if (combatHud != null) combatHud.DrainPlayerStamina(hookStaminaCost);
             if (combatHud != null) combatHud.DrainOpponentHealth(15f);
+            if (scoreManager != null) scoreManager.RegisterHit(15f);
             RegisterPunch();
         }
 
@@ -144,6 +152,7 @@ public class animationStateController : MonoBehaviour
         {
             if (combatHud != null) combatHud.DrainPlayerStamina(jabStaminaCost);
             if (combatHud != null) combatHud.DrainOpponentHealth(15f);
+            if (scoreManager != null) scoreManager.RegisterHit(15f);
             RegisterPunch();
         }
 

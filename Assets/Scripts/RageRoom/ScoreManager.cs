@@ -1,0 +1,91 @@
+using UnityEngine;
+using TMPro;
+
+public class ScoreSystem : MonoBehaviour
+{
+    public static ScoreSystem Instance;
+
+    public int streak = 0;
+    public int score;
+    public int highestStreak = 0;
+    public int coin;
+
+    public float streakResetTime = 2f;
+    private float lastHitTime;
+
+    public TMP_Text scoreText;
+    public TMP_Text streakText;
+
+    public GameObject resultPanel;
+    public TMP_Text resultScoreText;
+    public TMP_Text resultHighestStreakText;
+    public TMP_Text resultCoinsEarned;
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
+    void Start()
+    {
+        UpdateUI();
+    }
+
+    void Update()
+    {
+        if (streak > 0 && Time.time - lastHitTime > streakResetTime)
+        {
+            streak = 0;
+            UpdateUI();
+        }
+    }
+
+    public void AddScore(int amount)
+    {
+        score += amount;
+        UpdateUI();
+    }
+
+    public void AddHit(float velocity)
+    {
+        if (Time.time - lastHitTime <= streakResetTime)
+            streak++;
+        else
+            streak = 1;
+
+        lastHitTime = Time.time;
+
+        if (streak > highestStreak)
+            highestStreak = streak;
+
+        float multiplier = 1f + (streak - 1) * 0.1f;
+        multiplier = Mathf.Min(multiplier, 3f);
+
+        int baseScore = Mathf.RoundToInt(velocity * 10f);
+        score += Mathf.RoundToInt(baseScore * multiplier);
+        UpdateUI();
+    }
+
+    public void ShowResults()
+    {   
+        coin = Mathf.FloorToInt(score / 10f);
+        
+        if (resultPanel != null)
+            resultPanel.SetActive(true);
+
+        if (resultScoreText != null)
+            resultScoreText.text = score.ToString();
+
+        if (resultHighestStreakText != null)
+            resultHighestStreakText.text = highestStreak.ToString();
+
+        if (resultHighestStreakText != null)
+            resultCoinsEarned.text = coin.ToString();
+    }
+
+    void UpdateUI()
+    {
+        scoreText.text = score.ToString();
+        streakText.text = streak.ToString();
+    }
+}

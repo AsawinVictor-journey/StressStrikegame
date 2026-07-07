@@ -18,11 +18,17 @@ EditorBuildSettings:
     path: Assets/Scenes/Level 1.unity
     guid: 71cc3082354b75646a45828b1a0f582f
   - enabled: 1
+    path: Assets/Scenes/Level 3.unity
+    guid: c197798d39eb4b94080aa548200b1cad
+  - enabled: 1
     path: Assets/Scenes/Level 2.unity
     guid: da5c4fcfbe1a0e74ca664c1f7c67bc51
   - enabled: 1
-    path: Assets/Scenes/Level 3.unity
-    guid: c197798d39eb4b94080aa548200b1cad
+    path: Assets/Scenes/Rage Room/Rage Room.unity
+    guid: 3413065858418ea4e9c2717fda5a1aff
+  - enabled: 1
+    path: Assets/Scenes/Rage Room/Rage Room Menu.unity
+    guid: 26c8b05d998ae0641b16954229e70ac3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

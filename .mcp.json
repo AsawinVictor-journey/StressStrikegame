@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "mcp-unity": {
+      "command": "node",
+      "args": [
+        "Library/PackageCache/com.gamelovers.mcp-unity@c523d75b086d/Server~/build/index.js"
+      ],
+      "env": {
+        "UNITY_PORT": "8091"
+      }
+    },
+    "ai-game-developer": {
+      "type": "http",
+      "url": "http://localhost:23088"
+    }
+  }
+}

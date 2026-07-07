@@ -1,0 +1,111 @@
+SCORE SYSTEM IMPLEMENTATION - SETUP GUIDE
+=========================================
+
+✓ CODE CHANGES COMPLETE
+All C# files have been modified and are ready to use:
+- Assets/Scripts/ScoreManager.cs (NEW)
+- Assets/Scripts/CombatHudController.cs (MODIFIED)
+- Assets/Scripts/animationStateController.cs (MODIFIED)
+- Assets/b-o-o-k/handgrip scripts/PunchCollider.cs (MODIFIED)
+
+
+NEXT STEPS - SCENE SETUP (Manual in Unity Editor)
+==================================================
+
+For each combat scene (Level 1, Level 2, Level 3, copy of current):
+
+1. Open the scene in Unity Editor (double-click the .unity file)
+
+2. Create a new empty GameObject:
+   - Right-click in Hierarchy → Create Empty
+   - Rename it to "ScoreManager"
+   - Make sure position is (0, 0, 0)
+
+3. Add the ScoreManager component:
+   - Select the ScoreManager GameObject
+   - In Inspector → Add Component → Search for "ScoreManager"
+   - Click to add the ScoreManager component
+
+4. (OPTIONAL) Wire up UI for live score display:
+   - If your combat HUD canvas has a TextMeshProUGUI element for score:
+     - Select it and note its name
+     - Select the ScoreManager GameObject
+     - In the Inspector, under ScoreManager component:
+       - Set "Score Text UI" field to reference that text element
+     - Similarly for "Combo Text UI" if you have one
+
+5. (OPTIONAL) Set up KO screen score display:
+   - On your KO screen panel, optionally add new TextMeshProUGUI elements for:
+     - Score display
+     - Coins earned
+     - High score indicator
+   - In CombatHudController component:
+     - Set "_Ko Score Text", "_Ko Coins Earned Text", "_Ko High Score Text" fields
+   - If you don't wire these, the system will append to the winner text automatically
+
+6. Save the scene (Ctrl+S)
+
+7. Repeat steps 1-6 for the other combat scenes
+
+
+TESTING
+=======
+
+Once setup is complete:
+
+1. Enter Play mode in Level 1 (or any combat scene)
+
+2. Test keyboard punching:
+   - Press J/K/M/H to punch
+   - Watch the currentScore increase in real-time
+   - Check ScoreManager in Hierarchy to see values update
+
+3. Test combo system:
+   - Punch rapidly (within 1.5 seconds) - score should increase faster
+   - Wait > 1.5 seconds - next punch should reset combo multiplier to 1x
+   - Press Space (debug key) to drain player health - combo should reset
+
+4. Test end-of-match scoring:
+   - Spam Backspace (debug key) to damage opponent to 0 HP
+   - KO screen should appear showing:
+     - Final Score
+     - Coins Earned (should be Score / 10)
+     - High Score indicator or "NEW HIGH SCORE!"
+   - Coins should be added to CoinManager (check via Inspector)
+
+5. Test high score persistence:
+   - Exit Play mode
+   - Re-enter with a lower score punch scenario
+   - Confirm the high score wasn't overwritten
+
+
+TROUBLESHOOTING
+===============
+
+If code doesn't compile:
+- Check Assets/Scripts/ScoreManager.cs exists
+- Verify all edits to other files were applied correctly
+- Look in Console for specific error messages
+
+If ScoreManager component can't be found:
+- Make sure Assets/Scripts/ScoreManager.cs is in the Assets folder
+- Let Unity re-import if needed (wait 10 seconds)
+
+If score doesn't appear on KO screen:
+- The system falls back to appending to _koWinnerText if no dedicated fields are wired
+- If you want custom display, wire the 3 KO screen text fields in CombatHudController
+
+If coins aren't awarded:
+- Verify CoinManager.Instance is properly initialized in the scene
+- Check Console for any error messages
+- Score-to-coins uses: coins = score / 10 (rounded)
+
+
+KEY DESIGN NOTES
+================
+
+- Score persists across entire match (not reset per round)
+- Combo resets on: taking damage OR 1.5s gap since last punch
+- Combo multiplier: 1.0x → 1.1x → 1.2x ... up to 3.0x (caps at ~21 consecutive hits)
+- Score conversion: coins = finalScore / 10 (rounded)
+- High score: persisted via PlayerPrefs key "Player_HighScore"
