@@ -112,9 +112,9 @@ public class FeedbackManager : MonoBehaviour
 - Exercise blocker: {r.blocker}
 
 Respond with ONLY valid JSON (no markdown, no explanation, just the JSON object):
-{{"focus": "One motivational sentence for their session", "outline": ["activity1", "activity2"]}}
+{{""focus"": ""One motivational sentence for their session"", ""outline"": [""activity1"", ""activity2""]}}
 
-The outline array should have 1-3 activities matching their stress level and blocker (e.g., "heavy_bag" for high stress, "speed_bag" for motivation issues).";
+The outline array should have 1-3 activities matching their stress level and blocker (e.g., ""heavy_bag"" for high stress, ""speed_bag"" for motivation issues).";
     }
 
     private void ShowOutline(AIAdvice advice)
