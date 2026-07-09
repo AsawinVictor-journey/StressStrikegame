@@ -144,7 +144,7 @@ Material:
     - _WindNoiseContrast: {r: 0, g: 1, b: 0, a: 0}
     - _WindNoiseScale: {r: 40, g: 100, b: 0, a: 0}
     - _farcolor: {r: 0.2023672, g: 0.3679245, b: 0.1475169, a: 1}
-    - _nearcolor: {r: 0.41020018, g: 0.9716981, b: 0.23375754, a: 1}
+    - _nearcolor: {r: 0.59336203, g: 0.972549, b: 0.23529412, a: 1}
     - _nearfar: {r: 10, g: 25, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

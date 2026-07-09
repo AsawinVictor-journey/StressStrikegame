@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 0.6
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: d48a7646f5d0547e889733d84b50cb9f, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: cb27f5a6f112b464eb179ad1125bb081, type: 2}
   m_HaloStrength: 0.579
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -407,8 +407,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8ee2bf854e238d46b1c70f26c949067, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   side: 0
   moveAccel: 20
   punchKey: 323
@@ -5214,19 +5214,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8ee2bf854e238d46b1c70f26c949067, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   side: 1
-  gloveSide: 1
-  convertToLeftHanded: 1
-  allowRecenter: 1
-  recenterKey: 32
   moveAccel: 20
   punchKey: 324
   minPunchAccel: 70
   maxPunchAccel: 200
   chargeMaxTime: 1
   punchSpikeDuration: 0.15
+  gloveSide: 1
+  convertToLeftHanded: 1
+  allowRecenter: 1
+  recenterKey: 32
 --- !u!114 &1875450672
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: MemoryChunks
+  m_EditorClassIdentifier: 
+  m_GroupName: MemoryChunks
+  m_GUID: 53514895f70aa8046aab40291f3a40b3
+  m_SerializeEntries:
+  - m_GUID: 0528106aaf2f4e229e084bbc43cd4c8c
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Trees/Elm1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 080c176c29c04923a03f3d4f08ccd16e
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Trees/Elm2.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0e2ced96798e488582adefee51d9334f
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Trees/Bush1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5413f2850c434a8090f7e7f0cab8a7f2
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Fx/Butterflies.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b4324e23d44454b8daa220322c81407
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Rocks/Stone1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 95d61278a080404caa14203b24726050
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Barriers/Barrier1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a2d7192df0f44a51ba2a1d52179470a6
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Rocks/Stone4.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9d9b472f6084c999525828334e6fe09
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Trees/Elm5.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bdfa9ec74d8440ff9698aca0e9964c33
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Trees/Elm4.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bff7a1a72bb04037af67eaae9aa5164f
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Fx/TreeLeaves.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fbfe7b2d8dc742a8989dfe21753240cd
+    m_Address: Assets/BK/PureNature_Meadows/Prefabs/Rocks/Stone3.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 6a4daca50f93597458c417d37596adab, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 2096a30c74d8896428909e1fbf52f7e8, type: 2}
+    - {fileID: 11400000, guid: aad522004e072774aab367ffd5d7cf1d, type: 2}
