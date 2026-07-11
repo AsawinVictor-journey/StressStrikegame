@@ -215,14 +215,14 @@ Material:
     - _GIFlatShade: 0
     - _GIShadeThreshold: 0
     - _GlossColorPower: 10
-    - _GlossIntensity: 0.787
+    - _GlossIntensity: 0.76
     - _GlossMapScale: 0
-    - _GlossSoftness: 0.394
+    - _GlossSoftness: 0.43
     - _GlossTextureFollowLight: 0
     - _GlossTextureFollowObjectRotation: 0
     - _GlossTextureRotate: 0
     - _GlossTextureSoftness: 0
-    - _Glossiness: 0.343
+    - _Glossiness: 0.54
     - _GlossyReflections: 0
     - _Glow_Edge_Width: 1
     - _HighlightColorPower: 3.27
@@ -274,7 +274,7 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_TP: 0
-    - _NoisyOutlineIntensity: 0.228
+    - _NoisyOutlineIntensity: 0.61
     - _NormalMapIntensity: 1
     - _OcclusionStrength: 1
     - _Opacity: 1
@@ -356,7 +356,7 @@ Material:
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 0.9150943, g: 0.6863207, b: 0.6863207, a: 1}
     - _MainColor: {r: 1, g: 1, b: 1, a: 1}
-    - _OutlineColor: {r: 0.3820755, g: 0.34603062, b: 0.34603062, a: 1}
+    - _OutlineColor: {r: 0.3537568, g: 0.34509805, b: 0.38039216, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
     - _OverallShadowColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _PTCol: {r: 0, g: 0, b: 0, a: 1}

@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.autodesk.fbx": {
+      "version": "5.1.3",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.cdm.figma": {
       "version": "https://github.com/cdmvision/unity-figma-importer.git#1.9.0",
       "depth": 0,
@@ -47,7 +54,7 @@
       "hash": "cce8b57de9cb69633deb222c9162dad539a52b87"
     },
     "com.ivanmurzak.unity.mcp": {
-      "version": "0.82.4",
+      "version": "0.83.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -136,6 +143,16 @@
       "depth": 1,
       "source": "builtin",
       "dependencies": {}
+    },
+    "com.unity.formats.fbx": {
+      "version": "5.1.6",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.autodesk.fbx": "5.1.3",
+        "com.unity.timeline": "1.7.1"
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
       "version": "3.0.38",
