@@ -89,14 +89,14 @@ public class HandTarget : MonoBehaviour
     public float punchDistance = 0.5f;
 
     [Tooltip("Fist travel speed (m/s) for an uncharged/tap punch (strength ≈ 0).")]
-    public float minPunchSpeed = 3f;
+    public float minPunchSpeed = 15f; // Increased for a faster punch
 
     [Tooltip("Fist travel speed (m/s) for a fully-charged punch (strength = 1). " +
              "Charge scales speed, not distance — every punch covers the same " +
              "Punch Distance, a charged one just gets there faster, which also " +
              "means it lands with more impact velocity (DestructibleObject / " +
              "ImpactReaction already scale damage/force off that automatically).")]
-    public float punchSpeed = 6.25f;
+    public float punchSpeed = 25f; // Increased for a faster punch
 
     [Header("Punch Retract")]
     [Tooltip("How long the snap-back to the pre-punch position takes (s) once " +

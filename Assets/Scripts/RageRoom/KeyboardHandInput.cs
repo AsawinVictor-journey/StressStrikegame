@@ -200,8 +200,11 @@ public class KeyboardHandInput : HandInputProvider
         // source can trigger PunchDetector independently (or both at once).
         if (device != null)
         {
-            float forceY = device.forceY.ReadValue();
-            float forceZ = device.forceZ.ReadValue();
+            // The InputSystem SHRT control returns a normalized [-1, 1] value.
+            // Multiply by 327.67f to restore the raw 16-bit range so it reaches 
+            // the 60f - 150f acceleration thresholds expected by PunchDetector.
+            float forceY = device.forceY.ReadValue() * 327.67f;
+            float forceZ = device.forceZ.ReadValue() * 327.67f;
 
             if (!float.IsNaN(forceY) && !float.IsNaN(forceZ))
                 accel += Vector3.forward * new Vector2(forceY, forceZ).magnitude;
