@@ -202,7 +202,7 @@ Material:
     - _GIFlatShade: 0
     - _GIShadeThreshold: 0
     - _GlossColorPower: 10
-    - _GlossIntensity: 0.156
+    - _GlossIntensity: 0
     - _GlossMapScale: 0
     - _GlossSoftness: 0.459
     - _GlossTextureFollowLight: 0
