@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Brief-COPE — Coach Check-In</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    background: #14151a;
+    color: #e8e8ec;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+    line-height: 1.5;
+  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .coach-card {
+    background: #1d1e25;
+    border: 1px solid #2a2b34;
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .avatar {
+    font-size: 1.8rem;
+    width: 46px; height: 46px;
+    min-width: 46px;
+    background: #26272f;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .coach-body { display: flex; flex-direction: column; gap: 4px; }
+  .bot-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #ff5a5f;
+  }
+  .coach-text {
+    margin: 0;
+    font-size: 1rem;
+    color: #e8e8ec;
+  }
+  .coach-text.small { font-size: 0.9rem; color: #c8c8d0; }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 4px 0 18px;
+  }
+  .mode-card {
+    text-align: left;
+    background: #1d1e25;
+    border: 1px solid #2a2b34;
+    border-radius: 10px;
+    padding: 12px 12px;
+    cursor: pointer;
+    color: #d0d0d8;
+  }
+  .mode-card .mode-icon { font-size: 1.3rem; }
+  .mode-card .mode-title { font-weight: 600; font-size: 0.86rem; margin: 4px 0 2px; color: #e8e8ec; }
+  .mode-card .mode-blurb { font-size: 0.74rem; color: #9a9aa5; }
+  .mode-card.recommended { border-color: #ff5a5f; }
+  .mode-card.recommended .mode-title::after {
+    content: " ★ suggested";
+    font-size: 0.68rem;
+    color: #ff5a5f;
+    font-weight: 700;
+  }
+  .mode-card.selected {
+    background: #ff5a5f;
+    border-color: #ff5a5f;
+  }
+  .mode-card.selected .mode-title,
+  .mode-card.selected .mode-blurb { color: #14151a; }
+
+  .progress-bar {
+    height: 6px;
+    background: #26272f;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  #progressFill {
+    height: 100%;
+    background: #ff5a5f;
+    width: 0%;
+    transition: width 0.2s ease;
+  }
+  #progressLabel {
+    font-size: 0.78rem;
+    color: #7a7a85;
+    margin-bottom: 18px;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .choice-btn {
+    text-align: left;
+    background: #1d1e25;
+    border: 1px solid #2a2b34;
+    color: #d0d0d8;
+    padding: 13px 16px;
+    border-radius: 9px;
+    font-size: 0.92rem;
+    cursor: pointer;
+  }
+  .choice-btn:hover { border-color: #ff5a5f; }
+  .choice-btn.selected {
+    background: #ff5a5f;
+    color: #14151a;
+    border-color: #ff5a5f;
+    font-weight: 600;
+  }
+
+  button.primary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 8px;
+    background: #ff5a5f;
+    color: #14151a;
+  }
+  button.ghost {
+    display: inline-block;
+    background: transparent;
+    color: #9a9aa5;
+    border: none;
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 8px 2px;
+    text-decoration: underline;
+  }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; }
+
+  .result-card { flex-direction: column; }
+  #modeName { color: #ff5a5f; margin: 14px 0 6px; }
+  .disclaimer { font-size: 0.78rem; color: #7a7a85; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <section id="screen-intro" class="screen active">
+    <div class="coach-card">
+      <div class="avatar">🤖</div>
+      <div class="coach-body">
+        <span class="bot-name">Coach Byte</span>
+        <p class="coach-text">
+          Hey, I'm Coach Byte! Before you step in the ring, I want a quick read on how you've
+          been handling stress lately. 28 quick questions, about 3 minutes. There's no wrong
+          answer, this stays on your device, and it's not a diagnosis — just how I decide which
+          mode to point you at first. You can skip this anytime and pick a mode yourself.
+        </p>
+      </div>
+    </div>
+    <button class="primary" id="startBtn">Start check-in</button>
+    <button class="ghost" id="introSkipBtn">Skip — just let me play</button>
+  </section>
+
+  <section id="screen-quiz" class="screen">
+    <div class="progress-bar"><div id="progressFill"></div></div>
+    <div id="progressLabel"></div>
+    <div class="coach-card">
+      <div class="avatar">🤖</div>
+      <div class="coach-body">
+        <span class="bot-name">Coach Byte</span>
+        <p class="coach-text" id="questionText"></p>
+      </div>
+    </div>
+    <div class="choices" id="choicesBox"></div>
+    <div class="nav-row">
+      <button class="ghost" id="backBtn">← Back</button>
+      <button class="ghost" id="quizSkipBtn">Skip the rest →</button>
+    </div>
+  </section>
+
+  <section id="screen-mid" class="screen">
+    <div class="coach-card">
+      <div class="avatar">🤖</div>
+      <div class="coach-body">
+        <span class="bot-name">Coach Byte</span>
+        <p class="coach-text">Halfway there. Keep being honest — it just makes the read better.</p>
+      </div>
+    </div>
+    <button class="primary" id="midContinueBtn">Continue</button>
+  </section>
+
+  <section id="screen-result" class="screen">
+    <div class="coach-card result-card">
+      <div class="avatar">🤖</div>
+      <div class="coach-body">
+        <span class="bot-name">Coach Byte</span>
+        <p class="coach-text small" id="reasonText"></p>
+        <h2 id="modeName"></h2>
+        <p class="coach-text" id="coachMessage"></p>
+        <p class="disclaimer" id="disclaimerText"></p>
+      </div>
+    </div>
+    <p class="coach-text small" id="pickLabel">Or pick any mode yourself:</p>
+    <div class="mode-grid" id="modeGrid"></div>
+    <button class="primary" id="playBtn">Enter this mode</button>
+    <button class="ghost" id="restartBtn">Retake check-in</button>
+  </section>
+
+</div>
+
+<script>
+// ---- Data (ported from briefCopeData.ts) ----
+const RESPONSE_SCALE = [
+  { value: 1, label: "Not at all" },
+  { value: 2, label: "A little bit" },
+  { value: 3, label: "A medium amount" },
+  { value: 4, label: "A lot" },
+];
+
+const COPE_QUESTIONS = [
+  { id: 1, text: "I've been turning to work or other activities to take my mind off things.", subscale: "SelfDistraction" },
+  { id: 2, text: "I've been concentrating my efforts on doing something about the situation I'm in.", subscale: "ActiveCoping" },
+  { id: 3, text: "I've been saying to myself \"this isn't real.\"", subscale: "Denial" },
+  { id: 4, text: "I've been using alcohol or other drugs to make myself feel better.", subscale: "SubstanceUse" },
+  { id: 5, text: "I've been getting emotional support from others.", subscale: "EmotionalSupport" },
+  { id: 6, text: "I've been giving up trying to deal with it.", subscale: "BehavioralDisengagement" },
+  { id: 7, text: "I've been taking action to try to make the situation better.", subscale: "ActiveCoping" },
+  { id: 8, text: "I've been refusing to believe that it has happened.", subscale: "Denial" },
+  { id: 9, text: "I've been saying things to let my unpleasant feelings escape.", subscale: "Venting" },
+  { id: 10, text: "I've been getting help and advice from other people.", subscale: "InstrumentalSupport" },
+  { id: 11, text: "I've been using alcohol or other drugs to help me get through it.", subscale: "SubstanceUse" },
+  { id: 12, text: "I've been trying to see it in a different light, to make it seem more positive.", subscale: "PositiveReframing" },
+  { id: 13, text: "I've been criticizing myself.", subscale: "SelfBlame" },
+  { id: 14, text: "I've been trying to come up with a strategy about what to do.", subscale: "Planning" },
+  { id: 15, text: "I've been getting comfort and understanding from someone.", subscale: "EmotionalSupport" },
+  { id: 16, text: "I've been giving up the attempt to cope.", subscale: "BehavioralDisengagement" },
+  { id: 17, text: "I've been looking for something good in what is happening.", subscale: "PositiveReframing" },
+  { id: 18, text: "I've been making jokes about it.", subscale: "Humor" },
+  { id: 19, text: "I've been doing something to think about it less, such as going to movies, watching TV, reading, daydreaming, sleeping, or shopping.", subscale: "SelfDistraction" },
+  { id: 20, text: "I've been accepting the reality of the fact that it has happened.", subscale: "Acceptance" },
+  { id: 21, text: "I've been expressing my negative feelings.", subscale: "Venting" },
+  { id: 22, text: "I've been trying to find comfort in my religion or spiritual beliefs.", subscale: "Religion" },
+  { id: 23, text: "I've been trying to get advice or help from other people about what to do.", subscale: "InstrumentalSupport" },
+  { id: 24, text: "I've been learning to live with it.", subscale: "Acceptance" },
+  { id: 25, text: "I've been thinking hard about what steps to take.", subscale: "Planning" },
+  { id: 26, text: "I've been blaming myself for things that happened.", subscale: "SelfBlame" },
+  { id: 27, text: "I've been praying or meditating.", subscale: "Religion" },
+  { id: 28, text: "I've been making fun of the situation.", subscale: "Humor" },
+];
+
+const ALL_SUBSCALES = [
+  "SelfDistraction", "ActiveCoping", "Denial", "SubstanceUse", "EmotionalSupport",
+  "InstrumentalSupport", "BehavioralDisengagement", "Venting", "PositiveReframing",
+  "Planning", "Humor", "Acceptance", "Religion", "SelfBlame",
+];
+
+const BUCKET_BY_SUBSCALE = {
+  ActiveCoping: "Approach",
+  Planning: "Approach",
+  PositiveReframing: "Approach",
+  Acceptance: "Approach",
+  EmotionalSupport: "Approach",
+  InstrumentalSupport: "Approach",
+  Denial: "Avoidant",
+  SubstanceUse: "Avoidant",
+  BehavioralDisengagement: "Avoidant",
+  SelfDistraction: "Avoidant",
+  SelfBlame: "Avoidant",
+  Humor: "Context",
+  Religion: "Context",
+  Venting: "Context",
+};
+
+// Plain-language explanation shown on the result screen, keyed by whichever
+// subscale scored highest within the winning bucket.
+const REASON_BY_SUBSCALE = {
+  ActiveCoping: "You scored highest on taking direct action — when stress hits, you'd rather do something about it than sit with it.",
+  Planning: "You scored highest on planning — you like to map out a strategy before you make your move.",
+  PositiveReframing: "You scored highest on positive reframing — you tend to look for the upside even when things are rough.",
+  Acceptance: "You scored highest on acceptance — you deal with hard situations by facing them as they are, not fighting them.",
+  EmotionalSupport: "You scored highest on emotional support — you lean on people for comfort when things get heavy.",
+  InstrumentalSupport: "You scored highest on getting advice and help — you reach out to others for practical guidance.",
+  Denial: "Your answers leaned toward denial — pushing back on believing hard things are really happening.",
+  SubstanceUse: "Your answers leaned toward using substances to get through tough moments.",
+  BehavioralDisengagement: "Your answers leaned toward stepping back or giving up on dealing with things directly.",
+  SelfDistraction: "Your answers leaned toward distraction — keeping busy so you don't have to think about it.",
+  SelfBlame: "Your answers leaned toward being hard on yourself when things go wrong.",
+  Humor: "You scored highest on humor — you take the edge off stress by joking about it.",
+  Religion: "You scored highest on religion or spirituality — you find steadiness through prayer or reflection.",
+  Venting: "You scored highest on venting — you deal with stress by letting your feelings out, not bottling them up.",
+};
+
+function scoreSubscales(answers) {
+  const totals = Object.fromEntries(ALL_SUBSCALES.map((s) => [s, 0]));
+  for (const q of COPE_QUESTIONS) {
+    totals[q.subscale] += answers[q.id] || 0;
+  }
+  return totals;
+}
+
+function scoreBuckets(subscaleScores) {
+  const totals = { Approach: 0, Avoidant: 0, Context: 0 };
+  for (const s of ALL_SUBSCALES) {
+    totals[BUCKET_BY_SUBSCALE[s]] += subscaleScores[s];
+  }
+  return totals;
+}
+
+function topSubscaleInBucket(subscaleScores, bucket) {
+  const candidates = ALL_SUBSCALES.filter((s) => BUCKET_BY_SUBSCALE[s] === bucket);
+  return candidates.reduce((best, s) => (subscaleScores[s] > subscaleScores[best] ? s : best), candidates[0]);
+}
+
+// ---- Recommendation (ported from gameModeRecommendation.ts) ----
+// The actual game only has 3 modes (confirmed against the Unity project:
+// Assets/Scenes/Rage Room/, Assets/evococo/meditation.unity, Assets/b-o-o-k/BoxingMenu.unity).
+const MODE_INFO = {
+  Boxing: {
+    modeName: "Boxing",
+    coachMessage:
+      "That's real fighter instinct. Let's get you into Boxing, where every match rewards strategy " +
+      "as much as power. Read your opponent, build your gameplan, and work the fight your way.",
+  },
+  RageRoom: {
+    modeName: "Rage Room",
+    coachMessage:
+      "That's exactly what the Rage Room's for: no scorecards, no losing, just you and every ounce " +
+      "of stress you're ready to throw at something.",
+  },
+  Meditate: {
+    modeName: "Meditate",
+    coachMessage:
+      "So let's slow down for a second first. Meditate isn't a step back, it's your warm-up: guided " +
+      "breathing, no pressure, no clock. When you're ready to swing for real, the ring will still be here.",
+  },
+};
+
+const DISCLAIMER =
+  "This is just a suggestion based on how you said you've been coping lately — not a diagnosis. " +
+  "Pick whatever mode you're actually in the mood for.";
+
+// All 3 modes are always shown and pickable — the recommendation only pre-selects one.
+const MODE_LIST = [
+  { mode: "Boxing", icon: "🏆", title: "Boxing", blurb: "Structured fights, strategy rewarded." },
+  { mode: "RageRoom", icon: "🥊", title: "Rage Room", blurb: "No fail state — just hit stuff." },
+  { mode: "Meditate", icon: "🌿", title: "Meditate", blurb: "Guided breathing, zero pressure." },
+];
+
+function pickContextMode(topSubscale) {
+  if (topSubscale === "Religion") return "Meditate";
+  return "RageRoom"; // Humor or Venting
+}
+
+function recommendGameMode(answers) {
+  const subscaleScores = scoreSubscales(answers);
+  const bucketScores = scoreBuckets(subscaleScores);
+
+  const topBucket = Object.keys(bucketScores).reduce((best, b) =>
+    bucketScores[b] > bucketScores[best] ? b : best
+  );
+
+  let mode;
+  if (topBucket === "Avoidant") {
+    mode = "Meditate";
+  } else if (topBucket === "Approach") {
+    mode = "Boxing";
+  } else {
+    mode = pickContextMode(topSubscaleInBucket(subscaleScores, "Context"));
+  }
+
+  const topSubscale = topSubscaleInBucket(subscaleScores, topBucket);
+  const info = MODE_INFO[mode];
+  return {
+    mode,
+    modeName: info.modeName,
+    coachMessage: info.coachMessage,
+    disclaimer: DISCLAIMER,
+    reason: REASON_BY_SUBSCALE[topSubscale],
+  };
+}
+
+// ---- UI state ----
+const screens = {
+  intro: document.getElementById("screen-intro"),
+  quiz: document.getElementById("screen-quiz"),
+  mid: document.getElementById("screen-mid"),
+  result: document.getElementById("screen-result"),
+};
+function showScreen(name) {
+  Object.values(screens).forEach((s) => s.classList.remove("active"));
+  screens[name].classList.add("active");
+}
+
+const answers = {};
+let currentIndex = 0;
+let pendingNextIndex = 0;
+
+const progressFill = document.getElementById("progressFill");
+const progressLabel = document.getElementById("progressLabel");
+const questionText = document.getElementById("questionText");
+const choicesBox = document.getElementById("choicesBox");
+const backBtn = document.getElementById("backBtn");
+
+function showQuestion(i) {
+  const q = COPE_QUESTIONS[i];
+  questionText.textContent = q.text;
+  progressFill.style.width = `${(i / COPE_QUESTIONS.length) * 100}%`;
+  progressLabel.textContent = `Question ${i + 1} of ${COPE_QUESTIONS.length}`;
+  choicesBox.innerHTML = "";
+  RESPONSE_SCALE.forEach((r) => {
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    if (answers[q.id] === r.value) btn.classList.add("selected");
+    btn.textContent = r.label;
+    btn.addEventListener("click", () => selectAnswer(q.id, r.value));
+    choicesBox.appendChild(btn);
+  });
+  backBtn.style.visibility = i === 0 ? "hidden" : "visible";
+}
+
+function selectAnswer(questionId, value) {
+  answers[questionId] = value;
+  const nextIndex = currentIndex + 1;
+  if (questionId === 14) {
+    pendingNextIndex = nextIndex;
+    showScreen("mid");
+    return;
+  }
+  if (nextIndex >= COPE_QUESTIONS.length) {
+    finish();
+  } else {
+    currentIndex = nextIndex;
+    showQuestion(currentIndex);
+  }
+}
+
+backBtn.addEventListener("click", () => {
+  if (currentIndex > 0) {
+    currentIndex -= 1;
+    showQuestion(currentIndex);
+  }
+});
+
+document.getElementById("midContinueBtn").addEventListener("click", () => {
+  currentIndex = pendingNextIndex;
+  showScreen("quiz");
+  showQuestion(currentIndex);
+});
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  currentIndex = 0;
+  showScreen("quiz");
+  showQuestion(0);
+});
+
+let selectedMode = null;
+const modeGrid = document.getElementById("modeGrid");
+const playBtn = document.getElementById("playBtn");
+
+function renderModeGrid(recommendedMode) {
+  modeGrid.innerHTML = "";
+  selectedMode = recommendedMode || null;
+  MODE_LIST.forEach((m) => {
+    const card = document.createElement("button");
+    card.className = "mode-card";
+    if (m.mode === recommendedMode) card.classList.add("recommended");
+    if (m.mode === selectedMode) card.classList.add("selected");
+    card.innerHTML = `<div class="mode-icon">${m.icon}</div><div class="mode-title">${m.title}</div><div class="mode-blurb">${m.blurb}</div>`;
+    card.addEventListener("click", () => {
+      selectedMode = m.mode;
+      [...modeGrid.children].forEach((c) => c.classList.remove("selected"));
+      card.classList.add("selected");
+      playBtn.disabled = false;
+    });
+    modeGrid.appendChild(card);
+  });
+  playBtn.disabled = !selectedMode;
+}
+
+function finish() {
+  const rec = recommendGameMode(answers);
+  document.getElementById("reasonText").textContent = rec.reason;
+  document.getElementById("modeName").textContent = rec.modeName;
+  document.getElementById("coachMessage").textContent = rec.coachMessage;
+  document.getElementById("disclaimerText").textContent = rec.disclaimer;
+  document.getElementById("restartBtn").style.display = "inline-block";
+  renderModeGrid(rec.mode);
+  showScreen("result");
+}
+
+function skipToPlay() {
+  document.getElementById("reasonText").textContent = "";
+  document.getElementById("modeName").textContent = "Pick a mode";
+  document.getElementById("coachMessage").textContent =
+    "No problem — hop in whenever you're ready. Pick any mode you like below.";
+  document.getElementById("disclaimerText").textContent = "";
+  document.getElementById("restartBtn").style.display = "none";
+  renderModeGrid(null);
+  showScreen("result");
+}
+
+document.getElementById("introSkipBtn").addEventListener("click", skipToPlay);
+document.getElementById("quizSkipBtn").addEventListener("click", skipToPlay);
+
+document.getElementById("restartBtn").addEventListener("click", () => location.reload());
+
+playBtn.addEventListener("click", () => {
+  const picked = MODE_LIST.find((m) => m.mode === selectedMode);
+  alert(`(prototype) In Unity, this button calls SceneManager.LoadScene() for: ${picked.title}`);
+});
+</script>
+</body>
+</html>
