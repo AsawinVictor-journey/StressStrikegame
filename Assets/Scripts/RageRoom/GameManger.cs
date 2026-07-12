@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
     public string menuSceneName = "Rage Room Menu";
     public float resultScreenDuration = 6f;
 
+    public CanvasGroup resultUI;
+
     void Awake()
     {
         Instance = this;
@@ -56,7 +58,7 @@ public class GameManager : MonoBehaviour
 
         UpdateTimerUI();
 
-        FindFirstObjectByType<UIFade>()?.ShowResult();
+        FindFirstObjectByType<UIFade>()?.ShowUI(resultUI);
         ScoreSystem.Instance?.ShowResults();
 
         StartCoroutine(ReturnToMenu());

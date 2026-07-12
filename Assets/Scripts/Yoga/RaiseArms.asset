@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8b5a9124398a5642882c619dc9dd838, type: 3}
+  m_Name: RaiseArms
+  m_EditorClassIdentifier: 
+  description: Sit tall and slowly lift your arms overhead.
+  icon: {fileID: 21300000, guid: 87f05064c3a0d7d47a77d2c5fb978a40, type: 3}
+  transitionAnimation: {fileID: -8060864421712488247, guid: eb34ba7bf6032924dae4a0cb97d0406f, type: 3}
+  poseAnimation: {fileID: -7696431562710462267, guid: eb34ba7bf6032924dae4a0cb97d0406f, type: 3}
+  duration: 30
+  difficulty: 1

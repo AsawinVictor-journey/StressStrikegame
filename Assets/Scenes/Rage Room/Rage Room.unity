@@ -507,8 +507,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Total Score
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 924900b9358b5a14eba42e9cddfe4f27, type: 2}
-  m_sharedMaterial: {fileID: 403073073374022699, guid: 924900b9358b5a14eba42e9cddfe4f27, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
+  m_sharedMaterial: {fileID: 403073073374022699, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1686,8 +1686,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Coins Earned
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 924900b9358b5a14eba42e9cddfe4f27, type: 2}
-  m_sharedMaterial: {fileID: 403073073374022699, guid: 924900b9358b5a14eba42e9cddfe4f27, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
+  m_sharedMaterial: {fileID: 403073073374022699, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2962,6 +2962,7 @@ MonoBehaviour:
   timerText: {fileID: 738237157}
   menuSceneName: Rage Room Menu
   resultScreenDuration: 6
+  resultUI: {fileID: 279817986}
 --- !u!4 &1106176904
 Transform:
   m_ObjectHideFlags: 0
@@ -2989,7 +2990,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abda2829aff9aea42b43762502720ffe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resultGroup: {fileID: 279817986}
   fadeDuration: 0.5
 --- !u!4 &1124343070 stripped
 Transform:
@@ -5093,8 +5093,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Highest Streak
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 924900b9358b5a14eba42e9cddfe4f27, type: 2}
-  m_sharedMaterial: {fileID: 403073073374022699, guid: 924900b9358b5a14eba42e9cddfe4f27, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
+  m_sharedMaterial: {fileID: 403073073374022699, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
