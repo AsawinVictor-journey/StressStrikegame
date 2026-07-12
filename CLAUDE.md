@@ -14,3 +14,8 @@
 ## MCP tooling in this project
 - **AI Game Developer** (`unity-mcp-cli` / IvanMurzak/Unity-MCP) is connected for direct Unity Editor control (scenes, GameObjects, assets, materials, animations, etc.).
 - **blender-mcp** (ahujasid/blender-mcp) setup is in progress, for AI-assisted custom asset creation directly in Blender (v5.1, installed locally). Status as of last session: `uv`/`uvx` installed and verified; still need to install/enable the Blender addon, start its MCP server from Blender's N-panel sidebar, and register it with `claude mcp add blender -- uvx blender-mcp`.
+
+## Brief-COPE pre-game survey (not yet ported)
+- `docs/brief-cope-prototype/` holds a working TypeScript + HTML prototype (from the separate `zBiblion/Brief-COPE` repo) of a pre-fight questionnaire that recommends a game mode based on how the player says they've been coping with stress. See `docs/brief-cope-prototype/BRIEF_COPE_CONTEXT.md` for the full design, the survey→mode routing logic, and a porting checklist for `BriefCopeData.cs` / `GameModeRecommendation.cs`.
+- The game only has **3 modes**: Boxing (`Assets/b-o-o-k/BoxingMenu.unity`), Rage Room (`Assets/Scenes/Rage Room/`), Meditate (`Assets/evococo/meditation.unity`). Scene routing goes through `Assets/Scripts/SceneTransitionManager.cs` (`LoadScene(string sceneName)`) — there is no `LevelSelector.cs`.
+- Not integrated into this Unity project yet — the prototype is reference material only.
