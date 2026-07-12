@@ -42,6 +42,54 @@ public class YogaManager : MonoBehaviour
     public YogaTracker yogaTracker;
     public float finalScore;
 
+    [Header("Sun Feedback")]
+    public Light sunLight;
+
+    public Color calmColor = new Color32(244, 177, 131, 255);   // Peach
+    public Color goodColor = new Color32(255, 209, 102, 255);   // Gold
+    public Color perfectColor = new Color32(110, 198, 255, 255); // Sky Blue
+
+    public float colorSmooth = 2f;
+
+    [Header("Encouragement Feedback")]
+    public CanvasGroup feedbackGroup;
+    public TMP_Text feedbackText;
+
+    [Tooltip("How many encouraging messages to show over the whole hold.")]
+    public int feedbackMessageCount = 4;
+
+    [Tooltip("How long a message stays fully visible before fading out.")]
+    public float feedbackDisplayDuration = 3f;
+
+    [Tooltip("Accuracy (0-100) above which a high-accuracy message is used instead.")]
+    public float highAccuracyThreshold = 70f;
+
+    public string[] encouragingMessages = new string[]
+    {
+        "You're doing great.",
+        "Just breathe.",
+        "Let your body settle.",
+        "You're exactly where you need to be.",
+        "Stay present in this moment.",
+        "This is your time to relax.",
+        "Let go of any tension.",
+        "You're doing wonderfully.",
+        "Feel your breath move through you.",
+        "There's no rush, just be here.",
+    };
+
+    public string[] highAccuracyMessages = new string[]
+    {
+        "Beautiful posture.",
+        "Nice and steady.",
+        "You're glowing with calm.",
+        "Wonderfully balanced.",
+        "You're truly centered.",
+    };
+
+    Coroutine feedbackCoroutine;
+    string lastFeedbackMessage = "";
+
     public void SelectPose(YogaPose pose)
     {
         selectedPose = pose;
@@ -58,6 +106,60 @@ public class YogaManager : MonoBehaviour
             return;
 
         StartCoroutine(StartPoseRoutine());
+    }
+
+    void Update()
+    {
+        UpdateSunColor();
+    }
+
+    void UpdateSunColor()
+    {
+        if (sunLight == null || yogaTracker == null)
+            return;
+
+        // Convert accuracy (0-100) to 0-1
+        float t = Mathf.Clamp01(yogaTracker.accuracy / 100f);
+
+        Color targetColor;
+
+        // Peach -> Gold -> Sky Blue
+        if (t < 0.5f)
+        {
+            targetColor = Color.Lerp(
+                calmColor,
+                goodColor,
+                t * 2f
+            );
+        }
+        else
+        {
+            targetColor = Color.Lerp(
+                goodColor,
+                perfectColor,
+                (t - 0.5f) * 2f
+            );
+        }
+
+        // Smoothly change the sun color
+        sunLight.color = Color.Lerp(
+            sunLight.color,
+            targetColor,
+            Time.deltaTime * colorSmooth
+        );
+
+        // Smoothly change brightness
+        float targetIntensity = Mathf.Lerp(
+            0.8f,
+            1.4f,
+            t
+        );
+
+        sunLight.intensity = Mathf.Lerp(
+            sunLight.intensity,
+            targetIntensity,
+            Time.deltaTime * colorSmooth
+        );
     }
 
         IEnumerator StartPoseRoutine()
@@ -96,6 +198,7 @@ public class YogaManager : MonoBehaviour
         uiFade.ShowUI(timerGroup);
         StartCoroutine(HoldPose());
         breathingCoroutine = StartCoroutine(BreathingRoutine());
+        feedbackCoroutine = StartCoroutine(FeedbackRoutine());
 
         yield return new WaitForSeconds(2);
         uiFade.HideUI(descriptionGroup);
@@ -148,8 +251,53 @@ public class YogaManager : MonoBehaviour
         breathingCircle.localScale = Vector3.one * to;
     }
 
+    IEnumerator FeedbackRoutine()
+    {
+        int messageCount = Mathf.Max(1, feedbackMessageCount);
+        float interval = holdTime / messageCount;
+
+        // Let the pose settle before the first message appears.
+        yield return new WaitForSeconds(interval * 0.5f);
+
+        for (int i = 0; i < messageCount; i++)
+        {
+            feedbackText.text = PickFeedbackMessage();
+
+            yield return uiFade.FadeIn(feedbackGroup);
+            yield return new WaitForSeconds(feedbackDisplayDuration);
+            yield return uiFade.FadeOut(feedbackGroup);
+
+            float remaining = interval - feedbackDisplayDuration;
+            if (remaining > 0f)
+                yield return new WaitForSeconds(remaining);
+        }
+    }
+
+    string PickFeedbackMessage()
+    {
+        bool useHighAccuracy = yogaTracker != null
+            && yogaTracker.accuracy >= highAccuracyThreshold
+            && highAccuracyMessages.Length > 0;
+
+        string[] pool = useHighAccuracy ? highAccuracyMessages : encouragingMessages;
+        if (pool.Length == 0)
+            return lastFeedbackMessage;
+
+        string candidate = pool[Random.Range(0, pool.Length)];
+
+        int guard = 0;
+        while (candidate == lastFeedbackMessage && pool.Length > 1 && guard < 10)
+        {
+            candidate = pool[Random.Range(0, pool.Length)];
+            guard++;
+        }
+
+        lastFeedbackMessage = candidate;
+        return candidate;
+    }
+
     IEnumerator CompleteRoutine()
-    {   
+    {
         yogaTracker.StopTracking();
         finalScore = yogaTracker.accuracy;
 
@@ -157,6 +305,13 @@ public class YogaManager : MonoBehaviour
         {
             StopCoroutine(breathingCoroutine);
         }
+
+        if (feedbackCoroutine != null)
+        {
+            StopCoroutine(feedbackCoroutine);
+            feedbackCoroutine = null;
+        }
+        lastFeedbackMessage = "";
 
         breathingCircle.localScale = Vector3.one;
         instructorAnimator.CrossFade(
@@ -166,6 +321,7 @@ public class YogaManager : MonoBehaviour
 
         uiFade.HideUI(descriptionGroup);
         uiFade.HideUI(timerGroup);
+        uiFade.HideUI(feedbackGroup);
 
         yield return null;
     }

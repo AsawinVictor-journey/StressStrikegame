@@ -29,7 +29,7 @@ public class UIFade : MonoBehaviour
             yield return FadeIn(show);
     }
 
-    IEnumerator FadeIn(CanvasGroup group)
+    public IEnumerator FadeIn(CanvasGroup group)
     {
         if (group == null) yield break;
 
@@ -51,7 +51,7 @@ public class UIFade : MonoBehaviour
         group.blocksRaycasts = true;
     }
 
-    IEnumerator FadeOut(CanvasGroup group)
+    public IEnumerator FadeOut(CanvasGroup group)
     {
         if (group == null) yield break;
 
