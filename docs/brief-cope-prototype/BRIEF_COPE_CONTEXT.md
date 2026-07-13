@@ -115,6 +115,19 @@ Routing logic (implemented in `recommendGameMode()` in
 - [x] `BriefCopeData.cs` — ported to `Assets/Scripts/BriefCope/BriefCopeData.cs`
       (`CopeSubscale`/`CopeBucket` enums, `CopeQuestion` struct, `Questions`,
       `ScoreSubscales`, `ScoreBuckets`, `TopSubscaleInBucket`).
+      **Trimmed from 28 to 14 questions** (1 per subscale instead of 2) per
+      team feedback that 28 was too long for a pre-game screen — the two
+      canonical items per subscale are near-synonymous, and since the final
+      decision sums 5-6 subscales per bucket, single-item measurement is an
+      acceptable tradeoff for this non-clinical "just a suggestion" tool.
+      The kept Religion item deliberately avoids the canonical "praying or
+      meditating" wording in favor of "religion or spiritual beliefs" —
+      "meditating" would collide with this game's own Meditate/Yoga mode
+      name. The halfway-beat trigger in `BriefCopeSurveyController.cs` was
+      changed from a hardcoded question id to a position-based check
+      (`nextIndex == Questions.Length / 2`) so it stays correct regardless
+      of question count. Verified via `script-execute`: halfway fires after
+      question 7 of 14, full run produces correct recommendation + reason.
 - [x] `GameModeRecommendation.cs` — ported to
       `Assets/Scripts/BriefCope/GameModeRecommendation.cs` (`GameMode` enum,
       `SceneNames` map, `Recommend(answers)`). Confirmed exact scene names:
