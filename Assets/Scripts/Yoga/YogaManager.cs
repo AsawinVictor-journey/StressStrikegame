@@ -153,6 +153,11 @@ public class YogaManager : MonoBehaviour
         if(selectedPose == null)
             return;
 
+        if (HeartRateYogaFlowManager.Instance != null)
+        {
+            HeartRateYogaFlowManager.Instance.SetState(HeartRateYogaFlowManager.FlowState.YogaGameplay);
+        }
+
         StartCoroutine(StartPoseRoutine());
     }
 
@@ -371,7 +376,14 @@ public class YogaManager : MonoBehaviour
         uiFade.HideUI(feedbackGroup);
 
         CalculateResult();
-        ShowResult();
+        if (HeartRateYogaFlowManager.Instance != null)
+        {
+            HeartRateYogaFlowManager.Instance.SetState(HeartRateYogaFlowManager.FlowState.PostGameCalibration);
+        }
+        else
+        {
+            ShowResult();
+        }
 
         yield return null;
     }
