@@ -542,7 +542,10 @@ public class CombatHudController : MonoBehaviour
         Time.timeScale = 1f;
         
         // Load the main menu scene
-        SceneManager.LoadScene("idlee");
+        if (SceneTransitionManager.Instance != null)
+            SceneTransitionManager.Instance.LoadScene("idlee");
+        else
+            SceneManager.LoadScene("idlee");
     }
 
     private void OnDestroy()

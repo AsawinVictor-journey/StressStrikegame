@@ -138,7 +138,10 @@ Output ONLY valid JSON with 'focus' (string) and 'outline' (array of strings).";
     {
         if (!string.IsNullOrEmpty(sceneToLoadAfter))
         {
-            SceneManager.LoadScene(sceneToLoadAfter);
+            if (SceneTransitionManager.Instance != null)
+                SceneTransitionManager.Instance.LoadScene(sceneToLoadAfter);
+            else
+                SceneManager.LoadScene(sceneToLoadAfter);
         }
         else
         {

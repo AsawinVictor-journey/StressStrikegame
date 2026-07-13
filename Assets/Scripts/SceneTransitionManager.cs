@@ -68,6 +68,10 @@ public class SceneTransitionManager : MonoBehaviour
     {
         isTransitioning = true;
 
+        // Fade to black first so the player always sees a transition,
+        // regardless of how long the target scene takes to load in the background.
+        yield return Fade(1f);
+
         // Start loading the scene, but don't activate it yet.
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
         operation.allowSceneActivation = false;
@@ -77,9 +81,6 @@ public class SceneTransitionManager : MonoBehaviour
         {
             yield return null;
         }
-
-        // Fade to black.
-        yield return Fade(1f);
 
         // Activate the new scene.
         operation.allowSceneActivation = true;
@@ -108,7 +109,9 @@ public class SceneTransitionManager : MonoBehaviour
 
         while (timer < fadeDuration)
         {
-            timer += Time.unscaledDeltaTime;
+            // Clamp the step so a big frame hitch (e.g. activating a large scene)
+            // can't jump the timer past fadeDuration in a single frame.
+            timer += Mathf.Min(Time.unscaledDeltaTime, 1f / 30f);
 
             Color c = fadeImage.color;
             c.a = Mathf.Lerp(startAlpha, targetAlpha, timer / fadeDuration);
