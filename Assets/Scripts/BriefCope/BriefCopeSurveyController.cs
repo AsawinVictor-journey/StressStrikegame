@@ -125,7 +125,9 @@ public class BriefCopeSurveyController : MonoBehaviour
         answers[q.id] = value;
         int nextIndex = currentQuestionIndex + 1;
 
-        if (q.id == 14)
+        // Halfway beat fires by position (middle of the list), not by a specific
+        // question id - keeps working regardless of how many questions are in play.
+        if (nextIndex == BriefCopeData.Questions.Length / 2)
         {
             pendingNextIndex = nextIndex;
             ShowOnly(halfwayPanel);
