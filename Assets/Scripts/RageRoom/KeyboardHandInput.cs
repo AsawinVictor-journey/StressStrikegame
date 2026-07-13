@@ -74,6 +74,17 @@ public class KeyboardHandInput : HandInputProvider
              "coordinate system.")]
     public bool convertToLeftHanded = true;
 
+    [Tooltip("Glove force magnitude (raw units) below which a reading is " +
+             "treated as zero rather than fed into GetAcceleration(). Matches " +
+             "VRGloveProcessor's punchDeadzone. Real hardware reports nonzero " +
+             "Z-force noise even at rest — HandTarget's ImuVelocityIntegrator " +
+             "deadzone (0.5) is tuned for keyboard input and far too low to " +
+             "catch it, so without this gate that noise leaks into the " +
+             "continuous velocity integrator every frame and drifts/jitters " +
+             "the hand. Gating here keeps idle noise at exactly zero while " +
+             "still letting real punches through to PunchDetector.")]
+    public float gloveForceDeadzone = 15f;
+
     [Tooltip("Lets a key re-zero the glove's \"forward\" orientation. A " +
              "runtime reference-frame offset only, not a sensor calibration.")]
     public bool allowRecenter = true;
@@ -213,13 +224,21 @@ public class KeyboardHandInput : HandInputProvider
         if (useHardwareInput && device != null)
         {
             // The InputSystem SHRT control returns a normalized [-1, 1] value.
-            // Multiply by 327.67f to restore the raw 16-bit range so it reaches 
+            // Multiply by 327.67f to restore the raw 16-bit range so it reaches
             // the 60f - 150f acceleration thresholds expected by PunchDetector.
             float forceY = device.forceY.ReadValue() * 327.67f;
             float forceZ = device.forceZ.ReadValue() * 327.67f;
 
             if (!float.IsNaN(forceY) && !float.IsNaN(forceZ))
-                accel += Vector3.forward * new Vector2(forceY, forceZ).magnitude;
+            {
+                float gloveForce = new Vector2(forceY, forceZ).magnitude;
+
+                // Deadzone-gate before it ever reaches the accel signal (see
+                // gloveForceDeadzone tooltip) — below-threshold noise must
+                // contribute exactly zero, not just "small".
+                if (gloveForce > gloveForceDeadzone)
+                    accel += Vector3.forward * gloveForce;
+            }
         }
 
         return accel;
