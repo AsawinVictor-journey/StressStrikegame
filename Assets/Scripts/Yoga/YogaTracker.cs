@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
@@ -15,6 +16,18 @@ public class YogaTracker : MonoBehaviour
     public float smoothSpeed = 5f;
     public bool tracking;
 
+    [Header("Session Result")]
+    [Tooltip("How often (seconds) accuracy is sampled for the end-of-session result.")]
+    public float sampleInterval = 0.2f;
+
+    [Tooltip("Average accuracy across the whole hold, computed when tracking stops.")]
+    public float alignment;
+
+    [Tooltip("How little accuracy wobbled during the hold (100 = rock steady).")]
+    public float steadiness;
+
+    readonly List<float> accuracySamples = new List<float>();
+    float sampleTimer;
 
     void Update()
     {
@@ -45,6 +58,13 @@ public class YogaTracker : MonoBehaviour
                 "Accuracy: " +
                 Mathf.RoundToInt(accuracy) +
                 "%";
+        }
+
+        sampleTimer += Time.deltaTime;
+        if (sampleTimer >= sampleInterval)
+        {
+            sampleTimer = 0f;
+            accuracySamples.Add(accuracy);
         }
     }
 
@@ -87,11 +107,40 @@ public class YogaTracker : MonoBehaviour
     public void StartTracking()
     {
         tracking = true;
+        accuracySamples.Clear();
+        sampleTimer = 0f;
     }
 
 
     public void StopTracking()
     {
         tracking = false;
+        CalculateSessionResult();
+    }
+
+    void CalculateSessionResult()
+    {
+        if (accuracySamples.Count == 0)
+        {
+            alignment = accuracy;
+            steadiness = 100f;
+            return;
+        }
+
+        float sum = 0f;
+        foreach (float sample in accuracySamples)
+            sum += sample;
+        float mean = sum / accuracySamples.Count;
+
+        float variance = 0f;
+        foreach (float sample in accuracySamples)
+            variance += (sample - mean) * (sample - mean);
+        variance /= accuracySamples.Count;
+        float stdDev = Mathf.Sqrt(variance);
+
+        alignment = mean;
+
+        // A stdDev of ~30 or more reads as very shaky; 0 is rock steady.
+        steadiness = Mathf.Clamp(100f - (stdDev / 30f) * 100f, 0f, 100f);
     }
 }

@@ -90,6 +90,54 @@ public class YogaManager : MonoBehaviour
     Coroutine feedbackCoroutine;
     string lastFeedbackMessage = "";
 
+    [Header("Result UI")]
+    public CanvasGroup resultGroup;
+    public TMP_Text resultBandText;
+    public TMP_Text resultMessageText;
+    public TMP_Text alignmentText;
+    public TMP_Text steadinessText;
+
+    [Header("Result Scoring")]
+    [Range(0f, 1f)] public float alignmentWeight = 0.6f;
+    [Range(0f, 1f)] public float steadinessWeight = 0.4f;
+
+    public float centeredThreshold = 50f;
+    public float balancedThreshold = 75f;
+    public float radiantThreshold = 90f;
+
+    public float finalAlignment;
+    public float finalSteadiness;
+    public float finalCalmScore;
+    public string finalBand;
+
+    public string[] groundingMessages = new string[]
+    {
+        "You showed up today.",
+        "Stillness counts.",
+        "You made space to breathe.",
+    };
+
+    public string[] centeredMessages = new string[]
+    {
+        "You found your rhythm.",
+        "Time well spent.",
+        "You settled in nicely.",
+    };
+
+    public string[] balancedMessages = new string[]
+    {
+        "Real balance today.",
+        "Your calm really showed.",
+        "A grounded session.",
+    };
+
+    public string[] radiantMessages = new string[]
+    {
+        "Beautifully calm.",
+        "Truly present today.",
+        "A wonderfully steady session.",
+    };
+
     public void SelectPose(YogaPose pose)
     {
         selectedPose = pose;
@@ -104,6 +152,11 @@ public class YogaManager : MonoBehaviour
     {
         if(selectedPose == null)
             return;
+
+        if (HeartRateYogaFlowManager.Instance != null)
+        {
+            HeartRateYogaFlowManager.Instance.SetState(HeartRateYogaFlowManager.FlowState.YogaGameplay);
+        }
 
         StartCoroutine(StartPoseRoutine());
     }
@@ -299,7 +352,6 @@ public class YogaManager : MonoBehaviour
     IEnumerator CompleteRoutine()
     {
         yogaTracker.StopTracking();
-        finalScore = yogaTracker.accuracy;
 
         if (breathingCoroutine != null)
         {
@@ -323,6 +375,71 @@ public class YogaManager : MonoBehaviour
         uiFade.HideUI(timerGroup);
         uiFade.HideUI(feedbackGroup);
 
+        CalculateResult();
+        if (HeartRateYogaFlowManager.Instance != null)
+        {
+            HeartRateYogaFlowManager.Instance.SetState(HeartRateYogaFlowManager.FlowState.PostGameCalibration);
+        }
+        else
+        {
+            ShowResult();
+        }
+
         yield return null;
+    }
+
+    void CalculateResult()
+    {
+        finalAlignment = yogaTracker.alignment;
+        finalSteadiness = yogaTracker.steadiness;
+
+        finalCalmScore =
+            finalAlignment * alignmentWeight +
+            finalSteadiness * steadinessWeight;
+
+        finalBand = GetResultBand(finalCalmScore);
+        finalScore = finalCalmScore;
+    }
+
+    string GetResultBand(float score)
+    {
+        if (score >= radiantThreshold) return "Radiant";
+        if (score >= balancedThreshold) return "Balanced";
+        if (score >= centeredThreshold) return "Centered";
+        return "Grounding";
+    }
+
+    string PickResultMessage(string band)
+    {
+        string[] pool = band switch
+        {
+            "Radiant" => radiantMessages,
+            "Balanced" => balancedMessages,
+            "Centered" => centeredMessages,
+            _ => groundingMessages,
+        };
+
+        if (pool.Length == 0)
+            return "";
+
+        return pool[Random.Range(0, pool.Length)];
+    }
+
+    void ShowResult()
+    {
+        if (resultBandText != null)
+            resultBandText.text = finalBand;
+
+        if (resultMessageText != null)
+            resultMessageText.text = PickResultMessage(finalBand);
+
+        if (alignmentText != null)
+            alignmentText.text = Mathf.RoundToInt(finalAlignment) + "%";
+
+        if (steadinessText != null)
+            steadinessText.text = Mathf.RoundToInt(finalSteadiness) + "%";
+
+        if (resultGroup != null)
+            uiFade.ShowUI(resultGroup);
     }
 }

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   description: Sit tall and slowly bend your body to the left.
   icon: {fileID: 21300000, guid: b9f2f3962823a4b4aba2bddcb79d0a0e, type: 3}
-  transitionAnimation: {fileID: -3464838157272719296, guid: eb34ba7bf6032924dae4a0cb97d0406f, type: 3}
-  poseAnimation: {fileID: -6917035130756016787, guid: eb34ba7bf6032924dae4a0cb97d0406f, type: 3}
+  transitionAnimation: {fileID: 7448804484931618976, guid: 8d7bb67e133ef5942a4b8943e11321b0, type: 3}
+  poseAnimation: {fileID: 2685472202681444370, guid: 8d7bb67e133ef5942a4b8943e11321b0, type: 3}
   duration: 30
   difficulty: 1
   targetArmRotation: {x: 0, y: 0, z: 0}

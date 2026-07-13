@@ -60,6 +60,11 @@ public class KeyboardHandInput : HandInputProvider
     public float punchSpikeDuration = 0.15f;
 
     [Header("Glove (optional — used automatically when connected)")]
+    [Tooltip("On: use the glove's rotation and punch force when one is " +
+             "connected (falls back to keyboard/mouse if it isn't). " +
+             "Off: always use keyboard/mouse only, even with a glove connected.")]
+    public bool useHardwareInput = true;
+
     [Tooltip("Which glove this instance should bind to when more than one " +
              "ESP32Glove is connected. Matched by connection order. " +
              "Irrelevant with a single glove connected.")]
@@ -74,10 +79,16 @@ public class KeyboardHandInput : HandInputProvider
     public bool allowRecenter = true;
     public KeyCode recenterKey = KeyCode.Space;
 
+    [Tooltip("Re-zero orientation automatically the moment a glove is " +
+             "acquired, so rotation is correct from the first frame instead " +
+             "of requiring the player to press recenterKey first. Turn off " +
+             "if you'd rather always recenter manually.")]
+    public bool autoRecenterOnConnect = true;
+
     /// <summary>True once a matching physical glove is connected.</summary>
     public bool IsConnected => device != null;
 
-    public override bool ProvidesOrientation => IsConnected;
+    public override bool ProvidesOrientation => useHardwareInput && IsConnected;
 
     float punchTimer;
     float currentSpikeAccel;
@@ -161,6 +172,7 @@ public class KeyboardHandInput : HandInputProvider
             if (seen == matchIndex)
             {
                 device = glove;
+                if (autoRecenterOnConnect) RecenterOrientation();
                 return;
             }
             seen++;
@@ -198,7 +210,7 @@ public class KeyboardHandInput : HandInputProvider
 
         // Glove punch: raw combined force magnitude, added on top so either
         // source can trigger PunchDetector independently (or both at once).
-        if (device != null)
+        if (useHardwareInput && device != null)
         {
             // The InputSystem SHRT control returns a normalized [-1, 1] value.
             // Multiply by 327.67f to restore the raw 16-bit range so it reaches 

@@ -31,8 +31,13 @@ public class HandRotation : MonoBehaviour
     {
         if (input != null && input.ProvidesOrientation)
         {
-            Quaternion providerTarget = origin.rotation * input.GetOrientation();
-            transform.rotation = Quaternion.Slerp(transform.rotation, providerTarget, Time.deltaTime * smooth);
+            // Matches VRGloveProcessor's (Boxing) approach: GetOrientation()
+            // is already a delta from the recentered zero pose, so it's
+            // applied as local rotation directly and left to Unity's normal
+            // parent/child hierarchy to compose with origin's world rotation,
+            // instead of re-multiplying by origin.rotation by hand.
+            Quaternion providerTarget = input.GetOrientation();
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, providerTarget, Time.deltaTime * smooth);
             return;
         }
 
