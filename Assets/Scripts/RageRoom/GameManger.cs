@@ -70,6 +70,9 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(resultScreenDuration);
 
-        SceneManager.LoadScene(menuSceneName);
+        if (SceneTransitionManager.Instance != null)
+            SceneTransitionManager.Instance.LoadScene(menuSceneName);
+        else
+            SceneManager.LoadScene(menuSceneName);
     }
 }
