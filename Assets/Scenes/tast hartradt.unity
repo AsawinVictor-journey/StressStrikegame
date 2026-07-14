@@ -4278,7 +4278,6 @@ GameObject:
   - component: {fileID: 971847494}
   - component: {fileID: 971847495}
   - component: {fileID: 971847496}
-  - component: {fileID: 971847499}
   - component: {fileID: 971847498}
   - component: {fileID: 971847497}
   m_Layer: 0
@@ -4477,22 +4476,6 @@ MonoBehaviour:
   postGameHR: 0
   postGameHRV: 0
   caloriesBurned: 0
---- !u!114 &971847499
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 971847491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8929439c2382c214ab7f0c9d483f79dd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isConnected: 0
-  connectedDeviceName: 
-  currentBPM: 0
-  currentHRV: 0
 --- !u!4 &977998805 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6949280183219358778, guid: 95d61278a080404caa14203b24726050, type: 3}

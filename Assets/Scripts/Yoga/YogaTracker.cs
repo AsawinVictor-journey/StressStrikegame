@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class YogaTracker : MonoBehaviour
 {
-    public ESP32Glove glove;
+    // ESP32Glove is an InputDevice, not a UnityEngine.Object, so it can't be
+    // wired up in the Inspector — it has to be fetched from the Input System.
+    ESP32Glove glove;
 
     [Header("Current Target")]
     public Vector3 targetRotation;
@@ -31,8 +34,14 @@ public class YogaTracker : MonoBehaviour
 
     void Update()
     {
-        if (!tracking || glove == null)
+        if (!tracking)
             return;
+
+        if (glove == null)
+        {
+            glove = InputSystem.GetDevice<ESP32Glove>();
+            if (glove == null) return;
+        }
 
 
         Quaternion current = GetGloveRotation();
@@ -77,12 +86,13 @@ public class YogaTracker : MonoBehaviour
 
     Quaternion GetGloveRotation()
     {
-        return new Quaternion(
-            glove.x.ReadValue(),
-            glove.y.ReadValue(),
-            glove.z.ReadValue(),
-            glove.w.ReadValue()
-        );
+        // Same BNO055 -> Unity axis remap that VRGloveProcessor uses.
+        float qX = glove.x.ReadValue();
+        float qY = glove.y.ReadValue();
+        float qZ = glove.z.ReadValue();
+        float qW = glove.w.ReadValue();
+
+        return new Quaternion(-qY, -qZ, qX, qW).normalized;
     }
 
 

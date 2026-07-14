@@ -95,11 +95,6 @@ public class HeartRateYogaFlowManager : MonoBehaviour
 
             case FlowState.YogaGameplay:
                 playStartTime = Time.time;
-                // Temporarily increase heart rate base to simulate slight effort
-                if (HeartRateBluetoothManager.Instance != null)
-                {
-                    HeartRateBluetoothManager.Instance.SetBaseBPM(78f);
-                }
                 break;
 
             case FlowState.PostGameCalibration:
@@ -115,6 +110,8 @@ public class HeartRateYogaFlowManager : MonoBehaviour
 
     private IEnumerator CalibratePreGameRoutine()
     {
+        if (BiometricEngine.Instance != null) BiometricEngine.Instance.BeginSampleWindow();
+
         float timer = 0f;
         while (timer < calibrationDuration)
         {
@@ -123,10 +120,10 @@ public class HeartRateYogaFlowManager : MonoBehaviour
             yield return null;
         }
 
-        if (HeartRateBluetoothManager.Instance != null)
+        if (BiometricEngine.Instance != null)
         {
-            baselineHR = HeartRateBluetoothManager.Instance.GetAverageBPM();
-            baselineHRV = HeartRateBluetoothManager.Instance.CalculateFinalHRV();
+            baselineHR = BiometricEngine.Instance.GetAverageBPM();
+            baselineHRV = BiometricEngine.Instance.CalculateFinalHRV();
         }
 
         SetState(FlowState.YogaSelection);
@@ -134,11 +131,7 @@ public class HeartRateYogaFlowManager : MonoBehaviour
 
     private IEnumerator CalibratePostGameRoutine()
     {
-        // Lower simulated heart rate as yoga leads to calm/relaxation
-        if (HeartRateBluetoothManager.Instance != null)
-        {
-            HeartRateBluetoothManager.Instance.SetBaseBPM(62f);
-        }
+        if (BiometricEngine.Instance != null) BiometricEngine.Instance.BeginSampleWindow();
 
         float timer = 0f;
         while (timer < calibrationDuration)
@@ -148,10 +141,10 @@ public class HeartRateYogaFlowManager : MonoBehaviour
             yield return null;
         }
 
-        if (HeartRateBluetoothManager.Instance != null)
+        if (BiometricEngine.Instance != null)
         {
-            postGameHR = HeartRateBluetoothManager.Instance.GetAverageBPM();
-            postGameHRV = HeartRateBluetoothManager.Instance.CalculateFinalHRV();
+            postGameHR = BiometricEngine.Instance.GetAverageBPM();
+            postGameHRV = BiometricEngine.Instance.CalculateFinalHRV();
         }
 
         SetState(FlowState.Results);
