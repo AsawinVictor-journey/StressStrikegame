@@ -108,6 +108,11 @@ public class HandTarget : MonoBehaviour
     // Read by RageRoomCameraRotation (forwarded through PhysicsHandController).
     public Vector3 LocalPosition => localPos;
 
+    /// <summary>True while a punch is extending or retracting. Used by
+    /// RageRoomCameraRotation to suppress camera flicks during a punch, so an
+    /// imperfect (slightly sideways) punch doesn't also spin the camera.</summary>
+    public bool IsPunching => extending || retracting;
+
     [HideInInspector] public Collider handCollider;
 
     Vector3      localPos;
@@ -124,6 +129,7 @@ public class HandTarget : MonoBehaviour
     Vector3 extendTo;
     float   extendElapsed;
     float   extendDuration;
+    float   _dbgNextLog; // [TEMP DEBUG — remove after diagnosis]
 
     void Start()
     {
@@ -175,6 +181,16 @@ public class HandTarget : MonoBehaviour
             // damping, and clamping; this script only adds the optional
             // recovery spring on top before integrating.
             Vector3 accel = input.GetAcceleration();
+
+            // [TEMP DEBUG — remove after diagnosis] Throttled ~2 Hz. If accel.z
+            // stays nonzero while NOT punching and localPos.z creeps toward
+            // maxForward, continuous (sustained) input is pinning the hand
+            // forward — the "pushes forward and won't return" mechanism.
+            if (Time.time >= _dbgNextLog && (Mathf.Abs(accel.z) > 0.01f || localPos.z > maxForward * 0.5f))
+            {
+                _dbgNextLog = Time.time + 0.5f;
+                Debug.Log($"[HandDbg] {name}: NON-PUNCH drive accel.z={accel.z:F1} localPos.z={localPos.z:F2}/{maxForward} vel.z={velocity.Velocity.z:F2}", this);
+            }
 
             if (recoverySpringStrength > 0f)
                 accel += (Vector3.zero - localPos) * recoverySpringStrength;

@@ -384,7 +384,7 @@ MonoBehaviour:
     smoothing: 1
     dampingFactor: 0.9
     maxSpeed: 8
-  maxForward: 3
+  maxForward: 4.5
   maxBackward: 1.5
   maxUp: 2
   maxDown: 1.5
@@ -392,9 +392,9 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 0
   maxPushDist: 0.15
-  punchDistance: 2
-  minPunchSpeed: 3
-  punchSpeed: 6.25
+  punchDistance: 3.5
+  minPunchSpeed: 8
+  punchSpeed: 14
   retractDuration: 0.12
   handCollider: {fileID: 0}
 --- !u!114 &125392734
@@ -416,10 +416,16 @@ MonoBehaviour:
   maxPunchAccel: 200
   chargeMaxTime: 1
   punchSpikeDuration: 0.15
+  useHardwareInput: 1
   gloveSide: 0
   convertToLeftHanded: 1
+  gloveForceDeadzone: 15
+  glovePunchTrigger: 30
+  glovePunchFull: 55
+  punchSuppressTurnSpeed: 120
   allowRecenter: 1
   recenterKey: 32
+  autoRecenterOnConnect: 1
 --- !u!54 &125392735
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2113,6 +2119,11 @@ MonoBehaviour:
   smooth: 2.5
   pitchClamp: 80
   yawClamp: 90
+  rotationGain: 1.5
+  invertPitch: 1
+  invertYaw: 0
+  invertRoll: 0
+  holdDeadzoneDegrees: 3
 --- !u!114 &815928611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2786,11 +2797,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftHand: {fileID: 1680595308}
   rightHand: {fileID: 815928611}
-  edgeFraction: 0.2
-  maxRotateSpeed: 55
-  speedCurve: 2
-  accelSmooth: 10
-  decelSmooth: 22
+  triggerSource: 0
+  turnSpeedThreshold: 600
+  slideSpeedThreshold: 8
+  rearmFraction: 0.4
+  cooldown: 0.3
+  stepDegrees: 30
+  turnDuration: 0.4
+  invertDirection: 0
 --- !u!1 &1091453410
 GameObject:
   m_ObjectHideFlags: 0
@@ -4478,9 +4492,14 @@ MonoBehaviour:
   origin: {fileID: 2133746658}
   input: {fileID: 125392734}
   sensitivity: 10
-  smooth: 5
+  smooth: 15
   pitchClamp: 80
   yawClamp: 90
+  rotationGain: 1
+  invertPitch: 1
+  invertYaw: 0
+  invertRoll: 0
+  holdDeadzoneDegrees: 2
 --- !u!114 &1680595308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5223,10 +5242,16 @@ MonoBehaviour:
   maxPunchAccel: 200
   chargeMaxTime: 1
   punchSpikeDuration: 0.15
+  useHardwareInput: 1
   gloveSide: 1
   convertToLeftHanded: 1
+  gloveForceDeadzone: 15
+  glovePunchTrigger: 30
+  glovePunchFull: 55
+  punchSuppressTurnSpeed: 120
   allowRecenter: 1
   recenterKey: 32
+  autoRecenterOnConnect: 1
 --- !u!114 &1875450672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5246,7 +5271,7 @@ MonoBehaviour:
     smoothing: 1
     dampingFactor: 0.9
     maxSpeed: 8
-  maxForward: 3
+  maxForward: 4.5
   maxBackward: 1.5
   maxUp: 2
   maxDown: 1.5
@@ -5254,9 +5279,9 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 0
   maxPushDist: 0.15
-  punchDistance: 2
-  minPunchSpeed: 3
-  punchSpeed: 6.25
+  punchDistance: 3.5
+  minPunchSpeed: 8
+  punchSpeed: 14
   retractDuration: 0.12
   handCollider: {fileID: 0}
 --- !u!54 &1875450673
