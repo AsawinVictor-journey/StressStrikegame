@@ -17,14 +17,6 @@ public struct ModeRecommendation
     public string reason; // plain-language line drawn from the winning bucket's top subscale
 }
 
-public struct ModeCardInfo
-{
-    public GameMode mode;
-    public string icon;
-    public string title;
-    public string blurb;
-}
-
 public static class GameModeRecommendation
 {
     // Exact scene names for SceneTransitionManager.LoadScene(string).
@@ -33,14 +25,6 @@ public static class GameModeRecommendation
         { GameMode.Boxing, "BoxingMenu" },
         { GameMode.RageRoom, "Rage Room" },
         { GameMode.Meditate, "meditation" },
-    };
-
-    // All 3 modes are always shown and pickable — the recommendation only pre-selects one.
-    public static readonly ModeCardInfo[] ModeCards =
-    {
-        new ModeCardInfo { mode = GameMode.Boxing, icon = "🏆", title = "Boxing", blurb = "Structured fights, strategy rewarded." },
-        new ModeCardInfo { mode = GameMode.RageRoom, icon = "🥊", title = "Rage Room", blurb = "No fail state — just hit stuff." },
-        new ModeCardInfo { mode = GameMode.Meditate, icon = "🌿", title = "Meditate", blurb = "Guided breathing, zero pressure." },
     };
 
     private struct ModeInfo
@@ -75,9 +59,11 @@ public static class GameModeRecommendation
             GameMode.Meditate,
             new ModeInfo
             {
-                modeName = "Meditate",
+                // Display name is "Yoga" (team decision); the underlying scene is still
+                // Assets/evococo/meditation.unity - see SceneNames above.
+                modeName = "Yoga",
                 coachMessage =
-                    "So let's slow down for a second first. Meditate isn't a step back, it's your warm-up: guided " +
+                    "So let's slow down for a second first. Yoga isn't a step back, it's your warm-up: guided " +
                     "breathing, no pressure, no clock. When you're ready to swing for real, the ring will still be here.",
             }
         },

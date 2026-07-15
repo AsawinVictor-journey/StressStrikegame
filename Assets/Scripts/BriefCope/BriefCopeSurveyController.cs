@@ -5,11 +5,16 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
-// Ports the "Coach Byte" flow from docs/brief-cope-prototype/index.html:
-// intro -> one question at a time (with Back) -> halfway beat after Q14 ->
-// result with all 3 modes selectable (recommended one badged). Always skippable.
+// "Coach Byte" survey flow, laid out to match the designer's mockups in
+// Assets/UI/BriefCOPEExample (Frames 31-38):
+//   intro -> question (select an answer, then confirm with Next) -> halfway
+//   beat at the midpoint -> result showing the recommended mode's wordmark.
+// Always skippable. Every exit routes back to the main menu, which highlights
+// the recommended mode via RecommendedModeHighlighter reading the saved result.
 public class BriefCopeSurveyController : MonoBehaviour
 {
+    private const string MenuSceneName = "MainMenuScene";
+
     [Header("Panels")]
     [SerializeField] private GameObject introPanel;
     [SerializeField] private GameObject questionPanel;
@@ -23,9 +28,8 @@ public class BriefCopeSurveyController : MonoBehaviour
     [Header("Question")]
     [SerializeField] private TMP_Text questionText;
     [SerializeField] private TMP_Text progressLabel;
-    [SerializeField] private Slider progressBar;
-    [SerializeField] private Button[] answerButtons; // expects 4, matching BriefCopeData.ResponseScale
-    [SerializeField] private Button backButton;
+    [SerializeField] private Button[] answerButtons; // 4, in the order BriefCopeData.ResponseScale defines
+    [SerializeField] private Button nextQuestionButton;
     [SerializeField] private Button questionSkipButton;
 
     [Header("Halfway")]
@@ -33,64 +37,46 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     [Header("Result")]
     [SerializeField] private TMP_Text reasonText;
-    [SerializeField] private TMP_Text modeNameText;
-    [SerializeField] private TMP_Text coachMessageText;
     [SerializeField] private TMP_Text disclaimerText;
-    [SerializeField] private Button playButton;
-    [SerializeField] private Button restartButton;
-    [SerializeField] private ModeCard[] modeCards; // exactly 3, one per GameMode
+    [SerializeField] private Image modeWordmark;
+    [SerializeField] private Sprite boxingWordmark;
+    [SerializeField] private Sprite rageRoomWordmark;
+    [SerializeField] private Sprite yogaWordmark;
+    [SerializeField] private Button finishButton;
 
-    [Serializable]
-    public class ModeCard
-    {
-        public GameMode mode;
-        public Button button;
-        public GameObject recommendedBadge;
-        public GameObject selectedIndicator;
-        public TMP_Text iconText;
-        public TMP_Text titleText;
-        public TMP_Text blurbText;
-    }
+    [Header("Answer selection tint")]
+    [SerializeField] private Color answerIdleColor = Color.white;
+    [SerializeField] private Color answerSelectedColor = new Color(1f, 0.35f, 0.37f);
 
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
     private int currentQuestionIndex;
     private int pendingNextIndex;
-    private GameMode? selectedMode;
+    private int? pendingAnswer;
     private const string PrefsKey = "BriefCope_LastResult";
-
-    private void Awake()
-    {
-        if (startButton != null) startButton.onClick.AddListener(BeginSurvey);
-        if (introSkipButton != null) introSkipButton.onClick.AddListener(SkipToPicker);
-        if (questionSkipButton != null) questionSkipButton.onClick.AddListener(SkipToPicker);
-        if (backButton != null) backButton.onClick.AddListener(OnBack);
-        if (halfwayContinueButton != null) halfwayContinueButton.onClick.AddListener(OnHalfwayContinue);
-        if (restartButton != null) restartButton.onClick.AddListener(BeginSurvey);
-        if (playButton != null) playButton.onClick.AddListener(OnPlay);
-
-        for (int i = 0; i < answerButtons.Length; i++)
-        {
-            int value = i + 1; // buttons map 1..4 in the order BriefCopeData.ResponseScale defines
-            answerButtons[i].onClick.AddListener(() => OnAnswer(value));
-        }
-
-        if (modeCards != null)
-        {
-            foreach (var card in modeCards)
-            {
-                var m = card.mode;
-                card.button.onClick.AddListener(() => OnModeCardClicked(m));
-
-                var info = FindModeCardInfo(m);
-                if (card.iconText != null) card.iconText.text = info.icon;
-                if (card.titleText != null) card.titleText.text = info.title;
-                if (card.blurbText != null) card.blurbText.text = info.blurb;
-            }
-        }
-    }
 
     private void Start()
     {
+        if (startButton != null) startButton.onClick.AddListener(BeginSurvey);
+        if (introSkipButton != null) introSkipButton.onClick.AddListener(SkipSurvey);
+        if (questionSkipButton != null) questionSkipButton.onClick.AddListener(SkipSurvey);
+        if (halfwayContinueButton != null) halfwayContinueButton.onClick.AddListener(OnHalfwayContinue);
+        if (nextQuestionButton != null) nextQuestionButton.onClick.AddListener(ConfirmAnswer);
+        if (finishButton != null) finishButton.onClick.AddListener(CloseSurveyPopup);
+
+        if (answerButtons != null)
+        {
+            for (int i = 0; i < answerButtons.Length; i++)
+            {
+                int value = i + 1;
+                answerButtons[i].onClick.AddListener(() => SelectAnswer(value));
+            }
+        }
+
+        // Ask/show survey popup every time the scene loads (active by default for now)
+        if (introPanel != null && introPanel.transform.parent != null)
+        {
+            introPanel.transform.parent.gameObject.SetActive(true);
+        }
         ShowOnly(introPanel);
     }
 
@@ -106,23 +92,48 @@ public class BriefCopeSurveyController : MonoBehaviour
     {
         var q = BriefCopeData.Questions[index];
         if (questionText != null) questionText.text = q.text;
-
-        if (progressBar != null) progressBar.value = (float)index / BriefCopeData.Questions.Length;
         if (progressLabel != null) progressLabel.text = $"Question {index + 1} of {BriefCopeData.Questions.Length}";
 
-        for (int i = 0; i < answerButtons.Length && i < BriefCopeData.ResponseScale.Length; i++)
-        {
-            var label = answerButtons[i].GetComponentInChildren<TMP_Text>();
-            if (label != null) label.text = BriefCopeData.ResponseScale[i].label;
-        }
-
-        if (backButton != null) backButton.gameObject.SetActive(index != 0);
+        // Answer bar art has its label baked in, so only the selection tint is driven here.
+        pendingAnswer = null;
+        ClearAnswerTints();
+        if (nextQuestionButton != null) nextQuestionButton.interactable = false;
     }
 
-    private void OnAnswer(int value)
+    // Tapping an answer only stages it - "Next Question" is what commits, so the
+    // player can change their mind first (matches Frame 32).
+    private void SelectAnswer(int value)
     {
+        pendingAnswer = value;
+
+        if (answerButtons != null)
+        {
+            for (int i = 0; i < answerButtons.Length; i++)
+            {
+                var img = answerButtons[i].targetGraphic as Image;
+                if (img != null) img.color = (i + 1 == value) ? answerSelectedColor : answerIdleColor;
+            }
+        }
+
+        if (nextQuestionButton != null) nextQuestionButton.interactable = true;
+    }
+
+    private void ClearAnswerTints()
+    {
+        if (answerButtons == null) return;
+        foreach (var btn in answerButtons)
+        {
+            var img = btn.targetGraphic as Image;
+            if (img != null) img.color = answerIdleColor;
+        }
+    }
+
+    private void ConfirmAnswer()
+    {
+        if (!pendingAnswer.HasValue) return;
+
         var q = BriefCopeData.Questions[currentQuestionIndex];
-        answers[q.id] = value;
+        answers[q.id] = pendingAnswer.Value;
         int nextIndex = currentQuestionIndex + 1;
 
         // Halfway beat fires by position (middle of the list), not by a specific
@@ -145,13 +156,6 @@ public class BriefCopeSurveyController : MonoBehaviour
         }
     }
 
-    private void OnBack()
-    {
-        if (currentQuestionIndex <= 0) return;
-        currentQuestionIndex--;
-        ShowQuestion(currentQuestionIndex);
-    }
-
     private void OnHalfwayContinue()
     {
         currentQuestionIndex = pendingNextIndex;
@@ -159,19 +163,10 @@ public class BriefCopeSurveyController : MonoBehaviour
         ShowQuestion(currentQuestionIndex);
     }
 
-    private void SkipToPicker()
+    private void SkipSurvey()
     {
-        // Drops the player into the same 3-mode picker with nothing pre-selected.
-        ShowOnly(resultPanel);
-
-        if (reasonText != null) reasonText.text = "";
-        if (modeNameText != null) modeNameText.text = "Pick a mode";
-        if (coachMessageText != null) coachMessageText.text = "No problem — hop in whenever you're ready. Pick any mode you like below.";
-        if (disclaimerText != null) disclaimerText.text = "";
-        if (restartButton != null) restartButton.gameObject.SetActive(false);
-
-        RenderModeGrid(null);
         SaveResult(null, skipped: true);
+        CloseSurveyPopup();
     }
 
     private void Finish()
@@ -181,62 +176,49 @@ public class BriefCopeSurveyController : MonoBehaviour
         var rec = GameModeRecommendation.Recommend(answers);
 
         if (reasonText != null) reasonText.text = rec.reason;
-        if (modeNameText != null) modeNameText.text = rec.modeName;
-        if (coachMessageText != null) coachMessageText.text = rec.coachMessage;
+        // Guardrail (see BRIEF_COPE_CONTEXT.md): the not-a-diagnosis disclaimer
+        // stays attached to every recommendation.
         if (disclaimerText != null) disclaimerText.text = GameModeRecommendation.Disclaimer;
-        if (restartButton != null) restartButton.gameObject.SetActive(true);
 
-        RenderModeGrid(rec.mode);
+        if (modeWordmark != null)
+        {
+            modeWordmark.sprite = WordmarkFor(rec.mode);
+            modeWordmark.preserveAspect = true;
+            modeWordmark.enabled = modeWordmark.sprite != null;
+        }
+
         SaveResult(rec.mode, skipped: false);
     }
 
-    private void RenderModeGrid(GameMode? recommendedMode)
+    private Sprite WordmarkFor(GameMode mode)
     {
-        selectedMode = recommendedMode;
-
-        if (modeCards != null)
+        switch (mode)
         {
-            foreach (var card in modeCards)
-            {
-                bool isRecommended = recommendedMode.HasValue && card.mode == recommendedMode.Value;
-                bool isSelected = selectedMode.HasValue && card.mode == selectedMode.Value;
-                if (card.recommendedBadge != null) card.recommendedBadge.SetActive(isRecommended);
-                if (card.selectedIndicator != null) card.selectedIndicator.SetActive(isSelected);
-            }
+            case GameMode.Boxing: return boxingWordmark;
+            case GameMode.RageRoom: return rageRoomWordmark;
+            case GameMode.Meditate: return yogaWordmark;
+            default: return null;
         }
-
-        if (playButton != null) playButton.interactable = selectedMode.HasValue;
     }
 
-    private void OnModeCardClicked(GameMode mode)
+    private void CloseSurveyPopup()
     {
-        selectedMode = mode;
-        if (modeCards != null)
+        if (introPanel != null && introPanel.transform.parent != null)
         {
-            foreach (var card in modeCards)
-            {
-                bool isSelected = card.mode == mode;
-                if (card.selectedIndicator != null) card.selectedIndicator.SetActive(isSelected);
-            }
+            introPanel.transform.parent.gameObject.SetActive(false);
         }
-        if (playButton != null) playButton.interactable = true;
-    }
+        gameObject.SetActive(false);
 
-    private void OnPlay()
-    {
-        if (!selectedMode.HasValue) return;
-        string sceneName = GameModeRecommendation.SceneNames[selectedMode.Value];
-        if (SceneTransitionManager.Instance != null)
-            SceneTransitionManager.Instance.LoadScene(sceneName);
-        else
-            SceneManager.LoadScene(sceneName);
-    }
-
-    private static ModeCardInfo FindModeCardInfo(GameMode mode)
-    {
-        foreach (var info in GameModeRecommendation.ModeCards)
-            if (info.mode == mode) return info;
-        return default;
+        // Trigger highlights immediately without scene reload
+#if UNITY_2023_1_OR_NEWER
+        var highlighter = FindFirstObjectByType<RecommendedModeHighlighter>();
+#else
+        var highlighter = FindObjectOfType<RecommendedModeHighlighter>();
+#endif
+        if (highlighter != null)
+        {
+            highlighter.TriggerHighlight();
+        }
     }
 
     private void ShowOnly(GameObject panel)
