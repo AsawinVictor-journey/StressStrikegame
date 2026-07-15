@@ -941,11 +941,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: 4d013cf8-a5c8-4684-afb4-06127ebb4ce2
+  cloudProjectId: c924c442-2cda-419a-af6f-e3219773e782
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: StressStrikegame
-  organizationId: fringe174
+  organizationId: prukung
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
