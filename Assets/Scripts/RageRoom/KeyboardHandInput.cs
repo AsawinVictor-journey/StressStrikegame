@@ -85,6 +85,21 @@ public class KeyboardHandInput : HandInputProvider
              "still letting real punches through to PunchDetector.")]
     public float gloveForceDeadzone = 15f;
 
+    [Tooltip("Glove force magnitude (scaled units) that fires a punch. The glove " +
+             "signal is a slow analog force, not a clean impulse, so it is " +
+             "edge-detected: crossing UP through this value throws exactly one " +
+             "punch, and the force must fall back below gloveForceDeadzone before " +
+             "another can fire. Keep this above resting noise (~6) and at or below " +
+             "a real punch peak (~50). Decoupled from PunchDetector.punchThreshold: " +
+             "a detected swing is mapped to a proper minPunchAccel..maxPunchAccel " +
+             "spike, so trigger sensitivity here does not depend on the 60 threshold.")]
+    public float glovePunchTrigger = 30f;
+
+    [Tooltip("Glove force magnitude that maps to a full-strength (maxPunchAccel) " +
+             "punch. Force at glovePunchTrigger maps to minPunchAccel; force at or " +
+             "above this maps to maxPunchAccel. Set to a hard punch's peak (~55).")]
+    public float glovePunchFull = 55f;
+
     [Tooltip("Lets a key re-zero the glove's \"forward\" orientation. A " +
              "runtime reference-frame offset only, not a sensor calibration.")]
     public bool allowRecenter = true;
@@ -104,6 +119,9 @@ public class KeyboardHandInput : HandInputProvider
     float punchTimer;
     float currentSpikeAccel;
     float pressStartTime = -1f;
+    bool  gloveArmed = true; // rising-edge latch for glove-force punch detection
+    float _dbgNextRotLog;    // [TEMP DEBUG — remove after diagnosis]
+    float _dbgNextForceLog;  // [TEMP DEBUG — remove after diagnosis]
 
     ESP32Glove device;
     Quaternion zeroOffset = Quaternion.identity;
@@ -149,6 +167,59 @@ public class KeyboardHandInput : HandInputProvider
     {
         if (punchTimer > 0f)
             punchTimer = Mathf.Max(0f, punchTimer - Time.fixedDeltaTime);
+
+        UpdateGlovePunch();
+    }
+
+    /// <summary>
+    /// Turns the glove's slow analog force reading into the SAME transient punch
+    /// spike the mouse/keyboard uses. The raw force is not an impulse — depending
+    /// on the glove's pose it can sit high for many frames, which (if fed
+    /// continuously) both jams PunchDetector's re-arm and drives the hand to its
+    /// forward bound. Edge-detecting it here — one spike per upward crossing, with
+    /// hysteresis before the next — makes a glove punch indistinguishable from a
+    /// mouse-click punch downstream, so the existing extend/retract path just works.
+    /// Runs once per FixedUpdate (not in GetAcceleration, which is polled multiple
+    /// times per step and would corrupt the edge latch).
+    /// </summary>
+    void UpdateGlovePunch()
+    {
+        if (!useHardwareInput || device == null) return;
+
+        float forceY = device.forceY.ReadValue() * 327.67f;
+        float forceZ = device.forceZ.ReadValue() * 327.67f;
+        if (float.IsNaN(forceY) || float.IsNaN(forceZ)) return;
+
+        float gloveForce = new Vector2(forceY, forceZ).magnitude;
+
+        // [TEMP DEBUG — remove after diagnosis] Throttled ~3 Hz. Shows the two
+        // force axes SEPARATELY plus the combined magnitude. Throw a forward
+        // punch, then a sideways camera-flick swing, and compare: whichever axis
+        // dominates a forward punch (and stays low on a sideways swing) is the
+        // one we should gate punches on.
+        if (Time.time >= _dbgNextForceLog)
+        {
+            _dbgNextForceLog = Time.time + 0.33f;
+            Debug.Log($"[GloveForce] {name}: Y={forceY:F1} Z={forceZ:F1} mag={gloveForce:F1} trigger={glovePunchTrigger} armed={gloveArmed}", this);
+        }
+
+        if (gloveArmed && gloveForce >= glovePunchTrigger)
+        {
+            gloveArmed = false;
+
+            // Map the swing strength onto the same spike range a charged
+            // mouse punch produces, so it clears PunchDetector.punchThreshold
+            // regardless of the raw force's absolute scale.
+            float t = Mathf.InverseLerp(glovePunchTrigger, glovePunchFull, gloveForce);
+            currentSpikeAccel = Mathf.Lerp(minPunchAccel, maxPunchAccel, Mathf.Clamp01(t));
+            punchTimer        = punchSpikeDuration;
+            Debug.Log($"[GloveForce] {name}: GLOVE PUNCH FIRED force={gloveForce:F1} spike={currentSpikeAccel:F0}", this); // [TEMP DEBUG — remove after diagnosis]
+        }
+        else if (!gloveArmed && gloveForce <= gloveForceDeadzone)
+        {
+            // Force has fallen back to rest — ready for the next punch.
+            gloveArmed = true;
+        }
     }
 
     void OnDeviceChange(InputDevice changedDevice, InputDeviceChange change)
@@ -184,10 +255,14 @@ public class KeyboardHandInput : HandInputProvider
             {
                 device = glove;
                 if (autoRecenterOnConnect) RecenterOrientation();
+                Debug.Log($"[GloveDebug] {name}: ACQUIRED ESP32Glove '{glove.displayName}' (gloveSide={gloveSide}, useHardwareInput={useHardwareInput})", this); // [TEMP DEBUG — remove after diagnosis]
                 return;
             }
             seen++;
         }
+
+        // [TEMP DEBUG — remove after diagnosis]
+        Debug.LogWarning($"[GloveDebug] {name}: NO ESP32Glove acquired (wanted index {matchIndex}, saw {seen} glove(s), total InputSystem devices={InputSystem.devices.Count}). Hardware punches impossible until a device enumerates.", this);
     }
 
     public override Vector3 GetAcceleration()
@@ -219,27 +294,12 @@ public class KeyboardHandInput : HandInputProvider
         if (punchTimer > 0f)
             accel += Vector3.forward * currentSpikeAccel;
 
-        // Glove punch: raw combined force magnitude, added on top so either
-        // source can trigger PunchDetector independently (or both at once).
-        if (useHardwareInput && device != null)
-        {
-            // The InputSystem SHRT control returns a normalized [-1, 1] value.
-            // Multiply by 327.67f to restore the raw 16-bit range so it reaches
-            // the 60f - 150f acceleration thresholds expected by PunchDetector.
-            float forceY = device.forceY.ReadValue() * 327.67f;
-            float forceZ = device.forceZ.ReadValue() * 327.67f;
-
-            if (!float.IsNaN(forceY) && !float.IsNaN(forceZ))
-            {
-                float gloveForce = new Vector2(forceY, forceZ).magnitude;
-
-                // Deadzone-gate before it ever reaches the accel signal (see
-                // gloveForceDeadzone tooltip) — below-threshold noise must
-                // contribute exactly zero, not just "small".
-                if (gloveForce > gloveForceDeadzone)
-                    accel += Vector3.forward * gloveForce;
-            }
-        }
+        // Glove punches are handled by UpdateGlovePunch() in FixedUpdate, which
+        // edge-detects the force into the SAME transient spike as the mouse punch
+        // above (currentSpikeAccel / punchTimer). The raw glove force is
+        // deliberately NOT added here: it is a slow analog signal, and feeding it
+        // continuously jammed PunchDetector's re-arm and pinned the hand at its
+        // forward bound. Both sources now flow through the one transient path.
 
         return accel;
     }
@@ -285,6 +345,19 @@ public class KeyboardHandInput : HandInputProvider
         if (sqrMag < 0.0001f) return false;
 
         raw = raw.normalized;
+
+        // [TEMP DEBUG — remove after diagnosis] Throttled ~3 Hz. rawDev = the
+        // sensor quaternion straight off the device (pre-remap); mappedEuler =
+        // after the convertToLeftHanded remap. Hold the glove STILL: rawDev
+        // should barely move (steady fused quaternion). If it jitters/jumps
+        // while still -> sensor fusion/calibration (firmware). If steady but a
+        // known physical turn shows up on the wrong/coupled axis -> the remap.
+        if (Time.time >= _dbgNextRotLog)
+        {
+            _dbgNextRotLog = Time.time + 0.33f;
+            Debug.Log($"[RotDbg] {name}: rawDev=({qX:F3},{qY:F3},{qZ:F3},{qW:F3}) mappedEuler={raw.eulerAngles}", this);
+        }
+
         return true;
     }
 }

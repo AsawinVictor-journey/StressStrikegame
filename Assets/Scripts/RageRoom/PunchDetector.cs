@@ -36,6 +36,7 @@ public class PunchDetector : MonoBehaviour
 
     float cooldownTimer;
     bool  armed = true;
+    float _dbgNextLog; // [TEMP DEBUG — remove after diagnosis]
 
     void FixedUpdate()
     {
@@ -44,11 +45,21 @@ public class PunchDetector : MonoBehaviour
 
         float mag = input.GetAcceleration().magnitude;
 
+        // [TEMP DEBUG — remove after diagnosis] Throttled ~2 Hz. Shows whether
+        // the signal is sustained above threshold (which would jam re-arm) and
+        // the current armed/cooldown state.
+        if (Time.time >= _dbgNextLog)
+        {
+            _dbgNextLog = Time.time + 0.5f;
+            Debug.Log($"[PunchDbg] {name}: mag={mag:F1} thr={punchThreshold} armed={armed} cd={cooldownTimer:F2} (sustained-above-thr jams re-arm)", this);
+        }
+
         // Re-arm only once the signal drops back under threshold, so a
         // spike that stays high across several frames still fires exactly
         // one punch instead of one per frame.
         if (mag < punchThreshold)
         {
+            if (!armed) Debug.Log($"[PunchDbg] {name}: RE-ARMED (mag {mag:F1} dropped below {punchThreshold})", this); // [TEMP DEBUG — remove after diagnosis]
             armed = true;
             return;
         }
@@ -57,6 +68,8 @@ public class PunchDetector : MonoBehaviour
 
         armed         = false;
         cooldownTimer = cooldown;
-        OnPunch?.Invoke(Mathf.Clamp01(mag / fullStrengthAccel));
+        float strength = Mathf.Clamp01(mag / fullStrengthAccel);
+        Debug.Log($"[PunchDbg] {name}: PUNCH FIRED strength={strength:F2} (mag={mag:F1})", this); // [TEMP DEBUG — remove after diagnosis]
+        OnPunch?.Invoke(strength);
     }
 }

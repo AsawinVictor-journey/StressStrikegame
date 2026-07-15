@@ -3,10 +3,6 @@ using UnityEngine.InputSystem;
 
 public class VRGloveProcessor : MonoBehaviour
 {
-    [Header("Coordinate Translation")]
-    [Tooltip("Check this ONLY if the physical BNO055 axes don't match Unity's coordinate system.")]
-    public bool convertToLeftHanded = true; 
-
     [Header("Punch Detection")]
     public float punchDeadzone = 15.0f; 
     public float forceToDistanceMultiplier = 0.05f; 
@@ -56,7 +52,7 @@ public class VRGloveProcessor : MonoBehaviour
         Quaternion rawSensorRotation = new Quaternion(-qY, -qZ, qX, qW); 
         rawSensorRotation = rawSensorRotation.normalized;
 
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             manualZeroOffset = rawSensorRotation;
             Debug.Log("Glove Rotation Zeroed!");

@@ -15,6 +15,31 @@ public class HandRotation : MonoBehaviour
     public float pitchClamp = 90f;
     public float yawClamp   = 90f;
 
+    [Tooltip("Glove only: multiplies how far the hand rotates for a given real " +
+             "hand tilt. 1 = 1:1 with the sensor. 1.5 = rotates 50% more, 2 = " +
+             "double. Applied to the orientation delta from the recentered pose, " +
+             "so recenter (Space) still defines 'straight ahead'. Very high values " +
+             "can overshoot past 180 and flip — keep it in ~1..2.5.")]
+    public float rotationGain = 1.5f;
+
+    [Header("Glove axis correction (mirrored left hand)")]
+    [Tooltip("Invert up/down (pitch). On by default because the left hand's parent " +
+             "has a negative X scale, which flips this axis. Turn off if up/down is " +
+             "already correct.")]
+    public bool invertPitch = true;
+    [Tooltip("Invert left/right (yaw). Toggle if turning left rotates the hand right.")]
+    public bool invertYaw = false;
+    [Tooltip("Invert twist (roll). Toggle if wrist-twist goes the wrong way.")]
+    public bool invertRoll = false;
+
+    [Tooltip("Glove only: if the incoming orientation is within this many degrees " +
+             "of where the hand already is, don't move at all. Freezes out the " +
+             "BNO055's few-degrees of fused-quaternion jitter (the 'shivering') " +
+             "while still tracking real hand movement, which easily exceeds it. " +
+             "Raise if it still shivers; lower toward 0 if small real motions feel " +
+             "ignored. 0 disables the deadzone.")]
+    public float holdDeadzoneDegrees = 3f;
+
     float accPitch, accYaw;
 
     void Start()
@@ -31,13 +56,42 @@ public class HandRotation : MonoBehaviour
     {
         if (input != null && input.ProvidesOrientation)
         {
-            // Matches VRGloveProcessor's (Boxing) approach: GetOrientation()
-            // is already a delta from the recentered zero pose, so it's
-            // applied as local rotation directly and left to Unity's normal
-            // parent/child hierarchy to compose with origin's world rotation,
-            // instead of re-multiplying by origin.rotation by hand.
+            // GetOrientation() is a delta from the recentered zero pose. Apply
+            // it in WORLD space via origin — identical to the mouse path below —
+            // NOT as localRotation. This hand's parent (LeftHand) has a negative
+            // X scale (it is a mirrored copy of the right hand); applying the
+            // rotation locally makes the parent mirror invert an axis, which is
+            // what flipped up/down. World-space application through origin is
+            // immune to the parent's mirror, exactly like the mouse rotation.
             Quaternion providerTarget = input.GetOrientation();
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, providerTarget, Time.deltaTime * smooth);
+
+            // Amplify the rotation: scale the delta-from-recenter angle by
+            // rotationGain so a small real tilt turns the hand further.
+            if (rotationGain != 1f)
+                providerTarget = Quaternion.SlerpUnclamped(Quaternion.identity, providerTarget, rotationGain);
+
+            // Per-axis inversion to correct for the mirrored (negative-scale)
+            // left-hand hierarchy. Done on the delta-from-recenter so recenter
+            // still defines "straight ahead".
+            if (invertPitch || invertYaw || invertRoll)
+            {
+                Vector3 e = providerTarget.eulerAngles;
+                providerTarget = Quaternion.Euler(
+                    invertPitch ? -e.x : e.x,
+                    invertYaw   ? -e.y : e.y,
+                    invertRoll  ? -e.z : e.z);
+            }
+
+            Quaternion worldTarget = origin.rotation * providerTarget;
+
+            // Rotational deadzone: below this angle the target is just sensor
+            // jitter, so hold completely still (no shiver). Above it, track with
+            // frame-rate-independent smoothing.
+            if (Quaternion.Angle(transform.rotation, worldTarget) > holdDeadzoneDegrees)
+            {
+                float t = 1f - Mathf.Exp(-smooth * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, worldTarget, t);
+            }
             return;
         }
 

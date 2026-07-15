@@ -384,7 +384,7 @@ MonoBehaviour:
     smoothing: 1
     dampingFactor: 0.9
     maxSpeed: 8
-  maxForward: 3
+  maxForward: 4.5
   maxBackward: 1.5
   maxUp: 2
   maxDown: 1.5
@@ -392,9 +392,9 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 0
   maxPushDist: 0.15
-  punchDistance: 2
-  minPunchSpeed: 3
-  punchSpeed: 6.25
+  punchDistance: 3.5
+  minPunchSpeed: 8
+  punchSpeed: 14
   retractDuration: 0.12
   handCollider: {fileID: 0}
 --- !u!114 &125392734
@@ -416,10 +416,15 @@ MonoBehaviour:
   maxPunchAccel: 200
   chargeMaxTime: 1
   punchSpikeDuration: 0.15
+  useHardwareInput: 1
   gloveSide: 0
   convertToLeftHanded: 1
+  gloveForceDeadzone: 15
+  glovePunchTrigger: 32
+  glovePunchFull: 55
   allowRecenter: 1
   recenterKey: 32
+  autoRecenterOnConnect: 1
 --- !u!54 &125392735
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2109,10 +2114,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   origin: {fileID: 2133746658}
   input: {fileID: 1875450671}
-  sensitivity: 7
-  smooth: 2.5
+  sensitivity: 10
+  smooth: 15
   pitchClamp: 80
   yawClamp: 90
+  rotationGain: 1
+  invertPitch: 1
+  invertYaw: 0
+  invertRoll: 0
+  holdDeadzoneDegrees: 3
 --- !u!114 &815928611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2786,11 +2796,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftHand: {fileID: 1680595308}
   rightHand: {fileID: 815928611}
-  edgeFraction: 0.2
-  maxRotateSpeed: 55
-  speedCurve: 2
-  accelSmooth: 10
-  decelSmooth: 22
+  triggerSource: 0
+  turnSpeedThreshold: 1800
+  slideSpeedThreshold: 8
+  rearmFraction: 0.4
+  cooldown: 0.3
+  punchSuppressTime: 0.35
+  stepDegrees: 30
+  turnDuration: 0.4
+  invertDirection: 0
 --- !u!1 &1091453410
 GameObject:
   m_ObjectHideFlags: 0
@@ -2991,6 +3005,151 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeDuration: 0.5
+--- !u!1 &1106542763
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1106542766}
+  - component: {fileID: 1106542765}
+  - component: {fileID: 1106542764}
+  m_Layer: 0
+  m_Name: Soundtrack
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1106542764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1106542763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5cf35806cc19c64493782fd0792a44b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clip: {fileID: 8300000, guid: cbcaba9d5cdb3f64185e5bed36739fc5, type: 3}
+  volume: 1
+  fadeInDuration: 0.1
+--- !u!82 &1106542765
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1106542763}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 24300002, guid: cf40668eb4117c84682fce7842d5dcf7, type: 2}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: cbcaba9d5cdb3f64185e5bed36739fc5, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!4 &1106542766
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1106542763}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -14.286656, y: 1.5222986, z: -0.84326756}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1124343070 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1925532539302776439, guid: 5d99032999c9c8c43bd6781f974032ab, type: 3}
@@ -4478,9 +4637,14 @@ MonoBehaviour:
   origin: {fileID: 2133746658}
   input: {fileID: 125392734}
   sensitivity: 10
-  smooth: 5
+  smooth: 15
   pitchClamp: 80
   yawClamp: 90
+  rotationGain: 1
+  invertPitch: 1
+  invertYaw: 0
+  invertRoll: 0
+  holdDeadzoneDegrees: 2
 --- !u!114 &1680595308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5223,10 +5387,15 @@ MonoBehaviour:
   maxPunchAccel: 200
   chargeMaxTime: 1
   punchSpikeDuration: 0.15
+  useHardwareInput: 1
   gloveSide: 1
   convertToLeftHanded: 1
+  gloveForceDeadzone: 15
+  glovePunchTrigger: 32
+  glovePunchFull: 55
   allowRecenter: 1
   recenterKey: 32
+  autoRecenterOnConnect: 1
 --- !u!114 &1875450672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5246,7 +5415,7 @@ MonoBehaviour:
     smoothing: 1
     dampingFactor: 0.9
     maxSpeed: 8
-  maxForward: 3
+  maxForward: 4.5
   maxBackward: 1.5
   maxUp: 2
   maxDown: 1.5
@@ -5254,9 +5423,9 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 0
   maxPushDist: 0.15
-  punchDistance: 2
-  minPunchSpeed: 3
-  punchSpeed: 6.25
+  punchDistance: 3.5
+  minPunchSpeed: 8
+  punchSpeed: 14
   retractDuration: 0.12
   handCollider: {fileID: 0}
 --- !u!54 &1875450673
@@ -6655,3 +6824,4 @@ SceneRoots:
   - {fileID: 1570242843}
   - {fileID: 806268213}
   - {fileID: 1106176904}
+  - {fileID: 1106542766}

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
@@ -143,45 +144,55 @@ public class HeartRateYogaUI : MonoBehaviour
         }
     }
 
+    // The pulse sensor now rides on the ESP32 glove (USB HID), so there is nothing
+    // to pair over Bluetooth — "scan" just checks whether the glove is plugged in
+    // and reporting a pulse.
     private void OnScanClicked()
     {
-        if (connectionStatusText != null) connectionStatusText.text = "Scanning Bluetooth Devices...";
-        
-        if (HeartRateBluetoothManager.Instance != null)
-        {
-            scannedDevices = HeartRateBluetoothManager.Instance.ScanDevices();
-            
-            if (deviceDropdown != null)
-            {
-                deviceDropdown.options.Clear();
-                foreach (var device in scannedDevices)
-                {
-                    deviceDropdown.options.Add(new TMP_Dropdown.OptionData(device));
-                }
-                deviceDropdown.RefreshShownValue();
-            }
+        if (connectionStatusText != null) connectionStatusText.text = "Looking for the glove...";
 
-            if (connectionStatusText != null) connectionStatusText.text = "Scan Complete. Choose device below.";
-            if (connectButton != null) connectButton.interactable = scannedDevices.Count > 0;
+        scannedDevices.Clear();
+
+        bool gloveFound = InputSystem.GetDevice<ESP32Glove>() != null;
+        if (gloveFound) scannedDevices.Add("ESP32 VR Glove");
+
+        if (deviceDropdown != null)
+        {
+            deviceDropdown.options.Clear();
+            foreach (var device in scannedDevices)
+            {
+                deviceDropdown.options.Add(new TMP_Dropdown.OptionData(device));
+            }
+            deviceDropdown.RefreshShownValue();
         }
+
+        if (connectionStatusText != null)
+        {
+            connectionStatusText.text = gloveFound
+                ? "Glove found. Press Connect to begin."
+                : "No glove detected. Plug it in and scan again.";
+        }
+
+        if (connectButton != null) connectButton.interactable = gloveFound;
     }
 
     private void OnConnectClicked()
     {
-        if (deviceDropdown == null || deviceDropdown.options.Count == 0) return;
+        var engine = BiometricEngine.Instance;
 
-        string selectedDeviceName = deviceDropdown.options[deviceDropdown.value].text;
-        
-        if (connectionStatusText != null) connectionStatusText.text = $"Connecting to {selectedDeviceName}...";
-
-        if (HeartRateBluetoothManager.Instance != null)
+        if (engine == null || !engine.isConnected)
         {
-            HeartRateBluetoothManager.Instance.ConnectDevice(selectedDeviceName);
-            if (connectionStatusText != null) connectionStatusText.text = $"Connected to {selectedDeviceName}!";
-            
-            // Advance to calibration after short delay
-            Invoke(nameof(StartCalibration), 1.5f);
+            if (connectionStatusText != null)
+            {
+                connectionStatusText.text = "Glove is not reporting a pulse yet. Rest your finger on the sensor.";
+            }
+            return;
         }
+
+        if (connectionStatusText != null) connectionStatusText.text = "Pulse detected!";
+
+        // Advance to calibration after short delay
+        Invoke(nameof(StartCalibration), 1.5f);
     }
 
     private void StartCalibration()
@@ -191,13 +202,15 @@ public class HeartRateYogaUI : MonoBehaviour
 
     private void UpdateHeartPulse()
     {
-        if (HeartRateBluetoothManager.Instance == null || !HeartRateBluetoothManager.Instance.isConnected)
+        var engine = BiometricEngine.Instance;
+
+        if (engine == null || !engine.isConnected)
         {
             if (liveBpmText != null) liveBpmText.text = "-- BPM";
             return;
         }
 
-        float bpm = HeartRateBluetoothManager.Instance.currentBPM;
+        float bpm = engine.currentBPM;
         if (liveBpmText != null)
         {
             liveBpmText.text = $"{Mathf.RoundToInt(bpm)} <size=70%>BPM</size>";

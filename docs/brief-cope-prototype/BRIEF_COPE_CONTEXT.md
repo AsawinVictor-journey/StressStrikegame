@@ -185,13 +185,7 @@ Routing logic (implemented in `recommendGameMode()` in
         aren't reachable in this project's tool config), and the final
         `OnPlay` → `SceneManager.LoadScene(...)` handoff, which needs
         `BoxingMenu`/`Rage Room`/`meditation` present in Build Settings.
-- [ ] Decide where in the flow this survey triggers (e.g. before
-      `ModeCarouselController`, or as a one-time first-launch flow) — not
-      wired into any existing menu scene yet. Note: the current menu has
-      4 carousel pages (Level/Training/Rage Room/Meditate — see
-      `menu_flow` memory) which don't map 1:1 onto the survey's 3 modes
-      (Boxing/RageRoom/Meditate); this needs a real routing decision, not
-      a guess.
+- [x] Decide where in the flow this survey triggers: The survey is wired directly inside `MainMenuScene.unity` as a Canvas popup. On start, if no survey result is saved, it overlays the main menu with a dark tint blocker. On completion/skip, the scene is reloaded, hiding the popup and highlighting the recommended mode.
 - [ ] Old pre-pivot scaffolding (`Assets/Scripts/FeedbackManager.cs`,
       `OpenAIService.cs`, `FeedbackRecord.cs`, `OutlineHighlight.cs`,
       `AIRecommendationHighlighter.cs`) is now dead code — not referenced by
