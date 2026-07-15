@@ -218,7 +218,7 @@ public class YogaManager : MonoBehaviour
         IEnumerator StartPoseRoutine()
     {   
         uiFade.ShowUI(countdownGroup);
-        countdownText.text = "Get Ready!";
+        countdownText.text = "Sit tall, arms relaxed";
         yield return new WaitForSeconds(1);
 
         for(int i = 3; i > 0; i--)
@@ -227,6 +227,14 @@ public class YogaManager : MonoBehaviour
             yield return new WaitForSeconds(1);
         }
         uiFade.HideUI(countdownGroup);
+
+        // Recenter the glove to the player's current neutral pose. Pose targets
+        // were captured relative to this neutral, so this is what makes the
+        // accuracy line up regardless of how the BNO055's heading drifted since
+        // last session. The player is still in neutral here (just finished the
+        // "arms relaxed" countdown) before the instructor animation begins.
+        if (yogaTracker != null)
+            yogaTracker.Recenter();
 
         // Show description immediately
         uiFade.ShowUI(descriptionGroup);

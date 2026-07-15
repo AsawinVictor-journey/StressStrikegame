@@ -420,9 +420,8 @@ MonoBehaviour:
   gloveSide: 0
   convertToLeftHanded: 1
   gloveForceDeadzone: 15
-  glovePunchTrigger: 30
+  glovePunchTrigger: 32
   glovePunchFull: 55
-  punchSuppressTurnSpeed: 120
   allowRecenter: 1
   recenterKey: 32
   autoRecenterOnConnect: 1
@@ -2115,11 +2114,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   origin: {fileID: 2133746658}
   input: {fileID: 1875450671}
-  sensitivity: 7
-  smooth: 2.5
+  sensitivity: 10
+  smooth: 15
   pitchClamp: 80
   yawClamp: 90
-  rotationGain: 1.5
+  rotationGain: 1
   invertPitch: 1
   invertYaw: 0
   invertRoll: 0
@@ -2798,10 +2797,11 @@ MonoBehaviour:
   leftHand: {fileID: 1680595308}
   rightHand: {fileID: 815928611}
   triggerSource: 0
-  turnSpeedThreshold: 600
+  turnSpeedThreshold: 1800
   slideSpeedThreshold: 8
   rearmFraction: 0.4
   cooldown: 0.3
+  punchSuppressTime: 0.35
   stepDegrees: 30
   turnDuration: 0.4
   invertDirection: 0
@@ -5246,9 +5246,8 @@ MonoBehaviour:
   gloveSide: 1
   convertToLeftHanded: 1
   gloveForceDeadzone: 15
-  glovePunchTrigger: 30
+  glovePunchTrigger: 32
   glovePunchFull: 55
-  punchSuppressTurnSpeed: 120
   allowRecenter: 1
   recenterKey: 32
   autoRecenterOnConnect: 1
