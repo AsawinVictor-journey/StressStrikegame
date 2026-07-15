@@ -24,6 +24,7 @@ public class SceneAudio : MonoBehaviour
     public float fadeInDuration = 0.1f;
 
     AudioSource source;
+    bool fading;
 
     void Awake()
     {
@@ -49,8 +50,17 @@ public class SceneAudio : MonoBehaviour
             StartCoroutine(FadeIn());
     }
 
+    void Update()
+    {
+        // Keep the live AudioSource in sync so tweaking `volume` in the
+        // Inspector during Play Mode is actually audible, not just at Start().
+        if (!fading)
+            source.volume = volume;
+    }
+
     IEnumerator FadeIn()
     {
+        fading = true;
         float t = 0f;
         while (t < fadeInDuration)
         {
@@ -59,5 +69,6 @@ public class SceneAudio : MonoBehaviour
             yield return null;
         }
         source.volume = volume;
+        fading = false;
     }
 }

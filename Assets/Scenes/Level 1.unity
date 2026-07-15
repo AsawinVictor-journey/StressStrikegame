@@ -2961,7 +2961,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clip: {fileID: 8300000, guid: 5920c41bd412e7043a78c0258d47e367, type: 3}
-  volume: 0.4
+  volume: 0.7
   fadeInDuration: 2
 --- !u!82 &495592262
 AudioSource:

@@ -1368,6 +1368,7 @@ GameObject:
   - component: {fileID: 172488624}
   - component: {fileID: 172488623}
   - component: {fileID: 172488626}
+  - component: {fileID: 172488627}
   m_Layer: 0
   m_Name: Right
   m_TagString: Untagged
@@ -1500,6 +1501,31 @@ MonoBehaviour:
           m_StringArgument: Yoga Menu
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 172488627}
+        m_TargetAssemblyTypeName: SceneButton, Assembly-CSharp
+        m_MethodName: LoadScene
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &172488627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172488621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c7077f896a7bcc418d8813132e8c23f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneName: Yoga Menu
 --- !u!1 &173561311
 GameObject:
   m_ObjectHideFlags: 0
@@ -13003,9 +13029,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5cf35806cc19c64493782fd0792a44b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clip: {fileID: 8300000, guid: d464e9ef8c8ca064d97c2ca63f0f7515, type: 3}
-  volume: 1
-  fadeInDuration: 0.1
+  clip: {fileID: 8300000, guid: 20c82cdc7adc3c541824e31f81df4f59, type: 3}
+  volume: 0.6
+  fadeInDuration: 0.5
 --- !u!82 &1790972341
 AudioSource:
   m_ObjectHideFlags: 0
@@ -13017,7 +13043,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 24300002, guid: cf40668eb4117c84682fce7842d5dcf7, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: d464e9ef8c8ca064d97c2ca63f0f7515, type: 3}
+  m_Resource: {fileID: 8300000, guid: 20c82cdc7adc3c541824e31f81df4f59, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -13262,6 +13288,7 @@ GameObject:
   - component: {fileID: 1846736429}
   - component: {fileID: 1846736431}
   - component: {fileID: 1846736432}
+  - component: {fileID: 1846736433}
   m_Layer: 0
   m_Name: Left
   m_TagString: Untagged
@@ -13394,6 +13421,31 @@ MonoBehaviour:
           m_StringArgument: BoxingMenu
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1846736433}
+        m_TargetAssemblyTypeName: SceneButton, Assembly-CSharp
+        m_MethodName: LoadScene
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &1846736433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846736427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c7077f896a7bcc418d8813132e8c23f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneName: BoxingMenu
 --- !u!1 &1862396727
 GameObject:
   m_ObjectHideFlags: 0
@@ -13929,6 +13981,7 @@ GameObject:
   - component: {fileID: 1915312151}
   - component: {fileID: 1915312150}
   - component: {fileID: 1915312153}
+  - component: {fileID: 1915312154}
   m_Layer: 0
   m_Name: Center
   m_TagString: Untagged
@@ -14061,6 +14114,31 @@ MonoBehaviour:
           m_StringArgument: Rage Room Menu
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1915312154}
+        m_TargetAssemblyTypeName: SceneButton, Assembly-CSharp
+        m_MethodName: LoadScene
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &1915312154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1915312148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c7077f896a7bcc418d8813132e8c23f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneName: Rage Room Menu
 --- !u!1 &1919503943
 GameObject:
   m_ObjectHideFlags: 0

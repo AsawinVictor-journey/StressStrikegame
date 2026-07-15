@@ -34026,8 +34026,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clip: {fileID: 8300000, guid: 3759db6692ef3c343ac1e008633b44ff, type: 3}
-  volume: 1
-  fadeInDuration: 0.1
+  volume: 0.7
+  fadeInDuration: 0.5
 --- !u!82 &604722782
 AudioSource:
   m_ObjectHideFlags: 0
@@ -143022,7 +143022,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -161485,7 +161485,7 @@ GameObject:
   - component: {fileID: 6464688753430743206}
   - component: {fileID: 1867452533647095726}
   m_Layer: 5
-  m_Name: StressStrike
+  m_Name: Boxing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clip: {fileID: 8300000, guid: 76209bb3e1c50d548b41fb01f3825cf1, type: 3}
-  volume: 1
+  volume: 0.55
   fadeInDuration: 0.1
 --- !u!82 &9207088
 AudioSource:
@@ -623,7 +623,7 @@ GameObject:
   - component: {fileID: 275853196}
   - component: {fileID: 275853197}
   m_Layer: 5
-  m_Name: Image (4)
+  m_Name: Quit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2198,7 +2198,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

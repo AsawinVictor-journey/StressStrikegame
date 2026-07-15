@@ -218,7 +218,7 @@ public class YogaManager : MonoBehaviour
         IEnumerator StartPoseRoutine()
     {   
         uiFade.ShowUI(countdownGroup);
-        countdownText.text = "Sit tall, arms relaxed";
+        countdownText.text = "Get Ready!";
         yield return new WaitForSeconds(1);
 
         for(int i = 3; i > 0; i--)

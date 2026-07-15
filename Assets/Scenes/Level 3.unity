@@ -4706,7 +4706,7 @@ PrefabInstance:
     - target: {fileID: -5134703825824484271, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 364c0a833c0ef9144a3379820d574d1d, type: 2}
+      objectReference: {fileID: 2100000, guid: fd35aaac7c5fdfd41914ef57d7b8156d, type: 2}
     - target: {fileID: 250316905818439655, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.043
@@ -11759,8 +11759,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 236095699}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.013264088, y: 0, z: 0, w: 0.999912}
-  m_LocalPosition: {x: 10.46144, y: -20.8, z: -58.7}
+  m_LocalRotation: {x: 0.015009303, y: 0, z: 0, w: 0.99988735}
+  m_LocalPosition: {x: 10.46144, y: -21.3, z: -58.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11786,7 +11786,7 @@ Transform:
   - {fileID: 2072604852}
   - {fileID: 1463790169}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 1.52, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 1.72, y: 0, z: 0}
 --- !u!1001 &237352455
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -38605,7 +38605,7 @@ Transform:
   m_GameObject: {fileID: 792052026}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 25.69559, y: -3.051954, z: -16.342136}
+  m_LocalPosition: {x: 25.69559, y: -3.051954, z: -22.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -57243,7 +57243,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.9887041, b: 0.9669811, a: 1}
-  m_Intensity: 16.8
+  m_Intensity: 20
   m_Range: 27.48
   m_SpotAngle: 108.759995
   m_InnerSpotAngle: 86.24207
@@ -77703,7 +77703,7 @@ PrefabInstance:
     - target: {fileID: -5134703825824484271, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 364c0a833c0ef9144a3379820d574d1d, type: 2}
+      objectReference: {fileID: 2100000, guid: fd35aaac7c5fdfd41914ef57d7b8156d, type: 2}
     - target: {fileID: 6276432210690574450, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
       propertyPath: m_LocalScale.x
       value: 2.5
@@ -97609,7 +97609,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clip: {fileID: 8300000, guid: 2d40260aef54fd44b8989ddb4de4c3df, type: 3}
-  volume: 0.4
+  volume: 0.7
   fadeInDuration: 0.1
 --- !u!82 &2000630388
 AudioSource:
