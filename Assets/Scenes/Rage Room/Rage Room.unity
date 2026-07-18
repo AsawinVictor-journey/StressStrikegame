@@ -420,7 +420,7 @@ MonoBehaviour:
   gloveSide: 0
   convertToLeftHanded: 1
   gloveForceDeadzone: 15
-  glovePunchTrigger: 32
+  glovePunchTrigger: 5
   glovePunchFull: 55
   allowRecenter: 1
   recenterKey: 32
@@ -2922,7 +2922,7 @@ MonoBehaviour:
   leftHand: {fileID: 1680595308}
   rightHand: {fileID: 815928611}
   triggerSource: 0
-  turnSpeedThreshold: 1800
+  turnSpeedThreshold: 1200
   slideSpeedThreshold: 8
   rearmFraction: 0.4
   cooldown: 0.3

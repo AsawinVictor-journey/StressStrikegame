@@ -1,0 +1,80 @@
+<mxfile host="app.diagrams.net" type="device" version="24.0.0">
+  <diagram name="StressStrike Menu Flow" id="stress-strike-menu-flow">
+    <mxGraphModel dx="1100" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- START -->
+        <mxCell id="start" value="เปิดเกม Stress Strike" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=13;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="340" y="40" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- MAIN MENU -->
+        <mxCell id="menu" value="หน้าเมนูหลัก&#10;(Main Menu)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=13;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="340" y="120" width="200" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- SURVEY DECISION -->
+        <mxCell id="surveyQ" value="ทำแบบสำรวจ&#10;Coach Byte ไหม?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#EEEDFE;strokeColor=#534AB7;fontFamily=Tahoma;fontSize=12;fontColor=#26215C;" vertex="1" parent="1">
+          <mxGeometry x="360" y="215" width="160" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- SURVEY BOX -->
+        <mxCell id="surveyBox" value="ตอบแบบสำรวจ Coach Byte&#10;ระบบแนะนำโหมดที่เหมาะและไฮไลต์ในเมนู" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=12;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="600" y="234" width="240" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- MODE DECISION -->
+        <mxCell id="modeQ" value="ผู้เล่นเลือกโหมดใด?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#EEEDFE;strokeColor=#534AB7;fontFamily=Tahoma;fontSize=12;fontColor=#26215C;" vertex="1" parent="1">
+          <mxGeometry x="360" y="345" width="160" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- MODE ENTRIES -->
+        <mxCell id="boxEntry" value="ชกมวย&#10;(Boxing)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAECE7;strokeColor=#993C1D;fontFamily=Tahoma;fontSize=13;fontColor=#4A1B0C;" vertex="1" parent="1">
+          <mxGeometry x="110" y="480" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="rageEntry" value="ห้องระบายอารมณ์&#10;(Rage Room)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAEEDA;strokeColor=#854F0B;fontFamily=Tahoma;fontSize=13;fontColor=#412402;" vertex="1" parent="1">
+          <mxGeometry x="350" y="480" width="180" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="yogaEntry" value="โยคะ&#10;(Yoga)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5EE;strokeColor=#0F6E56;fontFamily=Tahoma;fontSize=13;fontColor=#04342C;" vertex="1" parent="1">
+          <mxGeometry x="590" y="480" width="180" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- MODE ACTIONS -->
+        <mxCell id="boxAct" value="ต่อสู้ตามจังหวะและกลยุทธ์" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=12;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="110" y="575" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rageAct" value="ทุบทำลายสิ่งของเพื่อปลดปล่อยความเครียด" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=12;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="350" y="575" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="yogaAct" value="ฝึกหายใจและทำท่าอย่างผ่อนคลาย" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=12;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="590" y="575" width="180" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- FINAL -->
+        <mxCell id="final" value="จบเซสชัน&#10;กลับสู่เมนูหลัก" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F1EFE8;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=13;fontColor=#2C2C2A;" vertex="1" parent="1">
+          <mxGeometry x="350" y="675" width="180" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="start" target="menu"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="menu" target="surveyQ"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="ทำ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=11;" edge="1" parent="1" source="surveyQ" target="surveyBox"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="surveyBox" target="modeQ"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" value="ข้าม" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=11;" edge="1" parent="1" source="surveyQ" target="modeQ"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" value="Boxing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=11;" edge="1" parent="1" source="modeQ" target="boxEntry"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" value="Rage Room" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=11;" edge="1" parent="1" source="modeQ" target="rageEntry"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" value="Yoga" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;fontFamily=Tahoma;fontSize=11;" edge="1" parent="1" source="modeQ" target="yogaEntry"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="boxEntry" target="boxAct"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="rageEntry" target="rageAct"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="yogaEntry" target="yogaAct"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="boxAct" target="final"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="rageAct" target="final"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#5F5E5A;" edge="1" parent="1" source="yogaAct" target="final"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" value="วนกลับสู่เมนูหลัก" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#888780;dashed=1;fontFamily=Tahoma;fontSize=11;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="final" target="menu"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

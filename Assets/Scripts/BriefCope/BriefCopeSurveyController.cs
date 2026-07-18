@@ -48,6 +48,10 @@ public class BriefCopeSurveyController : MonoBehaviour
     [SerializeField] private Color answerIdleColor = Color.white;
     [SerializeField] private Color answerSelectedColor = new Color(1f, 0.35f, 0.37f);
 
+    [Header("AI Coach (Ollama, local)")]
+    [SerializeField] private bool useAiCoachMessage = true;
+    [SerializeField] private string ollamaModel = "gemma3:4b";
+
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
     private int currentQuestionIndex;
     private int pendingNextIndex;
@@ -188,6 +192,34 @@ public class BriefCopeSurveyController : MonoBehaviour
         }
 
         SaveResult(rec.mode, skipped: false);
+
+        // Deterministic text above is shown immediately (works with Ollama offline).
+        // If the local Ollama server answers in time, its reply replaces reasonText
+        // with a warmer, non-canned version - purely cosmetic, never blocks the flow.
+        if (useAiCoachMessage && reasonText != null)
+        {
+            StartCoroutine(OllamaClient.Generate(
+                ollamaModel,
+                BuildCoachPrompt(rec),
+                onSuccess: aiText =>
+                {
+                    if (string.IsNullOrWhiteSpace(aiText)) return;
+                    reasonText.text = aiText;
+                    CoachByteHistory.Append("BriefCopeSurvey", rec.mode.ToString(), aiText);
+                },
+                onError: err => Debug.LogWarning("[CoachByte] " + err)
+            ));
+        }
+    }
+
+    private string BuildCoachPrompt(ModeRecommendation rec)
+    {
+        return "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief boxing game. " +
+               $"A player just took a short coping-style survey and the recommended mode is '{rec.modeName}'. " +
+               $"The reason: {rec.reason} " +
+               "Write 1-2 short, warm sentences (max 40 words) explaining this recommendation directly to the player. " +
+               "Do not diagnose them or use clinical language - this is just a game mode suggestion, not a diagnosis. " +
+               "No emojis, no quotation marks.";
     }
 
     private Sprite WordmarkFor(GameMode mode)

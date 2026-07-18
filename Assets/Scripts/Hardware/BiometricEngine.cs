@@ -79,12 +79,16 @@ public class BiometricEngine : MonoBehaviour
 
     void Update()
     {
-        // 1. Find the connected Glove
-        if (gloveDevice == null)
+        // 1. Find the connected Glove. Re-check `added` too, not just null: when
+        // the glove disconnects mid-session the Input System removes the device,
+        // but our cached reference stays non-null. Reading a removed device throws
+        // "before 'ESP32Glove' has been added to system", so refresh in that case.
+        if (gloveDevice == null || !gloveDevice.added)
         {
             gloveDevice = InputSystem.GetDevice<ESP32Glove>();
-            if (gloveDevice == null)
+            if (gloveDevice == null || !gloveDevice.added)
             {
+                gloveDevice = null;
                 isConnected = false;
                 return;
             }

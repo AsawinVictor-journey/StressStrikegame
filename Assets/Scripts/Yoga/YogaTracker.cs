@@ -48,7 +48,9 @@ public class YogaTracker : MonoBehaviour
         if (!tracking)
             return;
 
-        if (glove == null)
+        // `!glove.added` guards a stale reference after the glove disconnects —
+        // reading a removed device throws "before 'ESP32Glove' has been added".
+        if (glove == null || !glove.added)
         {
             glove = InputSystem.GetDevice<ESP32Glove>();
             if (glove == null) return;
@@ -119,7 +121,7 @@ public class YogaTracker : MonoBehaviour
     {
         get
         {
-            if (glove == null) glove = InputSystem.GetDevice<ESP32Glove>();
+            if (glove == null || !glove.added) glove = InputSystem.GetDevice<ESP32Glove>();
             return glove == null ? Quaternion.identity : GetGloveRotation();
         }
     }
@@ -129,7 +131,7 @@ public class YogaTracker : MonoBehaviour
     /// relative to it. Returns false if no glove is connected.</summary>
     public bool Recenter()
     {
-        if (glove == null) glove = InputSystem.GetDevice<ESP32Glove>();
+        if (glove == null || !glove.added) glove = InputSystem.GetDevice<ESP32Glove>();
         if (glove == null) return false;
         zeroOffset = GetRawGloveRotation();
         return true;

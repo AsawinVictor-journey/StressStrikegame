@@ -68,6 +68,12 @@ public class SceneTransitionManager : MonoBehaviour
     {
         isTransitioning = true;
 
+        // Slow-mo effects (KO freeze-frame, TriggerSlowMotionMode, etc.) can leave
+        // Time.timeScale below 1 if a scene switch interrupts their own restore logic.
+        // Reset it here so the next scene never loads into a paused/slowed state.
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = 0.02f;
+
         // Fade to black first so the player always sees a transition,
         // regardless of how long the target scene takes to load in the background.
         yield return Fade(1f);

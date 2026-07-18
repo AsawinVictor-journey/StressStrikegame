@@ -12,6 +12,13 @@
     "ai-game-developer": {
       "type": "http",
       "url": "http://localhost:23088"
+    },
+    "mcp-mermaid": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-mermaid"
+      ]
     }
   }
 }

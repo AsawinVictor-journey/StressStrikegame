@@ -184,6 +184,9 @@ public class KeyboardHandInput : HandInputProvider
     /// </summary>
     void UpdateGlovePunch()
     {
+        // Drop a stale reference if the glove disconnected — reading a removed
+        // device throws "before 'ESP32Glove' has been added to system".
+        if (device != null && !device.added) device = null;
         if (!useHardwareInput || device == null) return;
 
         float forceY = device.forceY.ReadValue() * 327.67f;
@@ -326,6 +329,7 @@ public class KeyboardHandInput : HandInputProvider
     bool TryReadRawOrientation(out Quaternion raw)
     {
         raw = Quaternion.identity;
+        if (device != null && !device.added) device = null;
         if (device == null) return false;
 
         float qX = device.x.ReadValue();
