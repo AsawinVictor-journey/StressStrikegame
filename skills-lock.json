@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "humanizer": {
+      "source": "blader/humanizer",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "24156ab90b99b46089aa528789aeee9d62bfb5cc1f9c877e0e2480f205dbfed0"
+    }
+  }
+}

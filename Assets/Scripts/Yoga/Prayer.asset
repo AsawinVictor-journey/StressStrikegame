@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   description: Sit tall and bring your palms together at your chest.
   icon: {fileID: 21300000, guid: ca50f6bb97043204da9df0af1a294241, type: 3}
-  transitionAnimation: {fileID: 7707021617306433140, guid: 8d7bb67e133ef5942a4b8943e11321b0, type: 3}
-  poseAnimation: {fileID: -413720972942758458, guid: 8d7bb67e133ef5942a4b8943e11321b0, type: 3}
+  transitionAnimation: {fileID: 7707021617306433140, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
+  reverseTransitionAnimation: {fileID: 0}
+  poseAnimation: {fileID: -413720972942758458, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
+  MidPoseAnimation: {fileID: 0}
   duration: 30
   difficulty: 1
   targetArmRotation: {x: 3, y: 3, z: 3}

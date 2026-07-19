@@ -78,3 +78,10 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Cloud sync backend (server/)
+# .env holds the MongoDB connection string - must never be committed.
+.env
+.env.*
+!.env.example
+node_modules/

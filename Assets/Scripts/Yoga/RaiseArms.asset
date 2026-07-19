@@ -14,8 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   description: Sit tall and slowly lift your arms overhead.
   icon: {fileID: 21300000, guid: 87f05064c3a0d7d47a77d2c5fb978a40, type: 3}
-  transitionAnimation: {fileID: -8060864421712488247, guid: 8d7bb67e133ef5942a4b8943e11321b0, type: 3}
-  poseAnimation: {fileID: -7696431562710462267, guid: 8d7bb67e133ef5942a4b8943e11321b0, type: 3}
+  transitionAnimation: {fileID: -8060864421712488247, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
+  reverseTransitionAnimation: {fileID: 0}
+  poseAnimation: {fileID: -7696431562710462267, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
+  MidPoseAnimation: {fileID: 0}
   duration: 30
   difficulty: 1
   targetArmRotation: {x: 0, y: 0, z: 0}

@@ -10,7 +10,7 @@ public class CoachByteMenuGreeting : MonoBehaviour
     private const string PrefsKey = "BriefCope_LastResult";
 
     [SerializeField] private TMP_Text greetingText;
-    [SerializeField] private string ollamaModel = "gemma3:4b";
+    [SerializeField] private string ollamaModel = "gemma4:e4b";
 
     private void Start()
     {

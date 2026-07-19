@@ -22,6 +22,7 @@ public class BriefCopeSurveyController : MonoBehaviour
     [SerializeField] private GameObject resultPanel;
 
     [Header("Intro")]
+    [SerializeField] private TMP_Text introTextTop;
     [SerializeField] private Button startButton;
     [SerializeField] private Button introSkipButton;
 
@@ -33,6 +34,7 @@ public class BriefCopeSurveyController : MonoBehaviour
     [SerializeField] private Button questionSkipButton;
 
     [Header("Halfway")]
+    [SerializeField] private TMP_Text halfwayText;
     [SerializeField] private Button halfwayContinueButton;
 
     [Header("Result")]
@@ -50,12 +52,15 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     [Header("AI Coach (Ollama, local)")]
     [SerializeField] private bool useAiCoachMessage = true;
-    [SerializeField] private string ollamaModel = "gemma3:4b";
+    // Must be a model actually pulled on this machine (`ollama list`). gemma3:4b was
+    // never installed here, so every request failed silently into the onError path.
+    [SerializeField] private string ollamaModel = "gemma4:e4b";
 
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
     private int currentQuestionIndex;
     private int pendingNextIndex;
     private int? pendingAnswer;
+    private string currentSurveyId;
     private const string PrefsKey = "BriefCope_LastResult";
 
     private void Start()
@@ -82,6 +87,53 @@ public class BriefCopeSurveyController : MonoBehaviour
             introPanel.transform.parent.gameObject.SetActive(true);
         }
         ShowOnly(introPanel);
+        PrepareIntro();
+    }
+
+    // Intro line is personalised from the PREVIOUS session (last saved result +
+    // last coaching message), because at this point the player hasn't answered
+    // anything yet. Deterministic copy shows first so the panel is never blank
+    // or half-written while Ollama thinks.
+    private void PrepareIntro()
+    {
+        if (introTextTop == null) return;
+
+        var previous = LoadPreviousResult();
+        bool returning = previous != null && !previous.skipped && !string.IsNullOrEmpty(previous.mode);
+
+        introTextTop.text = returning
+            ? "Welcome back. Let's see where your head's at today."
+            : "Hey, I'm Coach Byte. A few quick questions and I'll point you at a mode.";
+
+        if (!useAiCoachMessage) return;
+
+        string prompt =
+            "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief game. " +
+            (returning
+                ? $"The player is returning; last time their recommended mode was '{previous.mode}'. " +
+                  "Greet them back and say you want to check in on how they're coping today. "
+                : "The player is about to take a short coping-style check-in for the first time. Introduce yourself warmly. ") +
+            "Write 1 short sentence (max 25 words) to show above the survey intro. " +
+            "Do not diagnose them or use clinical language. No emojis, no quotation marks.";
+
+        StartCoroutine(OllamaClient.Generate(
+            ollamaModel, prompt,
+            onSuccess: aiText =>
+            {
+                if (string.IsNullOrWhiteSpace(aiText) || introTextTop == null) return;
+                introTextTop.text = aiText;
+                CoachByteHistory.Append("BriefCopeIntro", previous?.mode ?? "", aiText);
+            },
+            onError: err => Debug.LogWarning("[CoachByte] " + err)
+        ));
+    }
+
+    private BriefCopeResult LoadPreviousResult()
+    {
+        string json = PlayerPrefs.GetString(PrefsKey, "");
+        if (string.IsNullOrEmpty(json)) return null;
+        try { return JsonUtility.FromJson<BriefCopeResult>(json); }
+        catch { return null; }
     }
 
     private void BeginSurvey()
@@ -146,6 +198,7 @@ public class BriefCopeSurveyController : MonoBehaviour
         {
             pendingNextIndex = nextIndex;
             ShowOnly(halfwayPanel);
+            PrepareHalfway();
             return;
         }
 
@@ -160,6 +213,47 @@ public class BriefCopeSurveyController : MonoBehaviour
         }
     }
 
+    // Mid-survey encouragement. Grounded in the partial answers so it reflects the
+    // leaning so far, but deliberately never names a mode - the recommendation is
+    // the result screen's job, and the pattern can still flip on the back half.
+    private void PrepareHalfway()
+    {
+        if (halfwayText == null) return;
+
+        halfwayText.text = "Nice work — you're halfway. Keep going, there's no wrong answer here.";
+
+        if (!useAiCoachMessage) return;
+
+        string leaning = "";
+        try
+        {
+            var partialRec = GameModeRecommendation.Recommend(answers);
+            leaning = $"So far their answers lean toward: {partialRec.reason} ";
+        }
+        catch
+        {
+            // Partial scoring can be inconclusive this early; the generic prompt is fine.
+        }
+
+        string prompt =
+            "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief game. " +
+            "A player is exactly halfway through a short coping-style check-in. " + leaning +
+            "Write 1 short encouraging sentence (max 25 words) to keep them going. " +
+            "Do NOT name or suggest any game mode yet. Do not diagnose them or use clinical " +
+            "language. No emojis, no quotation marks.";
+
+        StartCoroutine(OllamaClient.Generate(
+            ollamaModel, prompt,
+            onSuccess: aiText =>
+            {
+                if (string.IsNullOrWhiteSpace(aiText) || halfwayText == null) return;
+                halfwayText.text = aiText;
+                CoachByteHistory.Append("BriefCopeHalfway", "", aiText);
+            },
+            onError: err => Debug.LogWarning("[CoachByte] " + err)
+        ));
+    }
+
     private void OnHalfwayContinue()
     {
         currentQuestionIndex = pendingNextIndex;
@@ -170,6 +264,11 @@ public class BriefCopeSurveyController : MonoBehaviour
     private void SkipSurvey()
     {
         SaveResult(null, skipped: true);
+
+        // Skip rate is worth measuring - if most players bail, the survey is too long.
+        StressStrike.Cloud.CloudSyncService.Instance?.RecordSurvey(
+            new StressStrike.Cloud.SurveyRecord { skipped = true });
+
         CloseSurveyPopup();
     }
 
@@ -193,6 +292,11 @@ public class BriefCopeSurveyController : MonoBehaviour
 
         SaveResult(rec.mode, skipped: false);
 
+        // Local save above is the source of truth; this is the opt-in cloud mirror.
+        // A fresh id per completed survey, reused by the AI-text update below.
+        currentSurveyId = Guid.NewGuid().ToString("N");
+        SyncSurvey(rec, null);
+
         // Deterministic text above is shown immediately (works with Ollama offline).
         // If the local Ollama server answers in time, its reply replaces reasonText
         // with a warmer, non-canned version - purely cosmetic, never blocks the flow.
@@ -206,10 +310,32 @@ public class BriefCopeSurveyController : MonoBehaviour
                     if (string.IsNullOrWhiteSpace(aiText)) return;
                     reasonText.text = aiText;
                     CoachByteHistory.Append("BriefCopeSurvey", rec.mode.ToString(), aiText);
+                    // Mirror the AI-written version once it exists. Same surveyId as
+                    // the send below, so this updates that record instead of adding one.
+                    SyncSurvey(rec, aiText);
                 },
                 onError: err => Debug.LogWarning("[CoachByte] " + err)
             ));
         }
+    }
+
+    // No-op unless the player has opted into cloud sync (CloudSyncService.SetConsent).
+    // Only the recommendation and winning subscale go up - never the individual
+    // question answers. See CloudModels.SurveyRecord for why.
+    private void SyncSurvey(ModeRecommendation rec, string aiMessage)
+    {
+        var sync = StressStrike.Cloud.CloudSyncService.Instance;
+        if (sync == null) return;
+
+        sync.RecordSurvey(new StressStrike.Cloud.SurveyRecord
+        {
+            surveyId = currentSurveyId,
+            skipped = false,
+            recommendedMode = rec.mode.ToString(),
+            topSubscale = rec.topSubscale.ToString(),
+            aiMessage = aiMessage ?? "",
+            aiModel = string.IsNullOrEmpty(aiMessage) ? "" : ollamaModel,
+        });
     }
 
     private string BuildCoachPrompt(ModeRecommendation rec)

@@ -5,12 +5,15 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 // Talks to a locally running Ollama server - no Python, no cloud API key.
-// Setup (once): install Ollama, then `ollama pull gemma3:4b`. Ollama's local
+// Setup (once): install Ollama, then `ollama pull gemma4:e4b`. Ollama's local
 // server starts automatically and listens on localhost:11434.
 public static class OllamaClient
 {
     private const string Endpoint = "http://localhost:11434/api/generate";
-    private const int TimeoutSeconds = 20;
+    // Cold start (loading an 8B model into memory) measured ~37s on this machine;
+    // warm calls are ~2s. 20s was below the cold-start floor, so the first request
+    // after Ollama idles out its model always aborted.
+    private const int TimeoutSeconds = 60;
 
     [Serializable]
     private class Request

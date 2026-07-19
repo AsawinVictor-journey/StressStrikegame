@@ -15,6 +15,7 @@ public struct ModeRecommendation
     public string modeName;
     public string coachMessage;
     public string reason; // plain-language line drawn from the winning bucket's top subscale
+    public CopeSubscale topSubscale; // the subscale `reason` was drawn from
 }
 
 public static class GameModeRecommendation
@@ -137,6 +138,7 @@ public static class GameModeRecommendation
             modeName = info.modeName,
             coachMessage = info.coachMessage,
             reason = ReasonBySubscale[topSubscale],
+            topSubscale = topSubscale,
         };
     }
 }

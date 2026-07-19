@@ -3,8 +3,14 @@
   <xs:import schemaLocation="UnityEngine.UIElements.xsd" namespace="UnityEngine.UIElements" />
   <xs:import schemaLocation="UnityEditor.ShaderGraph.Drawing.xsd" namespace="UnityEditor.ShaderGraph.Drawing" />
   <xs:include schemaLocation="GlobalNamespace.xsd" />
+  <xs:import schemaLocation="Unity.Services.Multiplayer.Editor.Shared.UI.DeploymentConfigInspectorFooter.xsd" namespace="Unity.Services.Multiplayer.Editor.Shared.UI.DeploymentConfigInspectorFooter" />
+  <xs:import schemaLocation="Unity.Services.Deployment.Editor.Shared.UI.DeploymentConfigInspectorFooter.xsd" namespace="Unity.Services.Deployment.Editor.Shared.UI.DeploymentConfigInspectorFooter" />
+  <xs:import schemaLocation="Unity.Services.Deployment.Editor.Interface.UI.Views.xsd" namespace="Unity.Services.Deployment.Editor.Interface.UI.Views" />
+  <xs:import schemaLocation="Unity.Services.Deployment.Editor.Interface.UI.Components.xsd" namespace="Unity.Services.Deployment.Editor.Interface.UI.Components" />
+  <xs:import schemaLocation="Unity.Services.Core.Editor.Environments.UI.xsd" namespace="Unity.Services.Core.Editor.Environments.UI" />
   <xs:import schemaLocation="UnityEditor.Rendering.xsd" namespace="UnityEditor.Rendering" />
   <xs:import schemaLocation="UnityEditor.U2D.Sprites.SpriteEditorTool.xsd" namespace="UnityEditor.U2D.Sprites.SpriteEditorTool" />
+  <xs:import schemaLocation="com.IvanMurzak.Unity.MCP.Editor.UI.Controls.xsd" namespace="com.IvanMurzak.Unity.MCP.Editor.UI.Controls" />
   <xs:import schemaLocation="UnityEditor.UIElements.Debugger.xsd" namespace="UnityEditor.UIElements.Debugger" />
   <xs:import schemaLocation="Unity.UI.Builder.xsd" namespace="Unity.UI.Builder" />
   <xs:import schemaLocation="UnityEditor.Search.xsd" namespace="UnityEditor.Search" />

@@ -29,6 +29,33 @@ public class YogaManager : MonoBehaviour
     public TMP_Text breathingText;
     public RectTransform breathingCircle;
     Coroutine breathingCoroutine;
+    Coroutine poseLoopCoroutine;
+
+    [Tooltip("How many times the instructor cycles out to the mid pose and back.")]
+    public int midPoseCycles = 3;
+
+    [Header("Cycle Timing")]
+    // Tuned against the reference footage (yoga spread.mp4), which runs a ~9.3s
+    // cycle spending ~5.8s spread and ~3.5s closed. Driving these by hand
+    // instead of by clip length is what keeps the instructor in step with the
+    // video -- the raw clips are ~2s each, which reads far too fast.
+    // The hold values are shorter than the on-screen spans because the crossfade
+    // either side bleeds into them; these are the numbers that measured correct.
+    [Tooltip("Seconds held in the open pose before closing.")]
+    public float openHoldDuration = 5.27f;
+
+    [Tooltip("Seconds held in the mid (closed) pose before unwinding.")]
+    public float closedHoldDuration = 1.81f;
+
+    [Tooltip("Seconds to travel from the open pose to the closed pose.")]
+    public float toClosedDuration = 1.17f;
+
+    [Tooltip("Seconds to travel back from the closed pose to the open pose.")]
+    public float toOpenDuration = 1.05f;
+
+    [Tooltip("Seconds of blend between the pose clips and the transition clips. " +
+             "Too short and the instructor snaps out of the held pose.")]
+    public float blendDuration = 0.35f;
 
 
     [Header("Instructor")]
@@ -214,7 +241,6 @@ public class YogaManager : MonoBehaviour
             Time.deltaTime * colorSmooth
         );
     }
-
         IEnumerator StartPoseRoutine()
     {   
         uiFade.ShowUI(countdownGroup);
@@ -252,8 +278,13 @@ public class YogaManager : MonoBehaviour
         // Play the actual pose
         instructorAnimator.CrossFade(
             selectedPose.poseAnimation.name,
-            0.3f
+            0.3f    
         );
+
+        // Cycle the instructor between the pose and its mid pose for as long as
+        // HoldPose() keeps the timer running.
+        poseLoopCoroutine = StartCoroutine(PoseLoopRoutine());
+
         yogaTracker.StartTracking();
 
         uiFade.ShowUI(timerGroup);
@@ -279,6 +310,127 @@ public class YogaManager : MonoBehaviour
 
         timerBar.fillAmount = 0f;
         StartCoroutine(CompleteRoutine());
+    }
+
+    // One full out-and-back cycle at the current inspector settings.
+    public float CycleDuration
+    {
+        get { return openHoldDuration + toClosedDuration + closedHoldDuration + toOpenDuration; }
+    }
+
+    // A pose may carry its own rhythm; anything it leaves at 0 falls back to the
+    // values above. Poses move at very different speeds, so one global tempo
+    // cannot serve all of them.
+    static float Resolve(float perPose, float fallback)
+    {
+        return perPose > 0f ? perPose : fallback;
+    }
+
+    float OpenHold { get { return Resolve(selectedPose.openHoldDuration, openHoldDuration); } }
+    float ClosedHold { get { return Resolve(selectedPose.closedHoldDuration, closedHoldDuration); } }
+    float ToClosed { get { return Resolve(selectedPose.toClosedDuration, toClosedDuration); } }
+    float ToOpen { get { return Resolve(selectedPose.toOpenDuration, toOpenDuration); } }
+    float Blend { get { return Resolve(selectedPose.blendDuration, blendDuration); } }
+    int Cycles { get { return selectedPose.midPoseCycles > 0 ? selectedPose.midPoseCycles : midPoseCycles; } }
+
+    void OnValidate()
+    {
+        // A zero or negative duration would divide by ~0 in PlayForward and
+        // spin forever in PlayReversed.
+        openHoldDuration = Mathf.Max(0.05f, openHoldDuration);
+        closedHoldDuration = Mathf.Max(0.05f, closedHoldDuration);
+        toClosedDuration = Mathf.Max(0.05f, toClosedDuration);
+        toOpenDuration = Mathf.Max(0.05f, toOpenDuration);
+        midPoseCycles = Mathf.Max(0, midPoseCycles);
+
+        // The hold timer ends the pose no matter where the cycle has got to, so
+        // warn rather than let the last rep silently get cut off.
+        float needed = CycleDuration * midPoseCycles;
+        if (needed > holdTime)
+            Debug.LogWarning(
+                "[YogaManager] " + midPoseCycles + " cycles need " + needed.ToString("F1") +
+                "s but holdTime is " + holdTime.ToString("F1") + "s - the last rep will be cut short. " +
+                "Raise holdTime to at least " + Mathf.Ceil(needed) + " or shorten the cycle.", this);
+    }
+
+    IEnumerator PoseLoopRoutine()
+    {
+        // No mid pose means the pose clip just loops on its own — nothing to drive.
+        if (selectedPose.MidPoseAnimation == null)
+            yield break;
+
+        // Played forwards to reach the mid pose, then backwards to come home.
+        AnimationClip midTransition = selectedPose.reverseTransitionAnimation;
+
+        // The pose clips loop, so holding longer than the clip just keeps them
+        // breathing rather than freezing on the last frame.
+        for (int cycle = 0; cycle < Cycles; cycle++)
+        {
+            yield return new WaitForSeconds(OpenHold);
+
+            if (midTransition != null)
+                yield return StartCoroutine(PlayForward(midTransition, ToClosed));
+
+            instructorAnimator.CrossFadeInFixedTime(selectedPose.MidPoseAnimation.name, Blend);
+            yield return new WaitForSeconds(ClosedHold);
+
+            // Same clip in reverse instead of a separately authored return clip.
+            if (midTransition != null)
+                yield return StartCoroutine(
+                    PlayReversed(midTransition, ToOpen, selectedPose.poseAnimation.name));
+            else
+                instructorAnimator.CrossFadeInFixedTime(selectedPose.poseAnimation.name, Blend);
+        }
+
+        poseLoopCoroutine = null;
+    }
+
+    // Plays a state forwards, stretched or compressed to last exactly
+    // 'duration' seconds regardless of how long the clip itself is.
+    IEnumerator PlayForward(AnimationClip clip, float duration)
+    {
+        float previousSpeed = instructorAnimator.speed;
+
+        instructorAnimator.speed = clip.length / Mathf.Max(duration, 0.01f);
+
+        // CrossFadeInFixedTime, not CrossFade: CrossFade's duration is normalized
+        // to the destination clip and then scaled by the speed set above, which
+        // collapsed the blend to ~0.18s and made the instructor snap out of the
+        // held pose. A fixed-time blend stays the length it says it is.
+        instructorAnimator.CrossFadeInFixedTime(clip.name, Mathf.Min(Blend, duration * 0.5f));
+        yield return new WaitForSeconds(duration);
+
+        instructorAnimator.speed = previousSpeed;
+    }
+
+    // Plays a state backwards by scrubbing normalizedTime from 1 down towards 0
+    // over 'duration' seconds, then blends into 'blendToState' for the tail.
+    //
+    // Two things this works around:
+    //  - Setting instructorAnimator.speed = -1f does nothing useful: Unity clamps
+    //    a negative Animator.speed to 0, freezing the pose on its last frame for
+    //    the length of the clip instead of unwinding it.
+    //  - The transition clip's first frame is not identical to the held pose
+    //    (measured ~0.19m narrower). Scrubbing all the way to 0 therefore made
+    //    the arms reach open, retract, then pop back out. Handing the last
+    //    'blend' seconds over to a crossfade keeps the motion monotonic.
+    IEnumerator PlayReversed(AnimationClip clip, float duration, string blendToState)
+    {
+        float previousSpeed = instructorAnimator.speed;
+
+        // The animator must not advance on its own while we drive the time.
+        instructorAnimator.speed = 0f;
+
+        float blend = Mathf.Min(Blend, duration * 0.4f);
+        for (float remaining = duration; remaining > blend; remaining -= Time.deltaTime)
+        {
+            instructorAnimator.Play(clip.name, 0, Mathf.Clamp01(remaining / duration));
+            yield return null;
+        }
+
+        instructorAnimator.speed = previousSpeed;
+        instructorAnimator.CrossFadeInFixedTime(blendToState, blend);
+        yield return new WaitForSeconds(blend);
     }
 
     IEnumerator BreathingRoutine()
@@ -370,6 +522,12 @@ public class YogaManager : MonoBehaviour
         {
             StopCoroutine(feedbackCoroutine);
             feedbackCoroutine = null;
+        }
+
+        if (poseLoopCoroutine != null)
+        {
+            StopCoroutine(poseLoopCoroutine);
+            poseLoopCoroutine = null;
         }
         lastFeedbackMessage = "";
 

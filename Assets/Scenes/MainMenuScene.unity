@@ -1783,7 +1783,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &199300221
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6334,7 +6334,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &791920935
 RectTransform:
   m_ObjectHideFlags: 0
@@ -15225,7 +15225,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2036740546
 RectTransform:
   m_ObjectHideFlags: 0
@@ -15618,6 +15618,7 @@ MonoBehaviour:
   questionPanel: {fileID: 199300220}
   halfwayPanel: {fileID: 791920934}
   resultPanel: {fileID: 2036740545}
+  introTextTop: {fileID: 0}
   startButton: {fileID: 433403455}
   introSkipButton: {fileID: 545117578}
   questionText: {fileID: 589514327}
@@ -15629,6 +15630,7 @@ MonoBehaviour:
   - {fileID: 2133767980}
   nextQuestionButton: {fileID: 763337203}
   questionSkipButton: {fileID: 2051193408}
+  halfwayText: {fileID: 0}
   halfwayContinueButton: {fileID: 740204365}
   reasonText: {fileID: 667937489}
   disclaimerText: {fileID: 1945903461}
@@ -15639,6 +15641,8 @@ MonoBehaviour:
   finishButton: {fileID: 1540433543}
   answerIdleColor: {r: 1, g: 1, b: 1, a: 1}
   answerSelectedColor: {r: 1, g: 0.35, b: 0.37, a: 1}
+  useAiCoachMessage: 1
+  ollamaModel: gemma3:4b
 --- !u!4 &2053801835
 Transform:
   m_ObjectHideFlags: 0

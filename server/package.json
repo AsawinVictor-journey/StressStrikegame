@@ -1,0 +1,22 @@
+{
+  "name": "stressstrike-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloud sync + statistics API for StressStrike (Unity client -> MongoDB)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file=.env server.js",
+    "dev": "node --watch --env-file=.env server.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.2.0"
+  }
+}
