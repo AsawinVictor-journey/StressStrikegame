@@ -9,6 +9,15 @@ public class DeformableMesh : MonoBehaviour
     public float minImpactSpeed = 1f;
     public float maxImpactSpeed = 14f;
 
+    [Tooltip("Minimum time (s) between two deformations of this mesh. Deforming is " +
+             "not cheap — it walks every vertex, re-uploads the vertex buffer, " +
+             "recalculates normals and bounds, and schedules a convex re-cook of the " +
+             "MeshCollider. Without this gate that whole chain ran on EVERY qualifying " +
+             "contact, and contacts arrive far faster than once per punch (a hand with " +
+             "two colliders touching an object with two colliders reports up to four). " +
+             "Mirrors DestructibleObject.hitCooldown, which already had this guard.")]
+    public float hitCooldown = 0.15f;
+
     [Header("Collider Sync")]
     public bool  updateCollider       = true;
     public float colliderRebuildDelay = 0.15f;
@@ -17,6 +26,15 @@ public class DeformableMesh : MonoBehaviour
     Vector3[]    vertices;
     Vector3[]    originalVertices;
     MeshCollider meshCollider;
+    float        lastHitTime = float.NegativeInfinity;
+
+    // Pending collider rebuild, tracked as a timestamp rather than Invoke().
+    // The old CancelInvoke/Invoke pair re-armed the delay on every hit, so a
+    // sustained barrage postponed the rebuild indefinitely and collision shape
+    // never caught up with the visible dents until the player stopped punching.
+    // A deadline that is only ever set, never pushed back, actually fires.
+    bool  rebuildPending;
+    float rebuildAt;
 
     void Start()
     {
@@ -46,7 +64,12 @@ public class DeformableMesh : MonoBehaviour
         originalVertices = (Vector3[])vertices.Clone();
         meshCollider     = GetComponent<MeshCollider>();
 
-        if (meshCollider != null && meshCollider.sharedMesh == null)
+        // Assign unconditionally. Guarding on "== null" meant that whenever the
+        // collider already referenced the shared FBX asset mesh (which it does in
+        // the authored scene), collision kept using the pristine asset while the
+        // renderer showed a deformed instance — two different meshes — until the
+        // first rebuild swapped it wholesale.
+        if (meshCollider != null)
             meshCollider.sharedMesh = mesh;
     }
 
@@ -54,8 +77,12 @@ public class DeformableMesh : MonoBehaviour
     {
         if (!collision.gameObject.CompareTag("Hand")) return;
 
+        if (Time.time - lastHitTime < hitCooldown) return;
+
         float speed = collision.relativeVelocity.magnitude;
         if (speed < minImpactSpeed) return;
+
+        lastHitTime = Time.time;
 
         float force = Mathf.Clamp01((speed - minImpactSpeed) / (maxImpactSpeed - minImpactSpeed));
 
@@ -108,16 +135,32 @@ public class DeformableMesh : MonoBehaviour
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        if (updateCollider)
+        // Arm the rebuild deadline once and leave it alone. Re-arming it on each
+        // subsequent hit is what starved it before.
+        if (updateCollider && !rebuildPending)
         {
-            CancelInvoke(nameof(RebuildCollider));
-            Invoke(nameof(RebuildCollider), colliderRebuildDelay);
+            rebuildPending = true;
+            rebuildAt      = Time.time + colliderRebuildDelay;
         }
+    }
+
+    void Update()
+    {
+        if (!rebuildPending || Time.time < rebuildAt) return;
+
+        rebuildPending = false;
+        RebuildCollider();
     }
 
     void RebuildCollider()
     {
-        meshCollider.sharedMesh = null;
+        if (meshCollider == null) return;
+
+        // Reassigning the same Mesh re-cooks the PhysX shape from its current
+        // vertices. Nulling first was removing the shape from the actor outright
+        // for a step, which dropped every contact against it and let anything
+        // resting on or pressed into the object re-penetrate and get ejected by
+        // depenetration on the next step — a visible lurch mid-punch.
         meshCollider.sharedMesh = mesh;
     }
 }

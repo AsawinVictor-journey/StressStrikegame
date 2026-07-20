@@ -41,9 +41,22 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Last value actually pushed to the label. Update() calls UpdateTimerUI()
+    // every frame, but the displayed value only changes once a second — the
+    // other ~59 assignments allocated a fresh string AND forced TextMeshPro to
+    // rebuild its text mesh to draw the identical glyphs. Caching the integer
+    // turns that into a cheap int compare.
+    int lastShownSeconds = int.MinValue;
+
     void UpdateTimerUI()
     {
-        timerText.text = Mathf.CeilToInt(timer).ToString();
+        if (timerText == null) return;
+
+        int seconds = Mathf.CeilToInt(timer);
+        if (seconds == lastShownSeconds) return;
+
+        lastShownSeconds = seconds;
+        timerText.SetText("{0}", seconds); // no string allocation
     }
 
     public void ObjectDestroyed()

@@ -25,8 +25,12 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class ImpactReaction : MonoBehaviour
 {
-    [Tooltip("Scales the final force. Tune this after setting forceExponent.")]
-    public float forceMultiplier = 1.0f;
+    [Tooltip("Scales the final impulse. Tune this after setting forceExponent.\n" +
+             "This value is in N·s, and ForceMode.Impulse divides it by mass to get " +
+             "a velocity change directly — so at forceExponent 2 and maxImpactSpeed 12, " +
+             "a multiplier of 1 produces a 144 N·s impulse, which throws a 10 kg monitor " +
+             "at 14 m/s. Keep it small: 0.05-0.2 is the useful range.")]
+    public float forceMultiplier = 0.1f;
 
     [Tooltip("Power curve applied to impact speed before multiplying by forceMultiplier.\n" +
              "1 = linear (force grows with speed)\n" +
@@ -74,8 +78,13 @@ public class ImpactReaction : MonoBehaviour
         Vector3 force = contact.normal * forceMag;
 
         // Single call: linear push + angular torque from lever arm at contact point.
-        // ForceMode.Impulse applies force × Time.fixedDeltaTime / rb.mass as ΔV,
-        // meaning mass is respected automatically with no extra code.
+        //
+        // ForceMode.Impulse applies force / rb.mass as ΔV — note there is NO
+        // Time.fixedDeltaTime term (that is ForceMode.Force). An earlier comment
+        // here claimed otherwise, and forceMultiplier was tuned against that wrong
+        // model, so every impulse landed 1/0.02 = 50x harder than intended. That
+        // is what launched objects across the room and spun them wildly. Mass IS
+        // still respected automatically, which is why heavier objects move less.
         rb.AddForceAtPosition(force, contact.point, ForceMode.Impulse);
     }
 }

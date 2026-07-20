@@ -35,10 +35,10 @@ namespace RageRoom
 ///       instant input stops
 ///     → PunchController drives two position-based overrides of the above,
 ///       BeginPunch() (guaranteed-distance forward lunge) and BeginRetract()
-///       (guaranteed return), both on their own timers rather than riding on
-///       velocity/damping — since punching is the sole source of Z motion,
-///       it can't be left to chance the way a free-roaming velocity kick
-///       could when the player could also just walk into range.
+///       (guaranteed return to a FIXED home pose), both on their own timers
+///       rather than riding on velocity/damping — since punching is the sole
+///       source of Z motion, it can't be left to chance the way a free-roaming
+///       velocity kick could when the player could also just walk into range.
 ///   ConfigurableJoint (PhysicsHandController, unchanged)
 ///     → physical hand follows this anchor via spring-damper inside PhysX
 ///   RageRoomCameraRotation (unchanged)
@@ -99,12 +99,52 @@ public class HandTarget : MonoBehaviour
     public float punchSpeed = 25f; // Increased for a faster punch
 
     [Header("Punch Retract")]
-    [Tooltip("How long the snap-back to the pre-punch position takes (s) once " +
+    [Tooltip("How long the snap-back to the home position takes (s) once " +
              "PunchController reports a connected hit (or the punch times out " +
              "without landing one). Position-driven, not velocity-driven — a " +
              "punch should retract on a predictable timer, not coast back at " +
              "the mercy of damping.")]
     public float retractDuration = 0.12f;
+
+    [Header("Punch Home")]
+    [Tooltip("On (default): the anchor's authored scene position is captured " +
+             "in Start() and becomes the home pose, so home always matches " +
+             "however the hand was placed in the scene. Off: Home Local " +
+             "Position below is used verbatim, for when you want a rest pose " +
+             "that deliberately differs from where the object sits in-editor.")]
+    public bool useAuthoredStartAsHome = true;
+
+    [Tooltip("The ONE fixed rest pose, in origin-local space, that every " +
+             "retract tweens back to. Deliberately a fixed point rather than " +
+             "'wherever the hand happened to be when the punch started': a " +
+             "remembered pre-punch position is only as trustworthy as the " +
+             "state that produced it, so a punch thrown while a previous one " +
+             "was still extended used to memorise an ALREADY-EXTENDED position " +
+             "as its rest pose and 'retract' the hand to a spot half a metre " +
+             "out in front of the player, permanently. A constant can't drift " +
+             "like that — no matter how many punches overlap, how many hitbox " +
+             "events go missing, or what the free-roam integrator was doing, " +
+             "the hand converges on exactly this point. Overwritten in Start() " +
+             "when Use Authored Start As Home is on.")]
+    public Vector3 homeLocalPosition = Vector3.zero;
+
+    [Tooltip("Hard ceiling (s) on how long the hand may stay extended before " +
+             "it retracts itself, whether or not anyone asked it to. The " +
+             "extend hold is open-ended by design — it waits for " +
+             "PunchController to call BeginRetract() on a landed hit or a " +
+             "closed hitbox window — which means every way that call can fail " +
+             "to arrive (unassigned hitbox, a PunchHitbox whose collision " +
+             "callback never fires, the controller being disabled mid-punch, " +
+             "an exception upstream) leaves the hand stuck out in front of the " +
+             "player forever. This timer is the backstop that makes that " +
+             "outcome impossible: it lives in this script's own FixedUpdate " +
+             "and depends on nothing external, so it still fires when every " +
+             "other part of the punch pipeline is broken. Set generously — it " +
+             "should never trigger on a healthy punch (extend lerp ~0.02-0.03s " +
+             "plus a hitbox window of at most 0.3s), only rescue a stuck one. " +
+             "0 or less disables it, which is not recommended.")]
+    public float maxPunchDuration = 1f;
+
     // Read by RageRoomCameraRotation (forwarded through PhysicsHandController).
     public Vector3 LocalPosition => localPos;
 
@@ -112,6 +152,17 @@ public class HandTarget : MonoBehaviour
     /// RageRoomCameraRotation to suppress camera flicks during a punch, so an
     /// imperfect (slightly sideways) punch doesn't also spin the camera.</summary>
     public bool IsPunching => extending || retracting;
+
+    /// <summary>
+    /// How long the current lunge takes (s), i.e. punchDistance / travel speed.
+    /// Exposed so PunchController can size its hitbox window against the punch
+    /// it is actually gating instead of against an independently-authored
+    /// constant. A window shorter than this retracts the hand mid-swing: a tap
+    /// travels at minPunchSpeed and so takes the LONGEST time to complete, which
+    /// is the opposite of the intuition the two separate inspector values invite.
+    /// Zero until the first BeginPunch.
+    /// </summary>
+    public float ExtendDuration => extendDuration;
 
     [HideInInspector] public Collider handCollider;
 
@@ -130,6 +181,13 @@ public class HandTarget : MonoBehaviour
     float   extendElapsed;
     float   extendDuration;
 
+    // Separate from extendElapsed on purpose. extendElapsed drives the lerp and
+    // is only meaningful against extendDuration; this one measures the whole
+    // uninterrupted stay in the extending state, including the open-ended hold
+    // after the lerp has already finished — which is precisely the window the
+    // watchdog exists to bound.
+    float   extendHeldTime;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -137,6 +195,14 @@ public class HandTarget : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         localPos = origin.InverseTransformPoint(transform.position);
+
+        // Home is resolved exactly once, before any punch can run, so the rest
+        // pose is a compile-time-style constant from the state machine's point
+        // of view — nothing that runs later is allowed to write it. Clamped
+        // either way: a home outside the workspace box could never be reached,
+        // and the retract lerp would appear to stall short of its target
+        // forever with no obvious cause.
+        homeLocalPosition = Clamp(useAuthoredStartAsHome ? localPos : homeLocalPosition);
 
         var all = FindObjectsByType<HandTarget>(FindObjectsSortMode.None);
         otherTargets = System.Array.FindAll(all, t => t != this);
@@ -154,10 +220,27 @@ public class HandTarget : MonoBehaviour
             // ignored for the duration so nothing fights the retraction.
             retractElapsed += dt;
             float t = Mathf.Clamp01(retractElapsed / retractDuration);
-            localPos = Clamp(Vector3.Lerp(retractFrom, retractTo, t));
+            localPos = Clamp(Vector3.Lerp(retractFrom, retractTo, Ease(t)));
 
             if (t >= 1f)
+            {
+                // Snap to the exact target rather than settling for whatever
+                // the last lerp step produced. At t = 1 the lerp already lands
+                // on retractTo mathematically, but float error over a variable
+                // number of steps can leave a sub-millimetre residue, and this
+                // position is the seed for the NEXT punch's extendFrom — small
+                // errors here are the kind that compound punch over punch until
+                // the rest pose has visibly wandered. Assigning the constant
+                // makes the hand's resting position bit-identical every time.
+                localPos   = retractTo;
                 retracting = false;
+
+                // Handing control back to the free-roam integrator with stale
+                // velocity in it would let the tween's leftover momentum keep
+                // pushing the hand the instant the retract ends — undoing the
+                // return we just guaranteed.
+                velocity.Velocity = Vector3.zero;
+            }
         }
         else if (extending)
         {
@@ -172,9 +255,24 @@ public class HandTarget : MonoBehaviour
             // lerp's ~20-30ms), so any live acceleration input (a held
             // movement key, or the punch's own charge spike still decaying)
             // kept driving the anchor further forward instead of holding.
-            extendElapsed += dt;
+            extendElapsed  += dt;
+            extendHeldTime += dt;
+
             float t = extendDuration > 0f ? Mathf.Clamp01(extendElapsed / extendDuration) : 1f;
-            localPos = Clamp(Vector3.Lerp(extendFrom, extendTo, t));
+            localPos = Clamp(Vector3.Lerp(extendFrom, extendTo, Ease(t)));
+
+            // ── Watchdog ─────────────────────────────────────────────────
+            // The hold above is open-ended: it ends when, and only when,
+            // someone else calls BeginRetract(). That is the correct shape for
+            // the feature and the wrong shape for reliability, because it makes
+            // "the hand comes back" conditional on an external call that has
+            // several plausible ways of never arriving (see maxPunchDuration's
+            // tooltip). This check closes that hole from the inside. It is
+            // deliberately here rather than in PunchController: a backstop that
+            // lives in the same component as the failure it guards against is
+            // one that cannot be bypassed by anything going wrong upstream.
+            if (maxPunchDuration > 0f && extendHeldTime >= maxPunchDuration)
+                BeginRetract();
         }
         else
         {
@@ -245,41 +343,101 @@ public class HandTarget : MonoBehaviour
     /// (minPunchSpeed..punchSpeed), not reach, so a fully-charged punch
     /// covers identical ground faster than a tap, landing with more impact
     /// velocity. Holds at full extension until BeginRetract is called (on a
-    /// landed hit, or on timeout if the hitbox window closes without one).
+    /// landed hit, or on timeout if the hitbox window closes without one),
+    /// with the watchdog as a hard ceiling on that hold.
+    ///
+    /// Safe to call at any point in the punch cycle: a punch arriving mid-
+    /// extend or mid-retract cleanly restarts the cycle from wherever the hand
+    /// currently is, and cannot corrupt the rest pose it will return to.
     /// </summary>
     public void BeginPunch(float strength)
-    {   
+    {
         float speed = Mathf.Lerp(minPunchSpeed, punchSpeed, strength);
 
+        // Reach is measured from HOME's forward axis, not from wherever the
+        // hand currently is. Measuring from localPos made overlapping punches
+        // additive on Z: punch twice in quick succession and the second lunge
+        // started from the first one's full extension and reached half a metre
+        // beyond it, walking the hand out to its forward bound one punch at a
+        // time. Anchoring the destination to a constant makes maximum reach
+        // identical for every punch no matter how they overlap. X/Y still come
+        // from the live position so the player keeps their lateral aim —
+        // punches land where the hand is pointed, they just always travel to
+        // the same depth.
+        Vector3 destination = new Vector3(
+            localPos.x,
+            localPos.y,
+            homeLocalPosition.z + punchDistance);
+
+        // A punch supersedes whatever the hand was doing. Clearing retracting
+        // here matters: without it a punch thrown mid-retract would leave both
+        // flags set, and the retract branch (checked first in FixedUpdate)
+        // would keep dragging the hand backwards while the punch it was
+        // supposed to throw silently never moved.
+        retracting     = false;
         extendFrom     = localPos;
-        extendTo       = Clamp(localPos + Vector3.forward * punchDistance);
+        extendTo       = Clamp(destination);
         extendDuration = speed > 0.01f ? punchDistance / speed : 0f;
         extendElapsed  = 0f;
+        extendHeldTime = 0f;
         extending      = true;
+
+        // Enter the tween with no stored momentum, so the position-driven lerp
+        // is the only thing moving the hand for its duration.
         velocity.Velocity = Vector3.zero;
-        Debug.Log($"Punch distance = {punchDistance}");
-        Debug.Log($"From = {localPos}");
-        Debug.Log($"To = {extendTo}");
     }
 
     /// <summary>
-    /// Called by PunchController when the hitbox lands a hit, or when the
-    /// punch's hitbox window times out without one. Snaps the anchor back to
-    /// targetLocalPos (the position captured right before the punch) over
-    /// retractDuration, overriding input for that window. Also zeroes the
-    /// integrator so leftover velocity doesn't resume carrying the hand
+    /// Retract to the fixed home DEPTH, keeping the hand where the player has
+    /// aimed it laterally. This is the overload PunchController calls, and the
+    /// one the watchdog calls.
+    ///
+    /// Only Z is forced home, and that asymmetry is the whole point. Z is the
+    /// one axis with no sustained player control — GetAcceleration() never
+    /// drives it, so punching is the only thing that ever moves the hand along
+    /// it. That makes Z the only axis that can ratchet: a retract aimed at a
+    /// remembered position re-recorded its target from an already-displaced
+    /// hand, so each punch's rest pose crept further out than the last and
+    /// nothing existed to pull it back (recoverySpringStrength defaults to 0).
+    /// Anchoring Z to a constant breaks that feedback loop permanently.
+    ///
+    /// X and Y are deliberately left alone. Those axes ARE player-driven and
+    /// bounded by Clamp(), so they self-correct and cannot ratchet — and
+    /// dragging them home on every punch would throw away the player's aim
+    /// mid-fight, forcing them to re-acquire a target after each hit.
+    /// </summary>
+    public void BeginRetract() =>
+        BeginRetract(new Vector3(localPos.x, localPos.y, homeLocalPosition.z));
+
+    /// <summary>
+    /// Retract to an explicit target. Kept for callers that genuinely want to
+    /// steer the return somewhere other than home; the parameterless overload
+    /// above is the right choice for ordinary punch handling. Snaps the anchor
+    /// back over retractDuration, overriding input for that window, and zeroes
+    /// the integrator so leftover velocity doesn't resume carrying the hand
     /// forward once the retract ends.
     /// </summary>
     public void BeginRetract(Vector3 targetLocalPos)
     {
-        Debug.Log($"[Punch] {name}: BeginRetract from {localPos} to {targetLocalPos}", this);
         extending      = false;
+        extendHeldTime = 0f;
         retractFrom    = localPos;
-        retractTo      = targetLocalPos;
+        retractTo      = Clamp(targetLocalPos);
         retractElapsed = 0f;
         retracting     = true;
         velocity.Velocity = Vector3.zero;
     }
+
+    /// <summary>
+    /// Smoothstep. Raw Vector3.Lerp on a linear t starts and stops the hand at
+    /// full speed, which reads as a mechanical snap in both directions —
+    /// especially on the retract, where a hard stop at the rest pose looks like
+    /// the hand hit a wall. Easing the ends gives the tween acceleration and
+    /// settle without changing its duration, its endpoints, or the guarantee
+    /// that t = 1 lands exactly on target. Hand-rolled by design: three float
+    /// ops do not justify pulling a tweening package into the project.
+    /// </summary>
+    static float Ease(float t) => t * t * (3f - 2f * t);
 
     Vector3 Clamp(Vector3 l)
     {

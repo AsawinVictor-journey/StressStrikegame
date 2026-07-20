@@ -141,7 +141,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 2.0398357, y: 3.817572, z: 2.242719}
   m_Center: {x: 0.0007164515, y: 0.90463763, z: -0.121377245}
@@ -154,8 +154,8 @@ Rigidbody:
   m_GameObject: {fileID: 6709415}
   serializedVersion: 4
   m_Mass: 25
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -169,9 +169,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &6709421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,6 +193,7 @@ MonoBehaviour:
   minScale: 0.1
   maxScale: 0.3
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!114 &6709425
@@ -207,7 +208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 1
+  forceMultiplier: 0.1
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -225,9 +226,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.75
-  maxDentDepth: -0.5
+  maxDentDepth: 0.5
   minImpactSpeed: 1
   maxImpactSpeed: 14
+  hitCooldown: 0.15
   updateCollider: 1
   colliderRebuildDelay: 0.15
 --- !u!64 &6709427
@@ -396,6 +398,9 @@ MonoBehaviour:
   minPunchSpeed: 8
   punchSpeed: 14
   retractDuration: 0.12
+  useAuthoredStartAsHome: 1
+  homeLocalPosition: {x: 0, y: 0, z: 0}
+  maxPunchDuration: 1
   handCollider: {fileID: 0}
 --- !u!114 &125392734
 MonoBehaviour:
@@ -420,7 +425,7 @@ MonoBehaviour:
   gloveSide: 0
   convertToLeftHanded: 1
   gloveForceDeadzone: 15
-  glovePunchTrigger: 5
+  glovePunchTrigger: 30
   glovePunchFull: 55
   allowRecenter: 1
   recenterKey: 32
@@ -782,6 +787,7 @@ MonoBehaviour:
   minScale: 0.1
   maxScale: 0.2
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!54 &269305325
@@ -793,8 +799,8 @@ Rigidbody:
   m_GameObject: {fileID: 269305320}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -808,9 +814,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!65 &269305326
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1230,7 +1236,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 2.0398355, y: 3.817572, z: 2.2427187}
   m_Center: {x: 0.0007145369, y: 0.90463763, z: -0.12137723}
@@ -1243,8 +1249,8 @@ Rigidbody:
   m_GameObject: {fileID: 360610502}
   serializedVersion: 4
   m_Mass: 25
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1258,9 +1264,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &360610508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1282,6 +1288,7 @@ MonoBehaviour:
   minScale: 0.1
   maxScale: 0.3
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!114 &360610512
@@ -1296,7 +1303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 1
+  forceMultiplier: 0.1
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -1314,9 +1321,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.75
-  maxDentDepth: -0.5
+  maxDentDepth: 0.5
   minImpactSpeed: 1
   maxImpactSpeed: 14
+  hitCooldown: 0.15
   updateCollider: 1
   colliderRebuildDelay: 0.15
 --- !u!64 &360610514
@@ -1881,7 +1889,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: -0.23, y: 0.2, z: 0.3}
+  m_Size: {x: 0.23, y: 0.2, z: 0.3}
   m_Center: {x: -0.04, y: 0, z: 0.14}
 --- !u!114 &781497045
 MonoBehaviour:
@@ -2176,7 +2184,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   input: {fileID: 1875450671}
   punchThreshold: 60
-  fullStrengthAccel: 150
+  fullStrengthAccel: 200
   cooldown: 0.25
 --- !u!114 &815928614
 MonoBehaviour:
@@ -2921,9 +2929,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftHand: {fileID: 1680595308}
   rightHand: {fileID: 815928611}
-  triggerSource: 0
+  triggerSource: 1
   turnSpeedThreshold: 1200
-  slideSpeedThreshold: 8
+  slideSpeedThreshold: 2.1599987
   rearmFraction: 0.4
   cooldown: 0.3
   punchSuppressTime: 0.35
@@ -4724,7 +4732,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: -0.25, y: 0.25, z: 0.27}
+  m_Size: {x: 0.25, y: 0.25, z: 0.27}
   m_Center: {x: -0.04, y: 0, z: 0.15}
 --- !u!54 &1680595305
 Rigidbody:
@@ -4823,7 +4831,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   input: {fileID: 125392734}
   punchThreshold: 60
-  fullStrengthAccel: 150
+  fullStrengthAccel: 200
   cooldown: 0.25
 --- !u!114 &1680595311
 MonoBehaviour:
@@ -4970,6 +4978,7 @@ MonoBehaviour:
   minScale: 0.1
   maxScale: 0.2
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!54 &1750875083
@@ -4981,8 +4990,8 @@ Rigidbody:
   m_GameObject: {fileID: 1750875078}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -4996,9 +5005,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!65 &1750875084
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5311,6 +5320,7 @@ MonoBehaviour:
   minScale: 0.1
   maxScale: 0.2
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!54 &1840009280
@@ -5322,8 +5332,8 @@ Rigidbody:
   m_GameObject: {fileID: 1840009275}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -5337,9 +5347,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!65 &1840009281
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5677,6 +5687,9 @@ MonoBehaviour:
   minPunchSpeed: 8
   punchSpeed: 14
   retractDuration: 0.12
+  useAuthoredStartAsHome: 1
+  homeLocalPosition: {x: 0, y: 0, z: 0}
+  maxPunchDuration: 1
   handCollider: {fileID: 0}
 --- !u!54 &1875450673
 Rigidbody:
@@ -5785,8 +5798,8 @@ Rigidbody:
   m_GameObject: {fileID: 1932902860}
   serializedVersion: 4
   m_Mass: 10
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -5800,9 +5813,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!65 &1932902865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5820,7 +5833,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1.7553741, y: 1.2615094, z: 0.5091721}
   m_Center: {x: 0, y: -0.13560447, z: 0.1593869}
@@ -5845,6 +5858,7 @@ MonoBehaviour:
   minScale: 0.05
   maxScale: 0.2
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!114 &1932902869
@@ -5860,9 +5874,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.4
-  maxDentDepth: -0.25
+  maxDentDepth: 0.25
   minImpactSpeed: 1
   maxImpactSpeed: 14
+  hitCooldown: 0.15
   updateCollider: 1
   colliderRebuildDelay: 0.15
 --- !u!64 &1932902870
@@ -5884,7 +5899,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2212009239438826721, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
 --- !u!1 &1941054043
@@ -6208,7 +6223,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 2.0398355, y: 3.817572, z: 2.2427187}
   m_Center: {x: 0.00071454025, y: 0.90463763, z: -0.12137747}
@@ -6221,8 +6236,8 @@ Rigidbody:
   m_GameObject: {fileID: 2050901830}
   serializedVersion: 4
   m_Mass: 25
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -6236,9 +6251,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &2050901836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6260,6 +6275,7 @@ MonoBehaviour:
   minScale: 0.1
   maxScale: 0.3
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!114 &2050901840
@@ -6274,7 +6290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 1
+  forceMultiplier: 0.1
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -6292,9 +6308,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.75
-  maxDentDepth: -0.5
+  maxDentDepth: 0.5
   minImpactSpeed: 1
   maxImpactSpeed: 14
+  hitCooldown: 0.15
   updateCollider: 1
   colliderRebuildDelay: 0.15
 --- !u!64 &2050901842
@@ -6354,7 +6371,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 6.1559515, y: 2.5616045, z: 2.8616042}
   m_Center: {x: -0.07500005, y: 0.000000059604645, z: -0.00000011920929}
@@ -6367,8 +6384,8 @@ Rigidbody:
   m_GameObject: {fileID: 2081913369}
   serializedVersion: 4
   m_Mass: 50
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Drag: 0.5
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -6382,9 +6399,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &2081913375
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6406,6 +6423,7 @@ MonoBehaviour:
   minScale: 0.2
   maxScale: 0.5
   hitCooldown: 0.15
+  fragmentLifetime: 5
   explosionForce: 6
   explosionRadius: 2
 --- !u!114 &2081913379
@@ -6420,7 +6438,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 1
+  forceMultiplier: 0.1
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -6438,9 +6456,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 1
-  maxDentDepth: -0.25
+  maxDentDepth: 0.25
   minImpactSpeed: 2
   maxImpactSpeed: 5
+  hitCooldown: 0.15
   updateCollider: 1
   colliderRebuildDelay: 0.15
 --- !u!64 &2081913381

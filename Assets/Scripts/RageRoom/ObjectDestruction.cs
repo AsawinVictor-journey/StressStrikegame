@@ -51,12 +51,15 @@ public class DestructibleObject : MonoBehaviour
             return;
         lastHitTime = Time.time;
 
-        ScoreSystem.Instance.AddHit(velocity);
+        // Null-conditional to match GameManager's usage. A destructible can
+        // outlive the ScoreSystem during scene teardown, and an unguarded call
+        // throws there — killing the rest of this method, so the object takes
+        // no damage and never breaks.
+        ScoreSystem.Instance?.AddHit(velocity);
 
         float impact = Mathf.Pow(collision.relativeVelocity.magnitude, damageExponent) * damageMultiplier;
         Health -= impact;
 
-        UnityEngine.Debug.Log($"impact: {impact}");
         if (Health <= 0)
         {
             BreakObject(collision);
@@ -69,7 +72,7 @@ public class DestructibleObject : MonoBehaviour
 
         if (objectScore != null)
         {
-            ScoreSystem.Instance.AddScore(objectScore.score);
+            ScoreSystem.Instance?.AddScore(objectScore.score);
         }
 
         int pieces = Random.Range(minPieces, maxPieces);
@@ -87,7 +90,15 @@ public class DestructibleObject : MonoBehaviour
 
             if (rb != null)
             {
-                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                // Speculative, not ContinuousDynamic. Full CCD is the most
+                // expensive collision mode there is, and a destroyed desk spawns
+                // up to 15 of these at once — several objects broken in quick
+                // succession put 40+ CCD bodies in the solver at the same time,
+                // for debris the player only ever sees tumbling. Speculative
+                // still prevents tunnelling through the floor at a fraction of
+                // the cost, and interpolation keeps them smooth above 50 Hz.
+                rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                rb.interpolation          = RigidbodyInterpolation.Interpolate;
                 Vector3 dir = (frag.transform.position - collision.transform.position).normalized;
 
                 if (dir == Vector3.zero)

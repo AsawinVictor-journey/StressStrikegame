@@ -109,7 +109,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!54 &654444327160345422
@@ -153,6 +153,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   background3DPlane: {fileID: 1773672968637810344}
   targetPunchBag: {fileID: 0}
+  stadium: {fileID: 0}
+  hitFlashColor: {r: 1, g: 0.2, b: 0.1, a: 1}
+  hitFlashDuration: 0.15
   standardReturnSpeed: 8
   shiftDampingFactor: 0.15
 --- !u!114 &3703576617120991598
@@ -167,3 +170,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6887c84c7ff218a408971fbd994c2433, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  curveIntensity: 2
+  subdivisions: 50
