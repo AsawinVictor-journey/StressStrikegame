@@ -129,7 +129,6 @@ public class HandTarget : MonoBehaviour
     Vector3 extendTo;
     float   extendElapsed;
     float   extendDuration;
-    float   _dbgNextLog; // [TEMP DEBUG — remove after diagnosis]
 
     void Start()
     {
@@ -162,15 +161,20 @@ public class HandTarget : MonoBehaviour
         }
         else if (extending)
         {
-            // Same reasoning as retract, mirrored: guaranteed reach on a fixed
-            // timer, not a velocity kick that's at the mercy of damping and
-            // may not cover any real distance in 0.1s.
+            // Guaranteed reach on a fixed timer, not a velocity kick that's at
+            // the mercy of damping. Once the lerp reaches extendTo (t >= 1) it
+            // holds there: extending stays true, so t clamps at 1 and localPos
+            // stays pinned at extendTo. BeginRetract() is the only place that
+            // clears extending — clearing it here on completion was the root
+            // cause of the "punch doesn't come back" bug: the state machine
+            // fell through to the free-roam branch below while the hitbox
+            // window was still open (up to hitboxDuration, well past this
+            // lerp's ~20-30ms), so any live acceleration input (a held
+            // movement key, or the punch's own charge spike still decaying)
+            // kept driving the anchor further forward instead of holding.
             extendElapsed += dt;
             float t = extendDuration > 0f ? Mathf.Clamp01(extendElapsed / extendDuration) : 1f;
             localPos = Clamp(Vector3.Lerp(extendFrom, extendTo, t));
-
-            if (t >= 1f)
-                extending = false; // holds at full extension until BeginRetract is called
         }
         else
         {
@@ -181,16 +185,6 @@ public class HandTarget : MonoBehaviour
             // damping, and clamping; this script only adds the optional
             // recovery spring on top before integrating.
             Vector3 accel = input.GetAcceleration();
-
-            // [TEMP DEBUG — remove after diagnosis] Throttled ~2 Hz. If accel.z
-            // stays nonzero while NOT punching and localPos.z creeps toward
-            // maxForward, continuous (sustained) input is pinning the hand
-            // forward — the "pushes forward and won't return" mechanism.
-            if (Time.time >= _dbgNextLog && (Mathf.Abs(accel.z) > 0.01f || localPos.z > maxForward * 0.5f))
-            {
-                _dbgNextLog = Time.time + 0.5f;
-                Debug.Log($"[HandDbg] {name}: NON-PUNCH drive accel.z={accel.z:F1} localPos.z={localPos.z:F2}/{maxForward} vel.z={velocity.Velocity.z:F2}", this);
-            }
 
             if (recoverySpringStrength > 0f)
                 accel += (Vector3.zero - localPos) * recoverySpringStrength;

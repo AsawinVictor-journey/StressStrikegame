@@ -77,8 +77,6 @@ public class PunchController : MonoBehaviour
         hitbox.enabled = false;
         hitboxPending  = false;
 
-        Debug.Log($"[PunchDbg] {name}: hitbox TIMEOUT -> retract to {prePunchLocalPos}", this); // [TEMP DEBUG — remove after diagnosis]
-
         if (handTarget != null)
             handTarget.BeginRetract(prePunchLocalPos);
     }

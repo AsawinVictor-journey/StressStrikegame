@@ -105,7 +105,6 @@ public class RageRoomCameraRotation : MonoBehaviour
             pending      += dir * stepDegrees;
             armed         = false;
             cooldownTimer = cooldown;
-            Debug.Log($"[CamFlick] {triggerSource} speed={v:F0} -> snap {dir * stepDegrees:F0} deg", this); // [TEMP DEBUG — remove after diagnosis]
         }
         else if (!armed && speed < threshold * rearmFraction)
         {

@@ -120,8 +120,6 @@ public class KeyboardHandInput : HandInputProvider
     float currentSpikeAccel;
     float pressStartTime = -1f;
     bool  gloveArmed = true; // rising-edge latch for glove-force punch detection
-    float _dbgNextRotLog;    // [TEMP DEBUG — remove after diagnosis]
-    float _dbgNextForceLog;  // [TEMP DEBUG — remove after diagnosis]
 
     ESP32Glove device;
     Quaternion zeroOffset = Quaternion.identity;
@@ -195,17 +193,6 @@ public class KeyboardHandInput : HandInputProvider
 
         float gloveForce = new Vector2(forceY, forceZ).magnitude;
 
-        // [TEMP DEBUG — remove after diagnosis] Throttled ~3 Hz. Shows the two
-        // force axes SEPARATELY plus the combined magnitude. Throw a forward
-        // punch, then a sideways camera-flick swing, and compare: whichever axis
-        // dominates a forward punch (and stays low on a sideways swing) is the
-        // one we should gate punches on.
-        if (Time.time >= _dbgNextForceLog)
-        {
-            _dbgNextForceLog = Time.time + 0.33f;
-            Debug.Log($"[GloveForce] {name}: Y={forceY:F1} Z={forceZ:F1} mag={gloveForce:F1} trigger={glovePunchTrigger} armed={gloveArmed}", this);
-        }
-
         if (gloveArmed && gloveForce >= glovePunchTrigger)
         {
             gloveArmed = false;
@@ -216,7 +203,6 @@ public class KeyboardHandInput : HandInputProvider
             float t = Mathf.InverseLerp(glovePunchTrigger, glovePunchFull, gloveForce);
             currentSpikeAccel = Mathf.Lerp(minPunchAccel, maxPunchAccel, Mathf.Clamp01(t));
             punchTimer        = punchSpikeDuration;
-            Debug.Log($"[GloveForce] {name}: GLOVE PUNCH FIRED force={gloveForce:F1} spike={currentSpikeAccel:F0}", this); // [TEMP DEBUG — remove after diagnosis]
         }
         else if (!gloveArmed && gloveForce <= gloveForceDeadzone)
         {
@@ -258,13 +244,12 @@ public class KeyboardHandInput : HandInputProvider
             {
                 device = glove;
                 if (autoRecenterOnConnect) RecenterOrientation();
-                Debug.Log($"[GloveDebug] {name}: ACQUIRED ESP32Glove '{glove.displayName}' (gloveSide={gloveSide}, useHardwareInput={useHardwareInput})", this); // [TEMP DEBUG — remove after diagnosis]
+                Debug.Log($"[GloveDebug] {name}: ACQUIRED ESP32Glove '{glove.displayName}' (gloveSide={gloveSide}, useHardwareInput={useHardwareInput})", this);
                 return;
             }
             seen++;
         }
 
-        // [TEMP DEBUG — remove after diagnosis]
         Debug.LogWarning($"[GloveDebug] {name}: NO ESP32Glove acquired (wanted index {matchIndex}, saw {seen} glove(s), total InputSystem devices={InputSystem.devices.Count}). Hardware punches impossible until a device enumerates.", this);
     }
 
@@ -349,18 +334,6 @@ public class KeyboardHandInput : HandInputProvider
         if (sqrMag < 0.0001f) return false;
 
         raw = raw.normalized;
-
-        // [TEMP DEBUG — remove after diagnosis] Throttled ~3 Hz. rawDev = the
-        // sensor quaternion straight off the device (pre-remap); mappedEuler =
-        // after the convertToLeftHanded remap. Hold the glove STILL: rawDev
-        // should barely move (steady fused quaternion). If it jitters/jumps
-        // while still -> sensor fusion/calibration (firmware). If steady but a
-        // known physical turn shows up on the wrong/coupled axis -> the remap.
-        if (Time.time >= _dbgNextRotLog)
-        {
-            _dbgNextRotLog = Time.time + 0.33f;
-            Debug.Log($"[RotDbg] {name}: rawDev=({qX:F3},{qY:F3},{qZ:F3},{qW:F3}) mappedEuler={raw.eulerAngles}", this);
-        }
 
         return true;
     }

@@ -20,6 +20,12 @@ public class DestructibleObject : MonoBehaviour
     public float maxScale = 1.0f;
     public float hitCooldown = 0.15f;
 
+    [Tooltip("Seconds a spawned fragment survives before being destroyed. " +
+             "Fragments were never cleaned up before, so a long session's worth " +
+             "of broken objects accumulated Rigidbodies forever and the physics " +
+             "solver got steadily heavier the longer you played.")]
+    public float fragmentLifetime = 5f;
+
     public float explosionForce = 6f;
     public float explosionRadius = 2f;
 
@@ -95,6 +101,8 @@ public class DestructibleObject : MonoBehaviour
 
                 rb.AddForce(dir * Random.Range(1f, 4f), ForceMode.Impulse);
             }
+
+            Destroy(frag, fragmentLifetime);
         }
         GameManager.Instance.ObjectDestroyed();
 
