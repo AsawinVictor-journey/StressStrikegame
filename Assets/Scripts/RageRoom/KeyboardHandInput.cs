@@ -264,8 +264,12 @@ public class KeyboardHandInput : HandInputProvider
         }
         else
         {
-            right = KeyCode.RightArrow; left = KeyCode.LeftArrow;
-            up    = KeyCode.PageUp;     down = KeyCode.PageDown;
+            // Left/Right arrows drive the camera flick (RageRoomCameraRotation,
+            // ArrowKeys trigger mode) instead of this hand's position now - so
+            // they're intentionally not read here anymore. Vertical stays on
+            // PageUp/PageDown.
+            right = KeyCode.None; left = KeyCode.None;
+            up    = KeyCode.PageUp; down = KeyCode.PageDown;
         }
 
         // No sustained forward/back (local Z) input — that axis is reserved
