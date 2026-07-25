@@ -543,9 +543,9 @@ public class CombatHudController : MonoBehaviour
         
         // Load the main menu scene
         if (SceneTransitionManager.Instance != null)
-            SceneTransitionManager.Instance.LoadScene("BoxingMenu");
+            SceneTransitionManager.Instance.LoadScene("idlee");
         else
-            SceneManager.LoadScene("BoxingMenu");
+            SceneManager.LoadScene("idlee");
     }
 
     private void OnDestroy()

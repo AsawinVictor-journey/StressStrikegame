@@ -11,13 +11,6 @@ public class HandInputManager : MonoBehaviour
 
     [Header("Mouse Debug Settings")]
     public float mouseSensitivity = 0.05f;
-    [Tooltip("Independent from mouseSensitivity, which is tuned for hand position. " +
-             "Previously the tilt reused the already-scaled position mouseX/mouseY " +
-             "multiplied by 50, making rotation ~50x more sensitive than position " +
-             "for the same mouse movement - this is what made the active hand " +
-             "(right, by default) look like it was moving too much on every mouse " +
-             "move. Tune this on its own now.")]
-    public float rotationSensitivity = 1f;
     public float punchDepth = 0.8f;
     public float punchSpeed = 15f;
     
@@ -122,10 +115,8 @@ public class HandInputManager : MonoBehaviour
         }
 
         // X/Y movement from mouse Delta
-        float rawMouseX = Input.GetAxis("Mouse X");
-        float rawMouseY = Input.GetAxis("Mouse Y");
-        float mouseX = rawMouseX * mouseSensitivity;
-        float mouseY = rawMouseY * mouseSensitivity;
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
         // Z movement (Punching) via Left Click
         if (Input.GetMouseButton(0))
@@ -206,9 +197,8 @@ public class HandInputManager : MonoBehaviour
             }
         }
 
-        // Apply mouse tilt on top of the base look rotation! Uses the raw mouse
-        // delta with its own sensitivity, independent of the position scaling.
-        Quaternion tilt = Quaternion.Euler(rawMouseY * -rotationSensitivity, rawMouseX * rotationSensitivity, isControllingLeft ? -15f : 15f);
+        // Apply mouse tilt on top of the base look rotation!
+        Quaternion tilt = Quaternion.Euler(mouseY * -50f, mouseX * 50f, isControllingLeft ? -15f : 15f);
         // Blend smoothly depending on punch depth so it snaps its gaze tightly when throwing a punch
         float trackStrength = Mathf.Lerp(0.3f, 1.0f, currentPunchDepth / punchDepth);
         

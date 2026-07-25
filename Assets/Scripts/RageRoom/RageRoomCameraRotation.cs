@@ -18,19 +18,12 @@ using UnityEngine;
 /// </summary>
 public class RageRoomCameraRotation : MonoBehaviour
 {
-    public enum TriggerSource { GloveTurnSpeed, HandSlideSpeed, ArrowKeys }
+    public enum TriggerSource { GloveTurnSpeed, HandSlideSpeed }
 
     [Header("References")]
     // Point these at the hand GameObjects (LeftHand / RightHand).
     public PhysicsHandController leftHand;
     public PhysicsHandController rightHand;
-
-    [Tooltip("Transform the flick actually rotates. Leave unassigned to rotate " +
-             "this component's own object (the old behavior). Point this at " +
-             "Main Camera instead so a flick turns only the view - the hands " +
-             "are anchored to the body (Player), not the camera, so they stay " +
-             "put instead of swinging around with every turn.")]
-    public Transform rotationTarget;
 
     [Header("Trigger")]
     [Tooltip("GloveTurnSpeed: fires on how fast you turn the hand (glove yaw). " +
@@ -95,49 +88,27 @@ public class RageRoomCameraRotation : MonoBehaviour
             punchSuppressTimer -= dt;
         bool suppressed = punchSuppressTimer > 0f;
 
-        if (triggerSource == TriggerSource.ArrowKeys)
-        {
-            // Direct key press -> direct flick. No speed/threshold/hysteresis
-            // needed here - a keypress is already a discrete, deliberate event,
-            // unlike the continuous glove-yaw/hand-slide signals below.
-            if (!suppressed && cooldownTimer <= 0f)
-            {
-                int keyDir = 0;
-                if (Input.GetKeyDown(KeyCode.LeftArrow)) keyDir = -1;
-                else if (Input.GetKeyDown(KeyCode.RightArrow)) keyDir = 1;
+        float vLeft  = Signal(leftHand,  ref prevLeft,  ref hasLeft,  dt);
+        float vRight = Signal(rightHand, ref prevRight, ref hasRight, dt);
 
-                if (keyDir != 0)
-                {
-                    float dir = keyDir * (invertDirection ? -1f : 1f);
-                    pending      += dir * stepDegrees;
-                    cooldownTimer = cooldown;
-                }
-            }
+        // Whichever hand is moving fastest drives the flick.
+        float v     = Mathf.Abs(vLeft) >= Mathf.Abs(vRight) ? vLeft : vRight;
+        float speed = Mathf.Abs(v);
+
+        float threshold = triggerSource == TriggerSource.GloveTurnSpeed
+            ? turnSpeedThreshold
+            : slideSpeedThreshold;
+
+        if (!suppressed && armed && cooldownTimer <= 0f && speed > threshold)
+        {
+            float dir = Mathf.Sign(v) * (invertDirection ? -1f : 1f);
+            pending      += dir * stepDegrees;
+            armed         = false;
+            cooldownTimer = cooldown;
         }
-        else
+        else if (!armed && speed < threshold * rearmFraction)
         {
-            float vLeft  = Signal(leftHand,  ref prevLeft,  ref hasLeft,  dt);
-            float vRight = Signal(rightHand, ref prevRight, ref hasRight, dt);
-
-            // Whichever hand is moving fastest drives the flick.
-            float v     = Mathf.Abs(vLeft) >= Mathf.Abs(vRight) ? vLeft : vRight;
-            float speed = Mathf.Abs(v);
-
-            float threshold = triggerSource == TriggerSource.GloveTurnSpeed
-                ? turnSpeedThreshold
-                : slideSpeedThreshold;
-
-            if (!suppressed && armed && cooldownTimer <= 0f && speed > threshold)
-            {
-                float dir = Mathf.Sign(v) * (invertDirection ? -1f : 1f);
-                pending      += dir * stepDegrees;
-                armed         = false;
-                cooldownTimer = cooldown;
-            }
-            else if (!armed && speed < threshold * rearmFraction)
-            {
-                armed = true;
-            }
+            armed = true;
         }
 
         // Smoothly consume the pending snap.
@@ -145,7 +116,7 @@ public class RageRoomCameraRotation : MonoBehaviour
         {
             float maxStep = turnDuration > 0f ? (stepDegrees / turnDuration) * dt : Mathf.Abs(pending);
             float step    = Mathf.Sign(pending) * Mathf.Min(Mathf.Abs(pending), maxStep);
-            (rotationTarget != null ? rotationTarget : transform).Rotate(0f, step, 0f, Space.World);
+            transform.Rotate(0f, step, 0f, Space.World);
             pending -= step;
         }
     }
