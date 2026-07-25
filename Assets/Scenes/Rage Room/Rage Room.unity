@@ -208,7 +208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -1303,7 +1303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -3953,6 +3953,10 @@ PrefabInstance:
       value: Bottle2
       objectReference: {fileID: 0}
     - target: {fileID: -6763858364670572316, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -6763858364670572316, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 64
       objectReference: {fileID: 0}
@@ -4015,6 +4019,10 @@ PrefabInstance:
     - target: {fileID: -2045257923548263128, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_Name
       value: Bottle1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2045257923548263128, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -2045257923548263128, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -4239,6 +4247,10 @@ PrefabInstance:
     - target: {fileID: 8009987137999418058, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_Name
       value: Bottle3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8009987137999418058, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8009987137999418058, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -6294,7 +6306,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -6442,7 +6454,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -6460,7 +6472,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 1
-  maxDentDepth: -0.25
+  maxDentDepth: -0.45
   minImpactSpeed: 2
   maxImpactSpeed: 5
   hitCooldown: 0.15
