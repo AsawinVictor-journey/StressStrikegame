@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 100
+  Health: 350
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
@@ -208,7 +208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -226,7 +226,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.75
-  maxDentDepth: 0.5
+  maxDentDepth: -0.5
   minImpactSpeed: 1
   maxImpactSpeed: 14
   hitCooldown: 0.15
@@ -1279,7 +1279,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 100
+  Health: 350
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
@@ -1303,7 +1303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -1321,7 +1321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.75
-  maxDentDepth: 0.5
+  maxDentDepth: -0.5
   minImpactSpeed: 1
   maxImpactSpeed: 14
   hitCooldown: 0.15
@@ -2905,7 +2905,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1082533432}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.9546627, z: 0, w: 0.2976898}
+  m_LocalRotation: {x: -0, y: 0.8450855, z: -0, w: 0.53463113}
   m_LocalPosition: {x: -15.314, y: 1.835, z: 0.46}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2929,8 +2929,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   leftHand: {fileID: 1680595308}
   rightHand: {fileID: 815928611}
-  rotationTarget: {fileID: 0}
-  triggerSource: 2
+  triggerSource: 1
   turnSpeedThreshold: 1200
   slideSpeedThreshold: 2.1599987
   rearmFraction: 0.4
@@ -3954,6 +3953,10 @@ PrefabInstance:
       value: Bottle2
       objectReference: {fileID: 0}
     - target: {fileID: -6763858364670572316, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -6763858364670572316, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 64
       objectReference: {fileID: 0}
@@ -4018,8 +4021,16 @@ PrefabInstance:
       value: Bottle1
       objectReference: {fileID: 0}
     - target: {fileID: -2045257923548263128, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -2045257923548263128, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 64
+      objectReference: {fileID: 0}
+    - target: {fileID: -1806680513116206669, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -1599826595754709761, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_Name
@@ -4236,6 +4247,10 @@ PrefabInstance:
     - target: {fileID: 8009987137999418058, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_Name
       value: Bottle3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8009987137999418058, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8009987137999418058, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -5850,7 +5865,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 150
+  Health: 300
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2287188301885227932, guid: 93291ea0345084b46ab1775a92a961cb, type: 3}
@@ -5875,7 +5890,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.4
-  maxDentDepth: 0.25
+  maxDentDepth: -0.25
   minImpactSpeed: 1
   maxImpactSpeed: 14
   hitCooldown: 0.15
@@ -6267,7 +6282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 100
+  Health: 350
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 1843036316886344235, guid: c7aae0a6ed14a0043be9de2c29219c4f, type: 3}
@@ -6291,7 +6306,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -6309,7 +6324,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 0.75
-  maxDentDepth: 0.5
+  maxDentDepth: -0.5
   minImpactSpeed: 1
   maxImpactSpeed: 14
   hitCooldown: 0.15
@@ -6415,7 +6430,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 200
+  Health: 1000
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 8596415664769589966, guid: fe49d118871c02c4f9c02c0bb907fb60, type: 3}
@@ -6439,7 +6454,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.1
+  forceMultiplier: 0.035
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -6457,7 +6472,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deformRadius: 1
-  maxDentDepth: 0.25
+  maxDentDepth: -0.45
   minImpactSpeed: 2
   maxImpactSpeed: 5
   hitCooldown: 0.15
@@ -6539,7 +6554,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30

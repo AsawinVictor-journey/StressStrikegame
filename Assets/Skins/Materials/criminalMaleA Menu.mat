@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Gloves 3
+  m_Name: criminalMaleA Menu
   m_Shader: {fileID: 4800000, guid: 6459b2db96a08ca41b0f9b39dc7ad59e, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -56,7 +56,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: ad0c5aafdd46d41428e9b2d063219ba9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -96,7 +96,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: ad0c5aafdd46d41428e9b2d063219ba9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskGloss:
@@ -202,17 +202,17 @@ Material:
     - _GIFlatShade: 0
     - _GIShadeThreshold: 0
     - _GlossColorPower: 10
-    - _GlossIntensity: 0.99
+    - _GlossIntensity: 0.77
     - _GlossMapScale: 0
-    - _GlossSoftness: 0.31
+    - _GlossSoftness: 0.36
     - _GlossTextureFollowLight: 0
     - _GlossTextureFollowObjectRotation: 0
     - _GlossTextureRotate: 0
     - _GlossTextureSoftness: 0
-    - _Glossiness: 0.49
+    - _Glossiness: 0.6
     - _GlossyReflections: 0
     - _Glow_Edge_Width: 1
-    - _HighlightColorPower: 2.17
+    - _HighlightColorPower: 1
     - _LigIgnoYNorDir: 0
     - _LightAffectOutlineColor: 0
     - _LightAffectRimLightColor: 0
@@ -223,7 +223,7 @@ Material:
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
-    - _MaiColPo: 0.52
+    - _MaiColPo: 0.8
     - _MaxFadDistance: 2
     - _Metallic: 0
     - _MinFadDistance: 0
@@ -261,16 +261,16 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_TP: 0
-    - _NoisyOutlineIntensity: 0.54
+    - _NoisyOutlineIntensity: 0
     - _NormalMapIntensity: 1
     - _OcclusionStrength: 1
     - _Opacity: 1
     - _Oper: 0
     - _OutlineExtrudeMethod: 0
-    - _OutlineWidth: 0.12
+    - _OutlineWidth: 0.03
     - _OutlineWidthAffectedByViewDistance: 0
     - _OutlineZPostionInCamera: 0
-    - _OverallShadowColorPower: -0.67
+    - _OverallShadowColorPower: 1
     - _PSGLOTEX: 0
     - _PTexturePower: 1
     - _Parallax: 0.005
@@ -296,11 +296,11 @@ Material:
     - _SelfLitIntensity: 0
     - _SelfLitPower: 2
     - _SelfShadowAffectedByLightShadowStrength: 0
-    - _SelfShadowHardness: 0.899
+    - _SelfShadowHardness: 1
     - _SelfShadowRealTimeShadowColorPower: 1
     - _SelfShadowRealtimeShadowIntensity: 1
     - _SelfShadowShadowTAtViewDirection: 0
-    - _SelfShadowThreshold: 0.83
+    - _SelfShadowThreshold: 0.93
     - _ShadowColorTexturePower: 0
     - _ShadowHardness: 0
     - _ShadowTColorPower: 1
@@ -339,11 +339,11 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CustomLightDirection: {r: 0, g: 0, b: 10, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _GlossColor: {r: 0.4009434, g: 1, b: 0.65413517, a: 1}
+    - _GlossColor: {r: 1, g: 0.15566039, b: 0.15566039, a: 1}
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
-    - _HighlightColor: {r: 0.9009434, g: 0.49940807, b: 0.08924439, a: 1}
-    - _MainColor: {r: 1, g: 0.2830189, b: 0.37640908, a: 1}
-    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MainColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0.3490566, g: 0, b: 0, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
     - _OverallShadowColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _PTCol: {r: 0, g: 0, b: 0, a: 1}
@@ -356,7 +356,7 @@ Material:
     - _XYZPosition: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &7548078995983763072
+--- !u!114 &6737214968934560934
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
