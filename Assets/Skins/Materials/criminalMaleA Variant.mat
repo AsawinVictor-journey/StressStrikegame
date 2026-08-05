@@ -1,6 +1,90 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-1083828639971098091
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: criminalMaleA Variant
+  m_Shader: {fileID: 4800000, guid: 6459b2db96a08ca41b0f9b39dc7ad59e, type: 3}
+  m_Parent: {fileID: 2100000, guid: 62d0b257771b7984eba0be172fa43049, type: 2}
+  m_ModifiedSerializedProperties: 18
+  m_ValidKeywords:
+  - N_F_DDMD_ON
+  - N_F_EAL_ON
+  - N_F_GLO_ON
+  - N_F_O_ON
+  - N_F_RDC_ON
+  - N_F_RELGI_ON
+  - N_F_SL_ON
+  - N_F_SS_ON
+  - N_F_TRANSAFFSHA_ON
+  m_InvalidKeywords:
+  - _BLENDNORMALS_ON
+  - _CUSTOMLIGHTDIRECTIONFOLLOWOBJECTROTATION_OFF
+  - _EMISSION
+  - _GIFLATSHADE_OFF
+  - _GLOSSTEXTUREFOLLOWOBJECTROTATION_OFF
+  - _LIGHTAFFECTOUTLINECOLOR_OFF
+  - _LIGHTAFFECTRIMLIGHTCOLOR_OFF
+  - _LIGHTAFFECTSHADOW_OFF
+  - _LIGHTFALLOFFAFFECTSHADOWT_OFF
+  - _LIGIGNOYNORDIR_OFF
+  - _MCIALO_OFF
+  - _MIXMAINTEXTOOUTLINE_OFF
+  - _MVCOL_OFF
+  - _OUTLINEWIDTHAFFECTEDBYVIEWDISTANCE_OFF
+  - _OVERLAY_UV_CHANNEL_UV0
+  - _PSGLOTEX_OFF
+  - _SELFSHADOWAFFECTEDBYLIGHTSHADOWSTRENGTH_OFF
+  - _SELFSHADOWSHADOWTATVIEWDIRECTION_OFF
+  - _SHOWNORMAL_OFF
+  - _SPECMODE_OFF
+  - _STIL_OFF
+  - _TEXTUREPATTERNSTYLE_OFF
+  - _USESECONDARYCUTOUT_OFF
+  - _USEVERTEXCOLOR_ON
+  - _VERTEXCOLORBLUEAFFECTOUTLINEWITDH_OFF
+  - _VERTEXCOLORGREENCONTROLSELFSHADOWTHRESHOLD_OFF
+  - _VERTEXCOLORREDCONTROLSMOOTHOBJECTNORMAL_OFF
+  m_LightmapFlags: 6
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2000
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Hair_Mask:
+        m_Texture: {fileID: 2800000, guid: 407f8dd97d74d064db5de6a9df91449f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 01835551b47e0aa4ca79ab070ce50ff2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2DLOD_648b6f355b5445e7b7d3fd95166cce93_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: edb9e027cfe95b243871759df824b04f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Skin_Mask:
+        m_Texture: {fileID: 2800000, guid: 7bd65a7a9d161f243bbd631ed423f94d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _QueueControl: 0
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!114 &2346856125882242916
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -13,85 +97,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   version: 10
---- !u!21 &2100000
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Material
-  m_Shader: {fileID: 4800000, guid: 6459b2db96a08ca41b0f9b39dc7ad59e, type: 3}
-  m_Parent: {fileID: 2100000, guid: a2a37557ea657984a8129ebd59c2cd6f, type: 2}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - N_F_DDMD_ON
-  - N_F_EAL_ON
-  - N_F_GLO_ON
-  - N_F_O_ON
-  - N_F_RDC_ON
-  - N_F_RELGI_ON
-  - N_F_SS_ON
-  - N_F_TRANSAFFSHA_ON
-  m_InvalidKeywords:
-  - _CUSTOMLIGHTDIRECTIONFOLLOWOBJECTROTATION_OFF
-  - _GIFLATSHADE_OFF
-  - _GLOSSTEXTUREFOLLOWOBJECTROTATION_OFF
-  - _LIGHTAFFECTOUTLINECOLOR_OFF
-  - _LIGHTAFFECTRIMLIGHTCOLOR_OFF
-  - _LIGHTAFFECTSHADOW_OFF
-  - _LIGHTFALLOFFAFFECTSHADOWT_OFF
-  - _LIGIGNOYNORDIR_OFF
-  - _MCIALO_OFF
-  - _MIXMAINTEXTOOUTLINE_OFF
-  - _MVCOL_OFF
-  - _OUTLINEWIDTHAFFECTEDBYVIEWDISTANCE_OFF
-  - _PSGLOTEX_OFF
-  - _SELFSHADOWAFFECTEDBYLIGHTSHADOWSTRENGTH_OFF
-  - _SELFSHADOWSHADOWTATVIEWDIRECTION_OFF
-  - _SHOWNORMAL_OFF
-  - _SPECMODE_OFF
-  - _STIL_OFF
-  - _TEXTUREPATTERNSTYLE_OFF
-  - _USESECONDARYCUTOUT_OFF
-  - _VERTEXCOLORBLUEAFFECTOUTLINEWITDH_OFF
-  - _VERTEXCOLORGREENCONTROLSELFSHADOWTHRESHOLD_OFF
-  - _VERTEXCOLORREDCONTROLSMOOTHOBJECTNORMAL_OFF
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses:
-  - MOTIONVECTORS
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _BumpMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _NormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _BumpScale: 1
-    - _N_F_NM: 0
-    - _NormalMapIntensity: 1
-    m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _MainColor: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1

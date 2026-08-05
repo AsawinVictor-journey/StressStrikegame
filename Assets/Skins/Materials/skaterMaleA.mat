@@ -236,7 +236,7 @@ Material:
     - _MCIALO: 0
     - _MCapIntensity: 1
     - _MVCOL: 0
-    - _MaiColPo: 1.33
+    - _MaiColPo: 1.55
     - _MaxFadDistance: 2
     - _Metallic: 0
     - _MinFadDistance: 0
@@ -274,7 +274,7 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_TP: 0
-    - _NoisyOutlineIntensity: 0.751
+    - _NoisyOutlineIntensity: 0.34
     - _NormalMapIntensity: 1
     - _OcclusionStrength: 1
     - _Opacity: 1
@@ -356,7 +356,7 @@ Material:
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
     - _MainColor: {r: 1, g: 1, b: 1, a: 1}
-    - _OutlineColor: {r: 0.22745098, g: 0.050057445, b: 0, a: 1}
+    - _OutlineColor: {r: 0.3443396, g: 0.20713377, b: 0.17054556, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
     - _OverallShadowColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
     - _PTCol: {r: 0, g: 0, b: 0, a: 1}

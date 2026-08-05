@@ -58,6 +58,9 @@
         },
         {
             "m_Id": "d197ee815ef840d18e0f910526638e56"
+        },
+        {
+            "m_Id": "7d88e4b808994406ae03a5e579acd3c6"
         }
     ],
     "m_GroupDatas": [],
@@ -128,7 +131,7 @@
             },
             "m_InputSlot": {
                 "m_Node": {
-                    "m_Id": "484855fa6f3c456eac33d2278d632f8e"
+                    "m_Id": "7d88e4b808994406ae03a5e579acd3c6"
                 },
                 "m_SlotId": 0
             }
@@ -143,6 +146,20 @@
             "m_InputSlot": {
                 "m_Node": {
                     "m_Id": "469c9e4bdacb4b0bac3bb7f20327d8d7"
+                },
+                "m_SlotId": 0
+            }
+        },
+        {
+            "m_OutputSlot": {
+                "m_Node": {
+                    "m_Id": "7d88e4b808994406ae03a5e579acd3c6"
+                },
+                "m_SlotId": 1
+            },
+            "m_InputSlot": {
+                "m_Node": {
+                    "m_Id": "484855fa6f3c456eac33d2278d632f8e"
                 },
                 "m_SlotId": 0
             }
@@ -624,10 +641,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": 56.99999237060547,
-            "y": 353.5000305175781,
+            "x": 57.0,
+            "y": 351.5,
             "width": 208.0,
-            "height": 302.0000305175781
+            "height": 302.0
         }
     },
     "m_Slots": [
@@ -663,7 +680,7 @@
     "m_StageCapability": 3,
     "m_Value": {
         "x": 0.0,
-        "y": 0.0
+        "y": -0.1899999976158142
     },
     "m_DefaultValue": {
         "x": 0.0,
@@ -776,8 +793,8 @@
     "m_ShaderOutputName": "Tiling",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 1.0,
-        "y": 1.0
+        "x": -0.1599999964237213,
+        "y": 1.409999966621399
     },
     "m_DefaultValue": {
         "x": 1.0,
@@ -850,8 +867,8 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -202.00001525878907,
-            "y": 675.5,
+            "x": -378.9999694824219,
+            "y": 668.5,
             "width": 208.0,
             "height": 302.00006103515627
         }
@@ -892,7 +909,7 @@
     "m_ShaderOutputName": "Edge2",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.5199999809265137,
+        "x": 0.4699999988079071,
         "y": 1.0,
         "z": 1.0,
         "w": 1.0
@@ -1053,6 +1070,30 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+    "m_ObjectId": "6693536b0436492eae3a4f8574da5446",
+    "m_Id": 0,
+    "m_DisplayName": "In",
+    "m_SlotType": 0,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "In",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    }
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.PositionMaterialSlot",
     "m_ObjectId": "67529ae8c77f42e4819cf2dd3af5cf99",
     "m_Id": 0,
@@ -1092,6 +1133,30 @@
 
 {
     "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+    "m_ObjectId": "7a35909c2a504d7e800bc47a985312ec",
+    "m_Id": 1,
+    "m_DisplayName": "Out",
+    "m_SlotType": 1,
+    "m_Hidden": false,
+    "m_ShaderOutputName": "Out",
+    "m_StageCapability": 3,
+    "m_Value": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    },
+    "m_DefaultValue": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
+    }
+}
+
+{
+    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.BlockNode",
     "m_ObjectId": "7d5ec3129b594c4dae6af7d6317b52a8",
     "m_Group": {
@@ -1122,6 +1187,42 @@
         "m_SerializableColors": []
     },
     "m_SerializedDescriptor": "VertexDescription.Position"
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.SineNode",
+    "m_ObjectId": "7d88e4b808994406ae03a5e579acd3c6",
+    "m_Group": {
+        "m_Id": ""
+    },
+    "m_Name": "Sine",
+    "m_DrawState": {
+        "m_Expanded": true,
+        "m_Position": {
+            "serializedVersion": "2",
+            "x": -177.5,
+            "y": 945.5,
+            "width": 208.00001525878907,
+            "height": 278.0
+        }
+    },
+    "m_Slots": [
+        {
+            "m_Id": "6693536b0436492eae3a4f8574da5446"
+        },
+        {
+            "m_Id": "7a35909c2a504d7e800bc47a985312ec"
+        }
+    ],
+    "synonyms": [],
+    "m_Precision": 0,
+    "m_PreviewExpanded": true,
+    "m_DismissedVersion": 0,
+    "m_PreviewMode": 0,
+    "m_CustomColors": {
+        "m_SerializableColors": []
+    }
 }
 
 {
@@ -1207,9 +1308,9 @@
     },
     "m_Color": {
         "color": {
-            "r": 0.18039216101169587,
-            "g": 0.18039216101169587,
-            "b": 0.18039216101169587,
+            "r": 0.08490568399429321,
+            "g": 0.07329122722148895,
+            "b": 0.07329122722148895,
             "a": 0.0
         },
         "mode": 1
@@ -1330,7 +1431,7 @@
     "m_ShaderOutputName": "Steps",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 46.099998474121097,
+        "x": 17.100000381469728,
         "y": 4.0,
         "z": 4.0,
         "w": 4.0
@@ -1493,10 +1594,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -440.4999694824219,
-            "y": 698.5,
+            "x": -581.0,
+            "y": 708.5000610351563,
             "width": 124.0,
-            "height": 173.0
+            "height": 172.99993896484376
         }
     },
     "m_Slots": [
@@ -1736,7 +1837,7 @@
     "m_ShaderOutputName": "B",
     "m_StageCapability": 3,
     "m_Value": {
-        "e00": 0.004999999888241291,
+        "e00": -0.029999999329447748,
         "e01": 2.0,
         "e02": 2.0,
         "e03": 2.0,
@@ -1985,7 +2086,7 @@
     "m_ShaderOutputName": "Edge1",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": -0.6399999856948853,
+        "x": -0.8600000143051148,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0

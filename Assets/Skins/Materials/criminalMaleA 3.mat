@@ -7,18 +7,18 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Material.011
+  m_Name: criminalMaleA 3
   m_Shader: {fileID: 4800000, guid: 6459b2db96a08ca41b0f9b39dc7ad59e, type: 3}
-  m_Parent: {fileID: 2100000, guid: f8135f21fd1f0b444aade19106e12cb9, type: 2}
-  m_ModifiedSerializedProperties: 16
+  m_Parent: {fileID: 2100000, guid: d7992a7f4227e3f46b98ea84b563c469, type: 2}
+  m_ModifiedSerializedProperties: 2
   m_ValidKeywords:
   - N_F_DDMD_ON
   - N_F_EAL_ON
   - N_F_GLO_ON
+  - N_F_HDLS_ON
   - N_F_O_ON
   - N_F_RDC_ON
   - N_F_RELGI_ON
-  - N_F_SS_ON
   - N_F_TRANSAFFSHA_ON
   m_InvalidKeywords:
   - _CUSTOMLIGHTDIRECTIONFOLLOWOBJECTROTATION_OFF
@@ -26,7 +26,6 @@ Material:
   - _GLOSSTEXTUREFOLLOWOBJECTROTATION_OFF
   - _LIGHTAFFECTOUTLINECOLOR_OFF
   - _LIGHTAFFECTRIMLIGHTCOLOR_OFF
-  - _LIGHTAFFECTSHADOW_OFF
   - _LIGHTFALLOFFAFFECTSHADOWT_OFF
   - _LIGIGNOYNORDIR_OFF
   - _MCIALO_OFF
@@ -44,35 +43,48 @@ Material:
   - _VERTEXCOLORBLUEAFFECTOUTLINEWITDH_OFF
   - _VERTEXCOLORGREENCONTROLSELFSHADOWTHRESHOLD_OFF
   - _VERTEXCOLORREDCONTROLSMOOTHOBJECTNORMAL_OFF
-  m_LightmapFlags: 4
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _GlossColor _MainColor _OverallShadowColor _OverallShadowColorPower
+    _SelfShadowShadowTAtViewDirection _TexturePatternStyle
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _MaskGloss:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 5.14, y: 1}
+        m_Offset: {x: 9.89, y: 30.88}
     m_Ints: []
     m_Floats:
-    - _BleModDest: 0
-    - _BleModSour: 1
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _Opacity: 1
-    - _Smoothness: 0.5
-    - _Surface: 0
-    - _TRANSMODE: 0
-    - _ZWrite: 1
+    - _GIShadeThreshold: 1
+    - _GlossColorPower: 10.04
+    - _GlossIntensity: 0.02
+    - _GlossSoftness: 1
+    - _Glossiness: 0.198
+    - _HighlightColorPower: 0.8
+    - _LightAffectShadow: 1
+    - _LightFalloffSoftness: 0.367
+    - _LightIntensity: -1
+    - _MaiColPo: 2.68
+    - _N_F_SON: 0
+    - _N_F_SS: 0
+    - _OutlineWidth: 0.015
+    - _OverallShadowColorPower: 2.7
+    - _PointSpotlightIntensity: 0.45
+    - _SelfShadowThreshold: 0.85
     m_Colors:
-    - _BaseColor: {r: 0.6329077, g: 0.6329077, b: 0.6329077, a: 1}
-    - _Color: {r: 0.6329076, g: 0.6329076, b: 0.6329076, a: 1}
-    - _MainColor: {r: 0.40057206, g: 0.40057206, b: 0.40057206, a: 1}
+    - _GlossColor: {r: 1, g: 0.7830189, b: 0.7830189, a: 1}
+    - _HighlightColor: {r: 1, g: 0.18867922, b: 0.18867922, a: 1}
+    - _MainColor: {r: 0.8117647, g: 0.5803922, b: 0.6249438, a: 1}
+    - _OverallShadowColor: {r: 0.04392132, g: 0.13814963, b: 0.1981132, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &880678742547782080
+--- !u!114 &31141373072697620
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
