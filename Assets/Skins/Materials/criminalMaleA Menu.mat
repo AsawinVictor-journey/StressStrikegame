@@ -32,7 +32,6 @@ Material:
   - _LIGHTFALLOFFAFFECTSHADOWT_OFF
   - _LIGIGNOYNORDIR_OFF
   - _MCIALO_OFF
-  - _MIXMAINTEXTOOUTLINE_OFF
   - _MVCOL_OFF
   - _OUTLINEWIDTHAFFECTEDBYVIEWDISTANCE_OFF
   - _PSGLOTEX_OFF
@@ -230,7 +229,7 @@ Material:
     - _MaxFadDistance: 2
     - _Metallic: 0
     - _MinFadDistance: 0
-    - _MixMainTexToOutline: 0
+    - _MixMainTexToOutline: 1
     - _N_F_CA: 0
     - _N_F_CLD: 0
     - _N_F_CO: 0
@@ -264,7 +263,7 @@ Material:
     - _N_F_STIAL: 0
     - _N_F_STIS: 0
     - _N_F_TP: 0
-    - _NoisyOutlineIntensity: 0
+    - _NoisyOutlineIntensity: 0.37
     - _NormalMapIntensity: 1
     - _OcclusionStrength: 1
     - _Opacity: 1
@@ -346,7 +345,7 @@ Material:
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 1, b: 1, a: 1}
     - _MainColor: {r: 1, g: 0.7877358, b: 0.7877358, a: 1}
-    - _OutlineColor: {r: 0.3490566, g: 0, b: 0, a: 1}
+    - _OutlineColor: {r: 0.33490568, g: 0.06943948, b: 0.06634924, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
     - _OverallShadowColor: {r: 0.06132078, g: 0.021982923, b: 0.021982923, a: 1}
     - _PTCol: {r: 0, g: 0, b: 0, a: 1}

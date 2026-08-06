@@ -13288,6 +13288,7 @@ GameObject:
   - component: {fileID: 1846736431}
   - component: {fileID: 1846736432}
   - component: {fileID: 1846736433}
+  - component: {fileID: 1846736434}
   m_Layer: 0
   m_Name: Left
   m_TagString: Untagged
@@ -13408,25 +13409,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1335280116}
-        m_TargetAssemblyTypeName: SceneTransitionManager, Assembly-CSharp
-        m_MethodName: LoadScene
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: BoxingMenu
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1846736433}
-        m_TargetAssemblyTypeName: SceneButton, Assembly-CSharp
-        m_MethodName: LoadScene
+      - m_Target: {fileID: 1846736434}
+        m_TargetAssemblyTypeName: OpenBoxingMenuPanelButton, Assembly-CSharp
+        m_MethodName: LoadBoxingMenuPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -13439,12 +13428,26 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1846736427}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4c7077f896a7bcc418d8813132e8c23f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sceneName: BoxingMenu
+--- !u!114 &1846736434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846736427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3c30d393b0708546a2f7c2e3c743ca0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneName: BoxingMenu
+  rigToOpen: Train
 --- !u!1 &1862396727
 GameObject:
   m_ObjectHideFlags: 0

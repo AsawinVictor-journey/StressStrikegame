@@ -78,8 +78,29 @@ public class SceneTransitionManager : MonoBehaviour
         // regardless of how long the target scene takes to load in the background.
         yield return Fade(1f);
 
-        // Start loading the scene, but don't activate it yet.
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
+        // Start loading the scene, but don't activate it yet. LoadSceneAsync throws
+        // (rather than returning null) if sceneName isn't in the active build
+        // profile/scene list — without this guard that exception kills the coroutine
+        // right here, leaving the screen stuck black and isTransitioning stuck true
+        // forever (every later LoadScene call silently no-ops). Fade back in and
+        // recover instead of freezing.
+        AsyncOperation operation = null;
+        try
+        {
+            operation = SceneManager.LoadSceneAsync(sceneName);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"SceneTransitionManager: couldn't load scene '{sceneName}': {e.Message}");
+        }
+
+        if (operation == null)
+        {
+            yield return Fade(0f);
+            isTransitioning = false;
+            yield break;
+        }
+
         operation.allowSceneActivation = false;
 
         // Wait until the scene has finished loading (90%).
