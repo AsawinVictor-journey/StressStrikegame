@@ -11,7 +11,7 @@
     },
     "ai-game-developer": {
       "type": "http",
-      "url": "http://localhost:23088"
+      "url": "http://localhost:21924/p/647c136a"
     },
     "mcp-mermaid": {
       "command": "npx",
