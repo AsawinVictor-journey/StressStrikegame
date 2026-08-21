@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 // The actual game only has 3 modes (confirmed against the Unity project:
-// Assets/b-o-o-k/BoxingMenu.unity, Assets/Scenes/Rage Room/Rage Room.unity, Assets/evococo/meditation.unity).
+// Assets/b-o-o-k/BoxingMenu.unity, Assets/Scenes/Rage Room/Rage Room.unity, Assets/Scenes/Yoga/Yoga Menu.unity).
 public enum GameMode
 {
     Boxing,     // structured sparring, strategy rewarded
@@ -16,6 +16,7 @@ public struct ModeRecommendation
     public string coachMessage;
     public string reason; // plain-language line drawn from the winning bucket's top subscale
     public CopeSubscale topSubscale; // the subscale `reason` was drawn from
+    public CopeBucket topBucket; // the raw dominant coping bucket `mode` was derived from
 }
 
 public static class GameModeRecommendation
@@ -24,8 +25,12 @@ public static class GameModeRecommendation
     public static readonly Dictionary<GameMode, string> SceneNames = new Dictionary<GameMode, string>
     {
         { GameMode.Boxing, "BoxingMenu" },
-        { GameMode.RageRoom, "Rage Room" },
-        { GameMode.Meditate, "meditation" },
+        // "Rage Room" (no "Menu") was the gameplay scene itself, not a menu - fixed
+        // to match Boxing/Meditate, which both land on a menu, not straight into play.
+        { GameMode.RageRoom, "Rage Room Menu" },
+        // "meditation" was stale - Assets/evococo/meditation.unity doesn't exist.
+        // The real Yoga scenes are Assets/Scenes/Yoga/Yoga.unity and Yoga Menu.unity.
+        { GameMode.Meditate, "Yoga Menu" },
     };
 
     private struct ModeInfo
@@ -60,8 +65,7 @@ public static class GameModeRecommendation
             GameMode.Meditate,
             new ModeInfo
             {
-                // Display name is "Yoga" (team decision); the underlying scene is still
-                // Assets/evococo/meditation.unity - see SceneNames above.
+                // Display name is "Yoga" (team decision) - see SceneNames above for the scene.
                 modeName = "Yoga",
                 coachMessage =
                     "So let's slow down for a second first. Yoga isn't a step back, it's your warm-up: guided " +
@@ -91,6 +95,11 @@ public static class GameModeRecommendation
         { CopeSubscale.Religion, "You scored highest on religion or spirituality — you find steadiness through prayer or reflection." },
         { CopeSubscale.Venting, "You scored highest on venting — you deal with stress by letting your feelings out, not bottling them up." },
     };
+
+    // Reused by CheckInResultPanel to show the same mode name/coach line Brief-COPE's
+    // own result screen used to show, now that only the check-in flow displays a result.
+    public static string ModeNameFor(GameMode mode) => ModeInfoByMode[mode].modeName;
+    public static string CoachMessageFor(GameMode mode) => ModeInfoByMode[mode].coachMessage;
 
     public const string Disclaimer =
         "This is just a suggestion based on how you said you've been coping lately — not a diagnosis. " +
@@ -139,6 +148,7 @@ public static class GameModeRecommendation
             coachMessage = info.coachMessage,
             reason = ReasonBySubscale[topSubscale],
             topSubscale = topSubscale,
+            topBucket = topBucket,
         };
     }
 }
