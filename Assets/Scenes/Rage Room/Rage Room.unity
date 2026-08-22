@@ -394,10 +394,10 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 0
   maxPushDist: 0.15
-  punchDistance: 3.5
+  punchDistance: 1
   minPunchSpeed: 8
   punchSpeed: 14
-  retractDuration: 0.12
+  retractDuration: 0.15
   useAuthoredStartAsHome: 1
   homeLocalPosition: {x: 0, y: 0, z: 0}
   maxPunchDuration: 1
@@ -5619,10 +5619,10 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 0
   maxPushDist: 0.15
-  punchDistance: 3.5
+  punchDistance: 1
   minPunchSpeed: 8
   punchSpeed: 14
-  retractDuration: 0.12
+  retractDuration: 0.15
   useAuthoredStartAsHome: 1
   homeLocalPosition: {x: 0, y: 0, z: 0}
   maxPunchDuration: 1
