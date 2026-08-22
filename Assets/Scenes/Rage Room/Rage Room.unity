@@ -394,7 +394,7 @@ MonoBehaviour:
   maxDown: 1.5
   maxLeft: 2
   maxRight: 2
-  recoverySpringStrength: 0
+  recoverySpringStrength: 6
   maxPushDist: 0.15
   punchDistance: 1
   minPunchSpeed: 8
@@ -5666,7 +5666,7 @@ MonoBehaviour:
   maxDown: 1.5
   maxLeft: 2
   maxRight: 2
-  recoverySpringStrength: 0
+  recoverySpringStrength: 6
   maxPushDist: 0.15
   punchDistance: 1
   minPunchSpeed: 8

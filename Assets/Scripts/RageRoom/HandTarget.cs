@@ -50,8 +50,9 @@ namespace RageRoom
 ///                            0.85-0.95: lower = snappier stop, higher = looser coast.
 ///   velocity.maxSpeed      — top speed of the anchor in m/s (on the integrator)
 ///   recoverySpringStrength — 0 disables. Higher pulls the anchor back toward
-///                            the workspace center more aggressively once
-///                            input drops out.
+///                            homeLocalPosition (the guard/idle pose) more
+///                            aggressively; player input still overrides it
+///                            when it's the larger of the two accelerations.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class HandTarget : MonoBehaviour
@@ -72,10 +73,15 @@ public class HandTarget : MonoBehaviour
     public float maxRight    = 0.8f;
 
     [Header("Recovery")]
-    [Tooltip("Optional spring pulling the anchor back toward the workspace " +
-             "center (local origin) as an extra acceleration term every step. " +
-             "0 disables it entirely — pure damping-coast-to-a-stop instead.")]
-    public float recoverySpringStrength = 0f;
+    [Tooltip("Spring pulling the anchor back toward homeLocalPosition — the " +
+             "SAME fixed rest pose punches retract to (see Punch Home below) — " +
+             "as an extra acceleration term every step whenever the player " +
+             "isn't actively driving it. Without this the hand only decelerates " +
+             "when input stops (via the integrator's damping); it never " +
+             "actually returns anywhere, so it's left wherever momentum ran out " +
+             "instead of settling into a guard/idle pose. 0 disables it entirely " +
+             "— pure damping-coast-to-a-stop instead.")]
+    public float recoverySpringStrength = 6f;
 
     [Header("Hand Separation")]
     public float maxPushDist = 0.15f;
@@ -285,7 +291,7 @@ public class HandTarget : MonoBehaviour
             Vector3 accel = input.GetAcceleration();
 
             if (recoverySpringStrength > 0f)
-                accel += (Vector3.zero - localPos) * recoverySpringStrength;
+                accel += (homeLocalPosition - localPos) * recoverySpringStrength;
 
             Vector3 currentVelocity = velocity.Step(accel, dt);
 
