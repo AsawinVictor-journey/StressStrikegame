@@ -231,7 +231,7 @@ MonoBehaviour:
   maxImpactSpeed: 14
   hitCooldown: 0.15
   updateCollider: 1
-  colliderRebuildDelay: 0.15
+  colliderRebuildDelay: 0.3
 --- !u!64 &6709427
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1173,7 +1173,7 @@ MonoBehaviour:
   maxImpactSpeed: 14
   hitCooldown: 0.15
   updateCollider: 1
-  colliderRebuildDelay: 0.15
+  colliderRebuildDelay: 0.3
 --- !u!64 &360610514
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -5815,7 +5815,7 @@ MonoBehaviour:
   maxImpactSpeed: 14
   hitCooldown: 0.15
   updateCollider: 1
-  colliderRebuildDelay: 0.15
+  colliderRebuildDelay: 0.3
 --- !u!64 &1932902870
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -6324,7 +6324,7 @@ MonoBehaviour:
   maxImpactSpeed: 14
   hitCooldown: 0.15
   updateCollider: 1
-  colliderRebuildDelay: 0.15
+  colliderRebuildDelay: 0.3
 --- !u!64 &2050901842
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -6472,7 +6472,7 @@ MonoBehaviour:
   maxImpactSpeed: 5
   hitCooldown: 0.15
   updateCollider: 1
-  colliderRebuildDelay: 0.15
+  colliderRebuildDelay: 0.3
 --- !u!64 &2081913381
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -7086,10 +7086,56 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fe49d118871c02c4f9c02c0bb907fb60, type: 3}
+--- !u!1 &700000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 700000002}
+  - component: {fileID: 700000003}
+  m_Layer: 0
+  m_Name: FragmentPool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &700000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &700000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2823cf96904466042fbce5b8bdf21ce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  prewarmSizePerPrefab: 20
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 700000002}
   - {fileID: 1659777935}
   - {fileID: 1082533433}
   - {fileID: 1982574847}
