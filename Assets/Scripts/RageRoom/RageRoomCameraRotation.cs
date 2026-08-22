@@ -62,8 +62,23 @@ public class RageRoomCameraRotation : MonoBehaviour
 
     float prevLeft, prevRight;
     bool  hasLeft, hasRight;
-    bool  armed = true;
-    float cooldownTimer;
+
+    // Armed/cooldown tracked PER HAND, not as one shared scalar. Picking
+    // "whichever hand is faster this frame" for the shared armed/cooldown
+    // state meant that during any natural two-handed motion (both hands
+    // moving, one sliding while the other is still decaying from a previous
+    // move) the "winner" could swap from left to right frame to frame. That
+    // let the LOSING hand's speed satisfy the shared re-arm check even while
+    // the hand that actually fired the last flick was still moving, and then
+    // let the OTHER hand — moving independently, often the opposite way —
+    // fire the next flick immediately after. The camera would flick once from
+    // hand A and then flick back from hand B's unrelated motion: two separate
+    // real motions misread as one gesture and its undo. Two fully independent
+    // trackers make each hand's flick eligibility depend only on that hand's
+    // own signal, never on the other hand's.
+    bool  armedLeft = true, armedRight = true;
+    float cooldownTimerLeft, cooldownTimerRight;
+
     float pending; // remaining signed degrees still to rotate this snap
     float punchSuppressTimer;
 
@@ -75,7 +90,8 @@ public class RageRoomCameraRotation : MonoBehaviour
         float dt = Time.deltaTime;
         if (dt <= 0f) return;
 
-        if (cooldownTimer > 0f) cooldownTimer -= dt;
+        if (cooldownTimerLeft  > 0f) cooldownTimerLeft  -= dt;
+        if (cooldownTimerRight > 0f) cooldownTimerRight -= dt;
 
         // A punch takes priority: while a hand is punching (and briefly after),
         // suppress flick detection so an imperfect, slightly-sideways punch
@@ -91,13 +107,31 @@ public class RageRoomCameraRotation : MonoBehaviour
         float vLeft  = Signal(leftHand,  ref prevLeft,  ref hasLeft,  dt);
         float vRight = Signal(rightHand, ref prevRight, ref hasRight, dt);
 
-        // Whichever hand is moving fastest drives the flick.
-        float v     = Mathf.Abs(vLeft) >= Mathf.Abs(vRight) ? vLeft : vRight;
-        float speed = Mathf.Abs(v);
-
         float threshold = triggerSource == TriggerSource.GloveTurnSpeed
             ? turnSpeedThreshold
             : slideSpeedThreshold;
+
+        TryFlick(vLeft,  threshold, suppressed, ref armedLeft,  ref cooldownTimerLeft);
+        TryFlick(vRight, threshold, suppressed, ref armedRight, ref cooldownTimerRight);
+
+        // Smoothly consume the pending snap.
+        if (Mathf.Abs(pending) > 0.001f)
+        {
+            float maxStep = turnDuration > 0f ? (stepDegrees / turnDuration) * dt : Mathf.Abs(pending);
+            float step    = Mathf.Sign(pending) * Mathf.Min(Mathf.Abs(pending), maxStep);
+            transform.Rotate(0f, step, 0f, Space.World);
+            pending -= step;
+        }
+    }
+
+    /// <summary>
+    /// Evaluates one hand's flick eligibility against its OWN armed/cooldown
+    /// state only — see the field remarks on armedLeft/armedRight for why this
+    /// must not be shared or picked-by-magnitude across hands.
+    /// </summary>
+    void TryFlick(float v, float threshold, bool suppressed, ref bool armed, ref float cooldownTimer)
+    {
+        float speed = Mathf.Abs(v);
 
         if (!suppressed && armed && cooldownTimer <= 0f && speed > threshold)
         {
@@ -109,15 +143,6 @@ public class RageRoomCameraRotation : MonoBehaviour
         else if (!armed && speed < threshold * rearmFraction)
         {
             armed = true;
-        }
-
-        // Smoothly consume the pending snap.
-        if (Mathf.Abs(pending) > 0.001f)
-        {
-            float maxStep = turnDuration > 0f ? (stepDegrees / turnDuration) * dt : Mathf.Abs(pending);
-            float step    = Mathf.Sign(pending) * Mathf.Min(Mathf.Abs(pending), maxStep);
-            transform.Rotate(0f, step, 0f, Space.World);
-            pending -= step;
         }
     }
 
