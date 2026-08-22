@@ -2696,7 +2696,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6441e668e4608846b13d696410386cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentCoins: 100
+  currentCoins: 150
   coinTextUI: {fileID: 836911747}
 --- !u!4 &48374314
 Transform:

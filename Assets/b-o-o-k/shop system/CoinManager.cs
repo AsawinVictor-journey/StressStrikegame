@@ -6,7 +6,7 @@ public class CoinManager : MonoBehaviour
     public static CoinManager Instance { get; private set; }
 
     [Header("Coin Data")]
-    public int currentCoins = 100; // Starting with some coins for testing
+    public int currentCoins = 150;
     private const string COIN_SAVE_KEY = "Player_Coins"; // Key for saving/loading
 
     [Header("UI Elements")]
@@ -80,17 +80,11 @@ public class CoinManager : MonoBehaviour
 
     private void LoadCoins()
     {
-        // Check if we have saved data. If yes, load it. If no, keep the default (100).
+        // Check if we have saved data. If yes, load it. If no, keep the default (150) —
+        // a fresh player's starting balance.
         if (PlayerPrefs.HasKey(COIN_SAVE_KEY))
         {
             currentCoins = PlayerPrefs.GetInt(COIN_SAVE_KEY);
-        }
-
-        // --- ADDED FOR TESTING: Always ensure we have plenty of money to test! ---
-        if (currentCoins < 1000)
-        {
-            currentCoins = 10000;
-            SaveCoins();
         }
     }
 }
