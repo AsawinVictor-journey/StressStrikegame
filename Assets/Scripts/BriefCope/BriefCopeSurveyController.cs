@@ -77,6 +77,16 @@ public class BriefCopeSurveyController : MonoBehaviour
             }
         }
 
+        // Once this session's check-in has already resolved (survey finished/skipped,
+        // then check-in decided/skipped), don't show the survey popup again just because
+        // the player came back to the main menu (e.g. after finishing a mode) - both the
+        // survey and the check-in it hands off to should only appear once per app run.
+        if (CheckInManager.HasCheckedInThisSession)
+        {
+            HideSurveyPopup();
+            return;
+        }
+
         var previous = LoadPreviousResult();
         bool returning = previous != null && !previous.skipped && !string.IsNullOrEmpty(previous.mode);
 

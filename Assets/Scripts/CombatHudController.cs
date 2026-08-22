@@ -70,13 +70,22 @@ public class CombatHudController : MonoBehaviour
     private bool _isMatchOver = false;
 
     [Header("KO Screen (Optional)")]
+    [Tooltip("Assign whichever TMP_Text/Image objects your KO UI uses for each stat — " +
+             "leave any of them empty to skip that stat entirely.")]
     [SerializeField] private GameObject _koScreenPanel;
+    [SerializeField] private CanvasGroup _koScreenCanvasGroup;
     [SerializeField] private TextMeshProUGUI _koWinnerText;
     [SerializeField] private TextMeshProUGUI _koScoreText;
+    [SerializeField] private TextMeshProUGUI _koComboStreakText;
     [SerializeField] private TextMeshProUGUI _koCoinsEarnedText;
-    [SerializeField] private TextMeshProUGUI _koHighScoreText;
+    [SerializeField] private Image _koLevelBarFill;
     [SerializeField] private AudioClip _playerWinSound;
     [SerializeField] private AudioClip _playerLoseSound;
+
+    [Header("Result Screen Flow")]
+    [Tooltip("How long the KO screen stays up before fading into the mode menu.")]
+    [SerializeField] private float _resultScreenDuration = 7f;
+    [SerializeField] private string _menuSceneName = "BoxingMenu";
 
     public bool IsPlayerExhausted { get; private set; }
     public bool IsOpponentExhausted { get; private set; }
@@ -446,27 +455,42 @@ public class CombatHudController : MonoBehaviour
         if (_isMatchOver) return;
         _isMatchOver = true;
 
-        int finalScore = 0, coinsAwarded = 0;
+        int finalScore = 0;
+        int highestCombo = 0;
         bool isNewHighScore = false;
+        PlayerProgression.SessionRewardResult reward = default;
         if (StressStrike.ScoreManager.Instance != null)
         {
-            StressStrike.ScoreManager.Instance.FinalizeMatch(out finalScore, out coinsAwarded, out isNewHighScore);
+            StressStrike.ScoreManager.Instance.FinalizeMatch(out finalScore, out highestCombo, out isNewHighScore, out reward);
         }
-        string scoreSummary = $"Score: {finalScore}\nCoins Earned: +{coinsAwarded}" +
-                               (isNewHighScore ? "\nNEW HIGH SCORE!" : $"\nBest: {StressStrike.ScoreManager.Instance?.highScore ?? 0}");
+        int coinsAwarded = reward.CoinsAwarded;
 
         if (_koScreenPanel != null)
         {
             _koScreenPanel.SetActive(true);
-            if (_koWinnerText != null) _koWinnerText.text = winnerText;
 
-            if (_koScoreText != null) _koScoreText.text = $"Score: {finalScore}";
-            if (_koCoinsEarnedText != null) _koCoinsEarnedText.text = $"Coins Earned: +{coinsAwarded}";
-            if (_koHighScoreText != null) _koHighScoreText.text = isNewHighScore ? "NEW HIGH SCORE!" : $"Best: {StressStrike.ScoreManager.Instance?.highScore ?? 0}";
-
-            if (_koScoreText == null && _koCoinsEarnedText == null && _koHighScoreText == null && _koWinnerText != null)
+            // Fade the panel in if it has a CanvasGroup wired up, using the same UIFade
+            // component Rage Room's result panel uses — falls back to the instant
+            // SetActive above if no CanvasGroup is assigned.
+            if (_koScreenCanvasGroup != null)
             {
-                _koWinnerText.text += "\n" + scoreSummary;
+                FindFirstObjectByType<UIFade>()?.ShowUI(_koScreenCanvasGroup);
+            }
+
+            // Result screen fields: Win/Lose, Score, Combo Streak, Coins Earned. Each is
+            // independently null-checked and formatted plainly (no "Score:"/"Coins Earned:"
+            // labels baked in) so you can freely swap which TMP_Text objects these point at
+            // in the Inspector, or add your own label text around them in the UI itself.
+            if (_koWinnerText != null) _koWinnerText.text = winnerText;
+            if (_koScoreText != null) _koScoreText.text = finalScore.ToString();
+            if (_koComboStreakText != null) _koComboStreakText.text = highestCombo.ToString();
+            if (_koCoinsEarnedText != null) _koCoinsEarnedText.text = "+" + coinsAwarded;
+
+            if (_koLevelBarFill != null)
+            {
+                _koLevelBarFill.fillAmount = reward.PreviousLevelProgress01;
+                StartCoroutine(AnimateLevelBar(_koLevelBarFill,
+                    reward.PreviousLevelProgress01, reward.LevelProgress01, reward.LeveledUp));
             }
         }
         else
@@ -491,6 +515,7 @@ public class CombatHudController : MonoBehaviour
             GameObject textObj = new GameObject("KOText");
             textObj.transform.SetParent(canvasObj.transform, false);
             TextMeshProUGUI tmpText = textObj.AddComponent<TextMeshProUGUI>();
+            string scoreSummary = $"Score: {finalScore}\nCombo Streak: {highestCombo}\nCoins Earned: +{coinsAwarded}";
             tmpText.text = "K.O.\n<size=50%>" + winnerText + "</size>\n<size=40%>" + scoreSummary + "</size>";
             tmpText.fontSize = 120;
             tmpText.alignment = TextAlignmentOptions.Center;
@@ -535,17 +560,51 @@ public class CombatHudController : MonoBehaviour
 
     private IEnumerator ReturnToMainMenuRoutine()
     {
-        // Wait for a few seconds using unscaled time because timeScale is 0.2f
-        yield return new WaitForSecondsRealtime(4f);
-        
+        // Wait using unscaled time because timeScale is 0.2f during the KO freeze-frame.
+        yield return new WaitForSecondsRealtime(_resultScreenDuration);
+
         // Restore time scale
         Time.timeScale = 1f;
-        
-        // Load the main menu scene
+
+        // Fade into Boxing's own menu scene (SceneTransitionManager fades to black,
+        // loads, then fades back in), matching Rage Room/Yoga's result-screen flow.
         if (SceneTransitionManager.Instance != null)
-            SceneTransitionManager.Instance.LoadScene("MainMenuScene");
+            SceneTransitionManager.Instance.LoadScene(_menuSceneName);
         else
-            SceneManager.LoadScene("MainMenuScene");
+            SceneManager.LoadScene(_menuSceneName);
+    }
+
+    // Animates the level bar filling up when the KO screen appears, rather than snapping
+    // straight to the post-match value. On a level-up it fills to full, snaps back to empty,
+    // then continues filling into the new level, so a level-up reads as a level-up rather than
+    // the bar just landing on a lower-looking number. Uses unscaled time since Time.timeScale
+    // is 0.2f during the KO freeze-frame.
+    private IEnumerator AnimateLevelBar(Image bar, float fromProgress, float toProgress, bool leveledUp)
+    {
+        const float fillDuration = 0.5f;
+
+        if (leveledUp)
+        {
+            yield return LerpFill(bar, fromProgress, 1f, fillDuration);
+            bar.fillAmount = 0f;
+            yield return LerpFill(bar, 0f, toProgress, fillDuration);
+        }
+        else
+        {
+            yield return LerpFill(bar, fromProgress, toProgress, fillDuration);
+        }
+    }
+
+    private IEnumerator LerpFill(Image bar, float from, float to, float duration)
+    {
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            bar.fillAmount = Mathf.Lerp(from, to, t / duration);
+            yield return null;
+        }
+        bar.fillAmount = to;
     }
 
     private void OnDestroy()

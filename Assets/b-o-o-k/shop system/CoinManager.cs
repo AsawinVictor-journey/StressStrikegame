@@ -17,6 +17,12 @@ public class CoinManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
+            // Must survive scene loads: this is the single spendable-coin wallet fed by every
+            // mode (Boxing, Rage Room, Yoga) via PlayerProgression.AddSessionResult(), and mode
+            // scenes are loaded single (replacing the scene this lives in) rather than
+            // additively. Without this, Instance would go null the moment a mode scene loads
+            // and every non-Boxing session's coins would be silently dropped.
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
