@@ -62,6 +62,11 @@ public class DeformableMesh : MonoBehaviour
     MeshCollider meshCollider;
     float        lastHitTime = float.NegativeInfinity;
 
+    // Rest-pose local bounds of the visual mesh. Computed once in Start(); shared by
+    // the maxDentDepth safety clamp and BuildCollisionProxy (which used to recompute
+    // the same thing independently).
+    Bounds localBounds;
+
     // Low-poly stand-in for the MeshCollider bake — see proxySegments' tooltip. Deformed in
     // lockstep with the visual mesh (same falloff math, far fewer vertices), never rendered.
     Mesh      proxyMesh;
@@ -109,6 +114,40 @@ public class DeformableMesh : MonoBehaviour
         originalVertices = (Vector3[])vertices.Clone();
         meshCollider     = GetComponent<MeshCollider>();
 
+        localBounds = ComputeLocalBounds(originalVertices);
+
+        // Safety clamp #1: maxDentDepth is author-set per object (e.g. -0.5 on
+        // a desk countertop) with nothing tying it to how thick the object
+        // actually is. DeformVertexArray's per-hit headroom math correctly
+        // bounds any single vertex's displacement to |maxDentDepth| — that
+        // part was never the bug — but if |maxDentDepth| itself exceeds the
+        // object's own thinnest dimension, a vertex can still be pushed clean
+        // through to the far side. Clamping to a fraction of the smallest
+        // local bounding-box dimension means a dent can never punch further
+        // than partway through the object as a whole.
+        float minExtent = Mathf.Min(localBounds.size.x, localBounds.size.y, localBounds.size.z);
+        float maxSafeDentDepth = minExtent * 0.4f;
+
+        // Safety clamp #2 — the one that actually matters for the black-spot
+        // artifact. Every deformable object in the scene is authored with
+        // |maxDentDepth| / deformRadius somewhere around 0.45-0.67 (e.g.
+        // depth 0.5 over radius 0.75). Combined with DeformVertexArray's t²
+        // falloff, that ratio makes for a narrow, steep-walled crater: the
+        // center sinks far faster than its rim keeps up, so the surface folds
+        // over itself and inverts triangle winding/normals right at the
+        // impact point. That reads as a black hole from LOCAL self-
+        // intersection — it happens well before the dent gets anywhere near
+        // the object's outer wall, which is why clamp #1 alone didn't fix it.
+        // Capping depth to a fraction of the dent's own radius keeps the
+        // crater shallow enough relative to its footprint to stay a smooth
+        // dish instead of a spike. 0.3 is comfortably inside where a t²
+        // falloff still folds.
+        float maxSafeDentDepthForRadius = deformRadius * 0.3f;
+
+        maxSafeDentDepth = Mathf.Min(maxSafeDentDepth, maxSafeDentDepthForRadius);
+        if (Mathf.Abs(maxDentDepth) > maxSafeDentDepth)
+            maxDentDepth = Mathf.Sign(maxDentDepth) * maxSafeDentDepth;
+
         BuildCollisionProxy();
 
         // Assign unconditionally. Guarding on "== null" meant that whenever the
@@ -121,6 +160,14 @@ public class DeformableMesh : MonoBehaviour
             meshCollider.sharedMesh = proxyMesh;
     }
 
+    static Bounds ComputeLocalBounds(Vector3[] verts)
+    {
+        Bounds b = new Bounds(verts[0], Vector3.zero);
+        for (int i = 1; i < verts.Length; i++)
+            b.Encapsulate(verts[i]);
+        return b;
+    }
+
     // Builds a coarse box-cage mesh sized to the visual mesh's rest-pose local bounds, used
     // as the MeshCollider's bake source instead of the full-detail visual mesh. Since these
     // colliders are convex (m_Convex on the MeshCollider), PhysX's convex hull bake only
@@ -129,10 +176,6 @@ public class DeformableMesh : MonoBehaviour
     // outward-facing-correct.
     void BuildCollisionProxy()
     {
-        Bounds localBounds = new Bounds(originalVertices[0], Vector3.zero);
-        for (int i = 1; i < originalVertices.Length; i++)
-            localBounds.Encapsulate(originalVertices[i]);
-
         int segments = Mathf.Max(1, proxySegments);
         var verts = new List<Vector3>();
         var tris  = new List<int>();

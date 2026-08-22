@@ -5,7 +5,31 @@ using UnityEngine.UI;
 
 public class SceneTransitionManager : MonoBehaviour
 {
-    public static SceneTransitionManager Instance;
+    private static SceneTransitionManager _instance;
+
+    /// <summary>
+    /// Lazily creates the manager if none exists yet. Any scene can carry a
+    /// SceneButton, but this manager only ever spawned via a hand-placed
+    /// instance's own Awake() — so entering a scene directly (in the Editor,
+    /// or any flow that skips whatever scene first placed one) left Instance
+    /// null and NRE'd every SceneButton in it. CreateTransitionUI() builds its
+    /// canvas entirely from code with no external prefab dependency, so
+    /// there's nothing stopping it from running on a manager created here
+    /// instead of one hand-placed in a scene — this makes Instance work no
+    /// matter which scene is entered first.
+    /// </summary>
+    public static SceneTransitionManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                var go = new GameObject("SceneTransitionManager (auto-created)");
+                _instance = go.AddComponent<SceneTransitionManager>();
+            }
+            return _instance;
+        }
+    }
 
     [Header("Transition")]
     public float fadeDuration = 0.5f;
@@ -17,13 +41,13 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
-        Instance = this;
+        _instance = this;
         DontDestroyOnLoad(gameObject);
 
         CreateTransitionUI();
