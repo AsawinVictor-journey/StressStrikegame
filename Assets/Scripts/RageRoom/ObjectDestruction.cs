@@ -52,6 +52,12 @@ public class DestructibleObject : MonoBehaviour
             return;
         lastHitTime = Time.time;
 
+        // The dedicated punch Hitbox's own collision messages aren't reliable
+        // (see PunchController.SpawnImpactEffect), so the VFX is triggered from
+        // here instead — this OnCollisionEnter is what actually fires on every
+        // landed punch.
+        collision.rigidbody?.GetComponent<PunchController>()?.SpawnImpactEffect(collision);
+
         // Null-conditional to match GameManager's usage. A destructible can
         // outlive the ScoreSystem during scene teardown, and an unguarded call
         // throws there — killing the rest of this method, so the object takes

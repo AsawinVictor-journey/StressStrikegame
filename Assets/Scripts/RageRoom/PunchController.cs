@@ -52,6 +52,18 @@ public class PunchController : MonoBehaviour
     [Range(0.1f, 0.3f)]
     public float hitboxDuration = 0.2f;
 
+    [Header("Impact VFX")]
+    [Tooltip("Particle system spawned at the contact point every time this glove " +
+             "lands a hit. Should be a one-shot prefab (looping off, Stop Action = " +
+             "Destroy) so instances clean themselves up.")]
+    public ParticleSystem impactEffectPrefab;
+
+    [Tooltip("Local Euler offset applied on top of the surface-normal alignment. " +
+             "The effect is rotated so its local +Z faces the hit surface's normal; " +
+             "if the prefab's own 'forward' (e.g. its Shape module's cone direction) " +
+             "doesn't match +Z, tune this until the burst looks right.")]
+    public Vector3 impactEffectRotationOffset;
+
     PunchHitbox hitboxEvents;
     bool        hitboxPending;
     float       hitboxDisableAt;
@@ -147,7 +159,27 @@ public class PunchController : MonoBehaviour
         // instead of waiting out the full duration, then snap back.
         CloseWindow();
 
+        SpawnImpactEffect(collision);
+
         if (handTarget != null)
             handTarget.BeginRetract();
+    }
+
+    /// <summary>
+    /// Spawns impactEffectPrefab at the collision's contact point. Public so
+    /// DestructibleObject/ImpactReaction can trigger it directly from their own
+    /// OnCollisionEnter — the dedicated punch Hitbox's own OnCollisionEnter does
+    /// not reliably fire even when its collider is the one that made contact
+    /// (confirmed: the receiving object's Collision.collider resolves to the
+    /// Hitbox, but PunchHitbox on that same GameObject never receives the
+    /// message), so HandleHit()/OnHit can't be trusted as the sole trigger.
+    /// </summary>
+    public void SpawnImpactEffect(Collision collision)
+    {
+        if (impactEffectPrefab == null || collision.contactCount == 0) return;
+
+        ContactPoint contact = collision.GetContact(0);
+        Quaternion rotation  = Quaternion.LookRotation(contact.normal) * Quaternion.Euler(impactEffectRotationOffset);
+        Instantiate(impactEffectPrefab, contact.point, rotation).Play();
     }
 }
