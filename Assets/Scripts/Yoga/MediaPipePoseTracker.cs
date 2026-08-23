@@ -83,6 +83,11 @@ public class MediaPipePoseTracker : MonoBehaviour
     // Per-joint state, refreshed whenever a valid result arrives; consumed every
     // Update() frame (not just on new-data frames) for smoothing & circle display.
     private float _scoreLeftElbow, _scoreRightElbow, _scoreLeftShoulder, _scoreRightShoulder, _scoreTorsoLean;
+    // Whether each joint's score has ever been computed at least once -- gates
+    // both the weighted average (below) and the "nothing scoreable yet" check,
+    // independently per joint (e.g. hips never in frame permanently excludes
+    // torso lean/shoulder angle but must not block elbow scoring).
+    private bool _hasLeftElbow, _hasRightElbow, _hasLeftShoulder, _hasRightShoulder, _hasTorsoLean;
     private Vector2 _targetPosLeftElbow, _targetPosRightElbow, _targetPosLeftWrist, _targetPosRightWrist;
     private bool _hasTargetPositions;
 
@@ -198,8 +203,12 @@ public class MediaPipePoseTracker : MonoBehaviour
     // separately per point and is what actually gates whether a given SCORE
     // updates -- a joint's score holds its last value rather than the whole
     // frame being discarded, per the "hold last value" design principle.
+    // Each point warms up independently the first time IT is individually seen
+    // valid -- NOT gated on all 8 landing in the same frame at once, which in
+    // practice (see live testing) can take arbitrarily long or never happen for
+    // a persistently marginal point like a hip near the frame edge.
     private Vector3 _cLShoulder, _cRShoulder, _cLElbow, _cRElbow, _cLWrist, _cRWrist, _cLHip, _cRHip;
-    private bool _hasCache;
+    private bool _seenLShoulder, _seenRShoulder, _seenLElbow, _seenRElbow, _seenLWrist, _seenRWrist, _seenLHip, _seenRHip;
 
     private void TryProcessResult(PoseLandmarkerResult result)
     {
@@ -227,40 +236,49 @@ public class MediaPipePoseTracker : MonoBehaviour
         bool fLHip = TryGetPoint(worldLandmarks, LeftHip, out var lHip);
         bool fRHip = TryGetPoint(worldLandmarks, RightHip, out var rHip);
 
-        // Fill in gaps with the last known-good position so Compute() always has
-        // a full 8-point set to work with; only the joints whose OWN required
-        // points are fresh this frame get their score updated below.
-        if (_hasCache)
-        {
-            if (!fLShoulder) lShoulder = _cLShoulder; if (!fRShoulder) rShoulder = _cRShoulder;
-            if (!fLElbow) lElbow = _cLElbow; if (!fRElbow) rElbow = _cRElbow;
-            if (!fLWrist) lWrist = _cLWrist; if (!fRWrist) rWrist = _cRWrist;
-            if (!fLHip) lHip = _cLHip; if (!fRHip) rHip = _cRHip;
-        }
-        else if (!(fLShoulder && fRShoulder && fLElbow && fRElbow && fLWrist && fRWrist && fLHip && fRHip))
-        {
-            // No cache yet and at least one point missing -- nothing usable to fall back to.
-            _diagLastFailReason = "warming up (waiting for first fully-tracked frame)";
-            return;
-        }
+        // Each point independently: use this frame's fresh value if valid,
+        // otherwise fall back to whatever was last seen for THAT point. A point
+        // never seen at all stays unresolved -- tracked via _seen*, not a single
+        // all-8 gate, so one persistently marginal point (e.g. a hip near the
+        // frame edge) can't block every other point from warming up.
+        if (fLShoulder) { _cLShoulder = lShoulder; _seenLShoulder = true; } else if (_seenLShoulder) lShoulder = _cLShoulder;
+        if (fRShoulder) { _cRShoulder = rShoulder; _seenRShoulder = true; } else if (_seenRShoulder) rShoulder = _cRShoulder;
+        if (fLElbow) { _cLElbow = lElbow; _seenLElbow = true; } else if (_seenLElbow) lElbow = _cLElbow;
+        if (fRElbow) { _cRElbow = rElbow; _seenRElbow = true; } else if (_seenRElbow) rElbow = _cRElbow;
+        if (fLWrist) { _cLWrist = lWrist; _seenLWrist = true; } else if (_seenLWrist) lWrist = _cLWrist;
+        if (fRWrist) { _cRWrist = rWrist; _seenRWrist = true; } else if (_seenRWrist) rWrist = _cRWrist;
+        if (fLHip) { _cLHip = lHip; _seenLHip = true; } else if (_seenLHip) lHip = _cLHip;
+        if (fRHip) { _cRHip = rHip; _seenRHip = true; } else if (_seenRHip) rHip = _cRHip;
 
-        _cLShoulder = lShoulder; _cRShoulder = rShoulder;
-        _cLElbow = lElbow; _cRElbow = rElbow;
-        _cLWrist = lWrist; _cRWrist = rWrist;
-        _cLHip = lHip; _cRHip = rHip;
-        _hasCache = true;
-
+        // No longer gated on all 8 points ever having been seen: each JOINT below
+        // only needs what it actually depends on (per YogaJointAngles.Compute's
+        // formulas). A hip that's genuinely never in frame (common for a
+        // desk/laptop webcam) permanently blocks torso-lean and shoulder-angle
+        // scoring, but must NOT block elbow scoring, which needs no hip data at
+        // all. Compute() itself is safe to call with never-seen points still at
+        // their Vector3 default -- those values just won't feed any score whose
+        // _seen* gate below excludes them.
         var current = YogaJointAngles.Compute(lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip);
 
-        if (fLShoulder && fLElbow && fLWrist) _scoreLeftElbow = Score(current.leftElbow, _target.leftElbow, elbowTolerance);
-        if (fRShoulder && fRElbow && fRWrist) _scoreRightElbow = Score(current.rightElbow, _target.rightElbow, elbowTolerance);
-        if (fLHip && fRHip && fLShoulder && fLElbow) _scoreLeftShoulder = Score(current.leftShoulder, _target.leftShoulder, shoulderTolerance);
-        if (fLHip && fRHip && fRShoulder && fRElbow) _scoreRightShoulder = Score(current.rightShoulder, _target.rightShoulder, shoulderTolerance);
-        if (fLHip && fRHip && fLShoulder && fRShoulder) _scoreTorsoLean = Score(current.torsoLean, _target.torsoLean, torsoLeanTolerance);
+        if (_seenLShoulder && _seenLElbow && _seenLWrist) { _scoreLeftElbow = Score(current.leftElbow, _target.leftElbow, elbowTolerance); _hasLeftElbow = true; }
+        if (_seenRShoulder && _seenRElbow && _seenRWrist) { _scoreRightElbow = Score(current.rightElbow, _target.rightElbow, elbowTolerance); _hasRightElbow = true; }
+        if (_seenLHip && _seenRHip && _seenLShoulder && _seenLElbow) { _scoreLeftShoulder = Score(current.leftShoulder, _target.leftShoulder, shoulderTolerance); _hasLeftShoulder = true; }
+        if (_seenLHip && _seenRHip && _seenRShoulder && _seenRElbow) { _scoreRightShoulder = Score(current.rightShoulder, _target.rightShoulder, shoulderTolerance); _hasRightShoulder = true; }
+        if (_seenLHip && _seenRHip && _seenLShoulder && _seenRShoulder) { _scoreTorsoLean = Score(current.torsoLean, _target.torsoLean, torsoLeanTolerance); _hasTorsoLean = true; }
 
-        _diagLastFailReason = $"OK (fresh: {(fLShoulder?"LSh ":"")}{(fRShoulder?"RSh ":"")}{(fLElbow?"LEl ":"")}{(fRElbow?"REl ":"")}{(fLWrist?"LWr ":"")}{(fRWrist?"RWr ":"")}{(fLHip?"LHi ":"")}{(fRHip?"RHi":"")})";
+        if (!(_hasLeftElbow || _hasRightElbow || _hasLeftShoulder || _hasRightShoulder || _hasTorsoLean))
+        {
+            _diagLastFailReason = "warming up (no joint has enough points seen yet: " +
+                $"{(!_seenLShoulder?"LSh ":"")}{(!_seenRShoulder?"RSh ":"")}{(!_seenLElbow?"LEl ":"")}{(!_seenRElbow?"REl ":"")}" +
+                $"{(!_seenLWrist?"LWr ":"")}{(!_seenRWrist?"RWr ":"")}{(!_seenLHip?"LHi ":"")}{(!_seenRHip?"RHi":"")})";
+            return; // literally nothing scoreable yet -- e.g. right at session start before even shoulders/elbows/wrists have been seen once
+        }
 
-        float weightSum = elbowWeight * 2f + shoulderWeight * 2f + torsoLeanWeight;
+        _diagLastFailReason = $"OK (scoring: {(_hasLeftElbow?"LEl ":"")}{(_hasRightElbow?"REl ":"")}{(_hasLeftShoulder?"LSh ":"")}{(_hasRightShoulder?"RSh ":"")}{(_hasTorsoLean?"Torso":"")}" +
+            $"{(!_seenLHip || !_seenRHip ? " -- hips never seen, torso lean & shoulder angle scores unavailable" : "")})";
+
+        float weightSum = (_hasLeftElbow ? elbowWeight : 0f) + (_hasRightElbow ? elbowWeight : 0f) +
+            (_hasLeftShoulder ? shoulderWeight : 0f) + (_hasRightShoulder ? shoulderWeight : 0f) + (_hasTorsoLean ? torsoLeanWeight : 0f);
         _rawAccuracy = (
             _scoreLeftElbow * elbowWeight + _scoreRightElbow * elbowWeight +
             _scoreLeftShoulder * shoulderWeight + _scoreRightShoulder * shoulderWeight +
