@@ -19,6 +19,10 @@ public class MenuDummyPuncher : MonoBehaviour
         ("LeftHookTrigger", 1.98333347f), // Hook left.fbx
     };
 
+    [Header("Punch VFX (basic step 1 — one shared effect, replayed on every hit)")]
+    [Tooltip("A ParticleSystem positioned at/near the glove. Played on every punch trigger. Leave empty to skip VFX entirely.")]
+    [SerializeField] private ParticleSystem punchVFX;
+
     private Animator animator;
 
     private void Start()
@@ -50,5 +54,8 @@ public class MenuDummyPuncher : MonoBehaviour
             if (t != trigger) animator.ResetTrigger(t);
         }
         animator.SetTrigger(trigger);
+
+        // Step 1: same effect on every punch, no per-hand/per-punch-type variation yet.
+        if (punchVFX != null) punchVFX.Play();
     }
 }

@@ -67,7 +67,7 @@ public class YogaManager : MonoBehaviour
     public UIFade uiFade;
 
     [Header("Score")]
-    public YogaTracker yogaTracker;
+    public MediaPipePoseTracker yogaTracker;
     public float finalScore;
 
     [Header("Sun Feedback")]
@@ -164,9 +164,7 @@ public class YogaManager : MonoBehaviour
         selectedPose = pose;
         descriptionImage.sprite = selectedPose.icon;
 
-        yogaTracker.SetTargetPose(
-            selectedPose.targetArmRotation
-        );
+        yogaTracker.SetTargetPose(selectedPose);
     }
 
     public void StartPose()
@@ -248,13 +246,9 @@ public class YogaManager : MonoBehaviour
         }
         uiFade.HideUI(countdownGroup);
 
-        // Recenter the glove to the player's current neutral pose. Pose targets
-        // were captured relative to this neutral, so this is what makes the
-        // accuracy line up regardless of how the BNO055's heading drifted since
-        // last session. The player is still in neutral here (just finished the
-        // "arms relaxed" countdown) before the instructor animation begins.
-        if (yogaTracker != null)
-            yogaTracker.Recenter();
+        // No recenter step here for MediaPipePoseTracker: unlike the glove (whose
+        // IMU has no absolute reference frame), MediaPipe's joint-angle accuracy
+        // is body-relative by construction and needs no per-session calibration.
 
         // Show description immediately
         uiFade.ShowUI(descriptionGroup);

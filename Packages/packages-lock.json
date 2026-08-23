@@ -53,6 +53,15 @@
       },
       "hash": "cce8b57de9cb69633deb222c9162dad539a52b87"
     },
+    "com.github.homuler.mediapipe": {
+      "version": "file:com.github.homuler.mediapipe",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.test-framework": "1.0.0"
+      }
+    },
     "com.ivanmurzak.unity.mcp": {
       "version": "0.89.0",
       "depth": 0,
