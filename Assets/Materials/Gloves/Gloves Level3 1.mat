@@ -339,13 +339,13 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CustomLightDirection: {r: 0, g: 0, b: 10, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _GlossColor: {r: 0.4009434, g: 1, b: 0.65413517, a: 1}
+    - _GlossColor: {r: 0.7028302, g: 1, b: 0.8290788, a: 1}
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 0.9019608, g: 0.47155467, b: 0.09019604, a: 1}
     - _MainColor: {r: 0.3018868, g: 0.049839795, b: 0.15278855, a: 1}
     - _OutlineColor: {r: 2.3796904, g: 2.3796904, b: 2.3796904, a: 1}
     - _OutlineOffset: {r: 0, g: 0, b: 0, a: 1}
-    - _OverallShadowColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
+    - _OverallShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _PTCol: {r: 0, g: 0, b: 0, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
     - _SSAOColor: {r: 0, g: 0, b: 0, a: 0}
