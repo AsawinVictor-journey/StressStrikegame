@@ -21,7 +21,7 @@ MonoBehaviour:
   m_OverrideGlobalSceneList: 1
   m_Scenes:
   - m_enabled: 1
-    m_path: Assets/Scenes/UI Mainmenu.unity
+    m_path: Assets/Scenes/Training.unity
   - m_enabled: 0
     m_path: Assets/Scenes/SampleScene.unity
   - m_enabled: 1
@@ -872,25 +872,25 @@ MonoBehaviour:
     - line: '|   webGLCloseOnQuit: 0'
     - line: '|   webWasm2023: 0'
     - line: '|   scriptingDefineSymbols:'
-    - line: '|     Android: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     EmbeddedLinux: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     GameCoreScarlett: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     GameCoreXboxOne: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     Kepler: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     LinuxHeadlessSimulation: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     Nintendo Switch: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     Nintendo Switch 2: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     PS4: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     PS5: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     QNX: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     Server: UNITY_MCP_READY'
-    - line: '|     Standalone: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     VisionOS: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     WebGL: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     Windows Store Apps: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     XboxOne: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     iPhone: DOTWEEN;UNITY_MCP_READY'
-    - line: '|     tvOS: DOTWEEN;UNITY_MCP_READY'
+    - line: '|     Android: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     EmbeddedLinux: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     GameCoreScarlett: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     GameCoreXboxOne: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     Kepler: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     LinuxHeadlessSimulation: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     Nintendo Switch: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     Nintendo Switch 2: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     PS4: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     PS5: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     QNX: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     Server: UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     Standalone: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     VisionOS: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     WebGL: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     Windows Store Apps: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     XboxOne: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     iPhone: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
+    - line: '|     tvOS: DOTWEEN;UNITY_MCP_READY;UNITY_MCP_DEPS_2'
     - line: '|   additionalCompilerArguments: {}'
     - line: '|   platformArchitecture: {}'
     - line: '|   scriptingBackend:'

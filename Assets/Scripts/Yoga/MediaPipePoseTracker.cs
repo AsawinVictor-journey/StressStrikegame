@@ -42,7 +42,10 @@ public class MediaPipePoseTracker : MonoBehaviour
     public float elbowWeight = 1f;
     public float shoulderWeight = 1f;
     public float torsoLeanWeight = 1f;
-    [Range(0f, 1f)] public float minLandmarkConfidence = 0.5f;
+    // Live-tested: even clearly-tracked landmarks commonly read 0.1-0.5 visibility
+    // in a typical desk/laptop webcam framing (see design notes) -- 0.5 rejected
+    // almost every frame. 0.25 is a deliberately forgiving starting point.
+    [Range(0f, 1f)] public float minLandmarkConfidence = 0.25f;
     public float smoothSpeed = 5f;
 
     public bool tracking { get; private set; }
@@ -106,7 +109,15 @@ public class MediaPipePoseTracker : MonoBehaviour
     {
         _pendingResult = result;
         _hasPendingResult = true;
+        _diagResultsReceived++;
     }
+
+    // --- TEMPORARY diagnostics (Prayer MVP bring-up) ---------------------------
+    // Throttled to ~once/sec so it doesn't flood the console. Safe to delete once
+    // live accuracy is confirmed working.
+    private int _diagResultsReceived;
+    private float _diagLastLogTime;
+    private string _diagLastFailReason = "";
 
     public void SetTargetPose(YogaPose pose)
     {
@@ -156,6 +167,13 @@ public class MediaPipePoseTracker : MonoBehaviour
             TryProcessResult(result);
         }
 
+        if (Time.unscaledTime - _diagLastLogTime > 1f)
+        {
+            _diagLastLogTime = Time.unscaledTime;
+            Debug.Log($"[MediaPipePoseTracker DIAG] resultsReceived={_diagResultsReceived} tracking={tracking} " +
+                $"hasTarget={_hasTarget} lastFrame={_diagLastFailReason} rawAccuracy={_rawAccuracy:F0} accuracy={accuracy:F0}");
+        }
+
         if (!tracking) return;
 
         accuracy = Mathf.Lerp(accuracy, _rawAccuracy, Time.deltaTime * smoothSpeed);
@@ -173,34 +191,74 @@ public class MediaPipePoseTracker : MonoBehaviour
         UpdateTargetCircles();
     }
 
+    // Cached last-known-good positions, per canonical joint -- used so a
+    // momentarily-unreliable point doesn't block angle math for OTHER joints
+    // that don't depend on it (e.g. a shaky elbow shouldn't freeze hip-based
+    // torso lean). Freshness (was THIS frame's reading usable?) is tracked
+    // separately per point and is what actually gates whether a given SCORE
+    // updates -- a joint's score holds its last value rather than the whole
+    // frame being discarded, per the "hold last value" design principle.
+    private Vector3 _cLShoulder, _cRShoulder, _cLElbow, _cRElbow, _cLWrist, _cRWrist, _cLHip, _cRHip;
+    private bool _hasCache;
+
     private void TryProcessResult(PoseLandmarkerResult result)
     {
-        if (!_hasTarget) return; // nothing to compare against yet
+        if (!_hasTarget) { _diagLastFailReason = "no target set (SetTargetPose not called / pose not baked)"; return; }
 
         if (result.poseWorldLandmarks == null || result.poseWorldLandmarks.Count == 0)
         {
             _hasLivePose = false;
+            _diagLastFailReason = "poseWorldLandmarks empty (no person detected this frame)";
             return; // no person detected -- hold last accuracy, don't zero it
         }
         var worldLandmarks = result.poseWorldLandmarks[0].landmarks;
-        if (worldLandmarks == null || worldLandmarks.Count < RequiredLandmarkCount) return;
+        if (worldLandmarks == null || worldLandmarks.Count < RequiredLandmarkCount)
+        {
+            _diagLastFailReason = $"only {(worldLandmarks == null ? 0 : worldLandmarks.Count)} landmarks (need {RequiredLandmarkCount})";
+            return;
+        }
 
-        if (!TryGetPoint(worldLandmarks, LeftShoulder, out var lShoulder)) return;
-        if (!TryGetPoint(worldLandmarks, RightShoulder, out var rShoulder)) return;
-        if (!TryGetPoint(worldLandmarks, LeftElbow, out var lElbow)) return;
-        if (!TryGetPoint(worldLandmarks, RightElbow, out var rElbow)) return;
-        if (!TryGetPoint(worldLandmarks, LeftWrist, out var lWrist)) return;
-        if (!TryGetPoint(worldLandmarks, RightWrist, out var rWrist)) return;
-        if (!TryGetPoint(worldLandmarks, LeftHip, out var lHip)) return;
-        if (!TryGetPoint(worldLandmarks, RightHip, out var rHip)) return;
+        bool fLShoulder = TryGetPoint(worldLandmarks, LeftShoulder, out var lShoulder);
+        bool fRShoulder = TryGetPoint(worldLandmarks, RightShoulder, out var rShoulder);
+        bool fLElbow = TryGetPoint(worldLandmarks, LeftElbow, out var lElbow);
+        bool fRElbow = TryGetPoint(worldLandmarks, RightElbow, out var rElbow);
+        bool fLWrist = TryGetPoint(worldLandmarks, LeftWrist, out var lWrist);
+        bool fRWrist = TryGetPoint(worldLandmarks, RightWrist, out var rWrist);
+        bool fLHip = TryGetPoint(worldLandmarks, LeftHip, out var lHip);
+        bool fRHip = TryGetPoint(worldLandmarks, RightHip, out var rHip);
+
+        // Fill in gaps with the last known-good position so Compute() always has
+        // a full 8-point set to work with; only the joints whose OWN required
+        // points are fresh this frame get their score updated below.
+        if (_hasCache)
+        {
+            if (!fLShoulder) lShoulder = _cLShoulder; if (!fRShoulder) rShoulder = _cRShoulder;
+            if (!fLElbow) lElbow = _cLElbow; if (!fRElbow) rElbow = _cRElbow;
+            if (!fLWrist) lWrist = _cLWrist; if (!fRWrist) rWrist = _cRWrist;
+            if (!fLHip) lHip = _cLHip; if (!fRHip) rHip = _cRHip;
+        }
+        else if (!(fLShoulder && fRShoulder && fLElbow && fRElbow && fLWrist && fRWrist && fLHip && fRHip))
+        {
+            // No cache yet and at least one point missing -- nothing usable to fall back to.
+            _diagLastFailReason = "warming up (waiting for first fully-tracked frame)";
+            return;
+        }
+
+        _cLShoulder = lShoulder; _cRShoulder = rShoulder;
+        _cLElbow = lElbow; _cRElbow = rElbow;
+        _cLWrist = lWrist; _cRWrist = rWrist;
+        _cLHip = lHip; _cRHip = rHip;
+        _hasCache = true;
 
         var current = YogaJointAngles.Compute(lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip);
 
-        _scoreLeftElbow = Score(current.leftElbow, _target.leftElbow, elbowTolerance);
-        _scoreRightElbow = Score(current.rightElbow, _target.rightElbow, elbowTolerance);
-        _scoreLeftShoulder = Score(current.leftShoulder, _target.leftShoulder, shoulderTolerance);
-        _scoreRightShoulder = Score(current.rightShoulder, _target.rightShoulder, shoulderTolerance);
-        _scoreTorsoLean = Score(current.torsoLean, _target.torsoLean, torsoLeanTolerance);
+        if (fLShoulder && fLElbow && fLWrist) _scoreLeftElbow = Score(current.leftElbow, _target.leftElbow, elbowTolerance);
+        if (fRShoulder && fRElbow && fRWrist) _scoreRightElbow = Score(current.rightElbow, _target.rightElbow, elbowTolerance);
+        if (fLHip && fRHip && fLShoulder && fLElbow) _scoreLeftShoulder = Score(current.leftShoulder, _target.leftShoulder, shoulderTolerance);
+        if (fLHip && fRHip && fRShoulder && fRElbow) _scoreRightShoulder = Score(current.rightShoulder, _target.rightShoulder, shoulderTolerance);
+        if (fLHip && fRHip && fLShoulder && fRShoulder) _scoreTorsoLean = Score(current.torsoLean, _target.torsoLean, torsoLeanTolerance);
+
+        _diagLastFailReason = $"OK (fresh: {(fLShoulder?"LSh ":"")}{(fRShoulder?"RSh ":"")}{(fLElbow?"LEl ":"")}{(fRElbow?"REl ":"")}{(fLWrist?"LWr ":"")}{(fRWrist?"RWr ":"")}{(fLHip?"LHi ":"")}{(fRHip?"RHi":"")})";
 
         float weightSum = elbowWeight * 2f + shoulderWeight * 2f + torsoLeanWeight;
         _rawAccuracy = (
@@ -260,10 +318,20 @@ public class MediaPipePoseTracker : MonoBehaviour
     private bool TryGetPoint(List<Landmark> landmarks, int index, out Vector3 point)
     {
         var lm = landmarks[index];
+        // 'presence' deliberately not gated here: live-tested against this project's
+        // BlazePoseFull model, presence sits persistently low (often <0.1) even for
+        // landmarks 'visibility' scores as clearly tracked (0.3-0.9) -- gating on it
+        // blocked nearly every frame. 'visibility' alone is the reliable signal here.
         if (lm.visibility.HasValue && lm.visibility.Value < minLandmarkConfidence) { point = default; return false; }
-        if (lm.presence.HasValue && lm.presence.Value < minLandmarkConfidence) { point = default; return false; }
         point = new Vector3(lm.x, lm.y, lm.z);
         return true;
+    }
+
+    // TEMPORARY diagnostic helper -- reports which landmark failed and why.
+    private static string DiagLowConfidence(string jointName, List<Landmark> landmarks, int index)
+    {
+        var lm = landmarks[index];
+        return $"{jointName} low confidence (visibility={lm.visibility}, presence={lm.presence})";
     }
 
     private static float Score(float current, float target, float tolerance)
