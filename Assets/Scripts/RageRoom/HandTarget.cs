@@ -154,6 +154,26 @@ public class HandTarget : MonoBehaviour
     // Read by RageRoomCameraRotation (forwarded through PhysicsHandController).
     public Vector3 LocalPosition => localPos;
 
+    /// <summary>
+    /// True while the player is actively holding a lateral movement key/tilt
+    /// (X/Y acceleration above a small deadzone), false when GetAcceleration()
+    /// is quiet — including while recoverySpringStrength is passively pulling
+    /// the anchor back toward home. RageRoomCameraRotation's HandSlideSpeed
+    /// mode reads this to tell a real player-driven slide apart from the
+    /// spring's own return motion: without it, releasing a movement key lets
+    /// the spring accelerate the anchor back through slideSpeedThreshold and
+    /// fire a second, opposite flick that undoes the one the player just made.
+    /// </summary>
+    public bool HasActiveInput
+    {
+        get
+        {
+            if (input == null) return false;
+            Vector3 a = input.GetAcceleration();
+            return (a.x * a.x + a.y * a.y) > 0.01f;
+        }
+    }
+
     /// <summary>True while a punch is extending or retracting. Used by
     /// RageRoomCameraRotation to suppress camera flicks during a punch, so an
     /// imperfect (slightly sideways) punch doesn't also spin the camera.</summary>

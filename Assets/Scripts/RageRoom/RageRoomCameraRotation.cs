@@ -111,8 +111,16 @@ public class RageRoomCameraRotation : MonoBehaviour
             ? turnSpeedThreshold
             : slideSpeedThreshold;
 
-        TryFlick(vLeft,  threshold, suppressed, ref armedLeft,  ref cooldownTimerLeft);
-        TryFlick(vRight, threshold, suppressed, ref armedRight, ref cooldownTimerRight);
+        // In HandSlideSpeed mode, only a player-driven slide should be able to
+        // fire a flick. Without this, HandTarget's recovery spring pulling the
+        // anchor back toward home the instant a movement key is released can
+        // itself cross slideSpeedThreshold and fire an opposite flick that
+        // undoes the one the player just made — see HasActiveInput's remarks.
+        bool leftSuppressed  = suppressed || (triggerSource == TriggerSource.HandSlideSpeed && leftHand  != null && !leftHand.HasActiveInput);
+        bool rightSuppressed = suppressed || (triggerSource == TriggerSource.HandSlideSpeed && rightHand != null && !rightHand.HasActiveInput);
+
+        TryFlick(vLeft,  threshold, leftSuppressed,  ref armedLeft,  ref cooldownTimerLeft);
+        TryFlick(vRight, threshold, rightSuppressed, ref armedRight, ref cooldownTimerRight);
 
         // Smoothly consume the pending snap.
         if (Mathf.Abs(pending) > 0.001f)

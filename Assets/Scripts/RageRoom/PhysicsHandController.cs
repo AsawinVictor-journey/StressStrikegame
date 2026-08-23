@@ -83,6 +83,7 @@ public class PhysicsHandController : MonoBehaviour
     public Vector3 TargetLocalPosition => target != null ? target.LocalPosition : Vector3.zero;
     public float   MaxRight            => target != null ? target.maxRight      : 0f;
     public float   MaxLeft             => target != null ? target.maxLeft       : 0f;
+    public bool    HasActiveInput      => target != null && target.HasActiveInput;
 
     [HideInInspector] public Collider col;
 
