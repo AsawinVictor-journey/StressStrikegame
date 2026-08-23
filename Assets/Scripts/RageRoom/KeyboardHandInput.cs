@@ -34,10 +34,8 @@ public class KeyboardHandInput : HandInputProvider
     public float moveAccel = 20f;
 
     [Header("Punch Input")]
-    [Tooltip("Button that triggers this hand's punch. Assign Mouse0 (left " +
-             "click) to the left hand and Mouse1 (right click) to the right " +
-             "hand so each hand punches independently.")]
-    public KeyCode punchKey = KeyCode.Mouse0;
+    [Tooltip("Button that triggers this hand's punch. e.g. M for Left, J for Right.")]
+    public KeyCode punchKey = KeyCode.J;
 
     [Header("Punch Charge")]
     [Tooltip("Spike magnitude (m/s²) thrown on a quick tap with no charge-up. " +
@@ -142,12 +140,16 @@ public class KeyboardHandInput : HandInputProvider
         // GetKeyDown/GetKeyUp must be polled once per rendered frame —
         // FixedUpdate runs on its own cadence and can miss the single frame
         // the button changed state, silently dropping presses/releases.
-        if (Input.GetKeyDown(punchKey))
+        
+        // Hardcoded punch keys: M for Left, J for Right
+        KeyCode actualPunchKey = (side == Side.Left) ? KeyCode.M : KeyCode.J;
+
+        if (Input.GetKeyDown(actualPunchKey))
         {
             pressStartTime = Time.time;
         }
 
-        if (Input.GetKeyUp(punchKey) && pressStartTime >= 0f)
+        if (Input.GetKeyUp(actualPunchKey) && pressStartTime >= 0f)
         {
             float heldTime = Time.time - pressStartTime;
             float chargeT  = Mathf.Clamp01(heldTime / chargeMaxTime);
