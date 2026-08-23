@@ -20,4 +20,16 @@ MonoBehaviour:
   MidPoseAnimation: {fileID: 0}
   duration: 30
   difficulty: 1
+  openHoldDuration: 0
+  closedHoldDuration: 0
+  toClosedDuration: 0
+  toOpenDuration: 0
+  blendDuration: 0
+  midPoseCycles: 0
   targetArmRotation: {x: 3, y: 3, z: 3}
+  hasMediaPipeTarget: 1
+  targetLeftElbowAngle: 90.13488
+  targetRightElbowAngle: 92.2505
+  targetLeftShoulderAngle: 92.17965
+  targetRightShoulderAngle: 94.13515
+  targetTorsoLean: 0

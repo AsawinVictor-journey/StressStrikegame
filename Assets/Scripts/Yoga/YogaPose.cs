@@ -40,4 +40,14 @@ public class YogaPose : ScriptableObject
 
     [Header("BNO055 Target")]
     public Vector3 targetArmRotation;
+
+    [Header("MediaPipe Target (upper body, baked from instructor rig)")]
+    [Tooltip("Set by Tools > Yoga > Bake MediaPipe Target For Selected Pose. False until baked -- " +
+             "MediaPipePoseTracker refuses to score against an un-baked pose rather than silently using zeros.")]
+    public bool hasMediaPipeTarget;
+    public float targetLeftElbowAngle;
+    public float targetRightElbowAngle;
+    public float targetLeftShoulderAngle;
+    public float targetRightShoulderAngle;
+    public float targetTorsoLean;
 }

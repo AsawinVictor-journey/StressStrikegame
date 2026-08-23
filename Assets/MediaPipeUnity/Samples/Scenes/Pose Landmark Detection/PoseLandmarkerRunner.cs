@@ -15,6 +15,17 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
   {
     [SerializeField] private PoseLandmarkerResultAnnotationController _poseLandmarkerResultAnnotationController;
 
+    /// <summary>
+    /// Fired from OnPoseLandmarkDetectionOutput every time a new result arrives in
+    /// LIVE_STREAM mode. NOTE: may fire from a thread other than Unity's main
+    /// thread -- subscribers must not touch Unity APIs directly in their handler,
+    /// only store data and process it later (e.g. in Update()), the same way
+    /// _poseLandmarkerResultAnnotationController.DrawLater defers to LateUpdate.
+    /// Added for Yoga's MediaPipePoseTracker; does not change any existing
+    /// behavior of this runner or the sample scene.
+    /// </summary>
+    public event System.Action<PoseLandmarkerResult> OnPoseLandmarkerResult;
+
     private Experimental.TextureFramePool _textureFramePool;
 
     public readonly PoseLandmarkDetectionConfig config = new PoseLandmarkDetectionConfig();
@@ -162,6 +173,7 @@ namespace Mediapipe.Unity.Sample.PoseLandmarkDetection
     private void OnPoseLandmarkDetectionOutput(PoseLandmarkerResult result, Image image, long timestamp)
     {
       _poseLandmarkerResultAnnotationController.DrawLater(result);
+      OnPoseLandmarkerResult?.Invoke(result);
       DisposeAllMasks(result);
     }
 
