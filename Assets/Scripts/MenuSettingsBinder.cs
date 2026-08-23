@@ -109,6 +109,68 @@ public class MenuSettingsBinder : MonoBehaviour
         {
             storePanel.SetActive(false);
         }
+
+        RestoreMainMenuBackdrop();
+    }
+
+    // The Shop button hides the Boxing/RageRoom/Yoga preview triptych ("Buttons") and its
+    // feeder cameras to reveal ShopCam full-screen; closing the shop must bring them back.
+    private void RestoreMainMenuBackdrop()
+    {
+        GameObject buttons = FindInLoadedScene("Buttons");
+        if (buttons != null)
+        {
+            buttons.SetActive(true);
+        }
+
+        // Leftover duplicate triptych canvas (root-level "Canvas", separate from ComicPanelCanvas)
+        // that also feeds off RT_Left/RT_Center/RT_Right and must be hidden/shown alongside "Buttons".
+        GameObject duplicateCanvas = FindInLoadedScene("Canvas");
+        if (duplicateCanvas != null)
+        {
+            duplicateCanvas.SetActive(true);
+        }
+
+        GameObject shopCam = FindInLoadedScene("ShopCam");
+        if (shopCam != null)
+        {
+            shopCam.SetActive(false);
+        }
+
+        SetCameraActiveByNameAndLayer("Main Camera", 11, true); // Boxing
+        SetCameraActiveByNameAndLayer("Main Camera", 6, true);  // Yoga
+        SetCameraActiveByName("Camera", true);                  // RageRoom
+        SetCameraActiveByName("Center Camera", true);
+        SetCameraActiveByName("Right Camera", true);
+        SetCameraActiveByName("Background Camera", true);
+
+        GameObject top = FindInLoadedScene("Top");
+        if (top != null)
+        {
+            top.SetActive(true);
+        }
+    }
+
+    private void SetCameraActiveByName(string cameraName, bool active)
+    {
+        foreach (Camera camera in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (camera.gameObject.name == cameraName)
+            {
+                camera.gameObject.SetActive(active);
+            }
+        }
+    }
+
+    private void SetCameraActiveByNameAndLayer(string cameraName, int layer, bool active)
+    {
+        foreach (Camera camera in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (camera.gameObject.name == cameraName && camera.gameObject.layer == layer)
+            {
+                camera.gameObject.SetActive(active);
+            }
+        }
     }
 
     public void CloseSettings()
