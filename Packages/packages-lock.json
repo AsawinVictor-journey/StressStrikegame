@@ -63,7 +63,7 @@
       }
     },
     "com.ivanmurzak.unity.mcp": {
-      "version": "0.87.0",
+      "version": "0.89.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {

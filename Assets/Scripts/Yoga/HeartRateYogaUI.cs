@@ -137,10 +137,15 @@ public class HeartRateYogaUI : MonoBehaviour
 
         if (hrResultsGroup != null) hrResultsGroup.SetActive(true);
 
-        // Tell YogaManager to open standard panel
+        // Show the standard result panel (Score/Accuracy/Coins/Level/level bar) and start
+        // its return-to-menu countdown from here — this is the point HR results actually
+        // become visible, not ~calibrationDuration seconds earlier when post-game
+        // calibration started. Calling ShowResult() instead of just SetActive(true) on
+        // resultGroup also means the heart-rate flow no longer skips Score/Accuracy/Coins/
+        // Level, which it previously did.
         if (flow.yogaManager != null)
         {
-            flow.yogaManager.resultGroup.gameObject.SetActive(true);
+            flow.yogaManager.ShowResult();
         }
     }
 

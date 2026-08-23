@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class YogaManager : MonoBehaviour
 {
@@ -119,51 +120,44 @@ public class YogaManager : MonoBehaviour
 
     [Header("Result UI")]
     public CanvasGroup resultGroup;
-    public TMP_Text resultBandText;
-    public TMP_Text resultMessageText;
     public TMP_Text alignmentText;
     public TMP_Text steadinessText;
+    public TMP_Text resultScoreText;
+    public TMP_Text resultAccuracyText;
+    public TMP_Text resultCoinsEarnedText;
+    public TMP_Text resultLevelText;
+    public Image resultLevelBarFill;
+    public GameObject levelUpBanner;
+
+    [Header("Result Screen Flow")]
+    [Tooltip("How long the result panel stays up before fading into the mode menu.")]
+    public float resultScreenDuration = 7f;
+    public string menuSceneName = "Yoga Menu";
+
+    // Yoga has no numeric "Score" — finalCalmScore (0-100, alignment/steadiness weighted) is
+    // used as both the accuracy-based Score-equivalent for the coin formula and, divided by
+    // 100, as performance_normalized for the XP formula.
+    //
+    // "Accuracy" on the result screen is finalAlignment (yogaTracker.alignment, the average
+    // pose-match reading over the whole hold) — a genuinely separate input that gets blended
+    // with finalSteadiness into finalCalmScore, NOT the same number as the Score. Do not wire
+    // this to yogaTracker.accuracy: that field is the live, continuously-smoothed instantaneous
+    // reading (it just freezes wherever it was the instant tracking stopped), not a real
+    // session metric, and reads close enough to finalAlignment to look like a fabricated
+    // duplicate without actually being the correct averaged value.
+    //
+    // There's also no per-hit "intensity" concept in this mode (no punches/velocity to sum),
+    // so intensityUnits is fixed at 0 for the coin formula here rather than guessing at a
+    // stand-in signal.
+    const float YogaIntensityUnits = 0f;
 
     [Header("Result Scoring")]
     [Range(0f, 1f)] public float alignmentWeight = 0.6f;
     [Range(0f, 1f)] public float steadinessWeight = 0.4f;
 
-    public float centeredThreshold = 50f;
-    public float balancedThreshold = 75f;
-    public float radiantThreshold = 90f;
-
     public float finalAlignment;
     public float finalSteadiness;
     public float finalCalmScore;
-    public string finalBand;
-
-    public string[] groundingMessages = new string[]
-    {
-        "You showed up today.",
-        "Stillness counts.",
-        "You made space to breathe.",
-    };
-
-    public string[] centeredMessages = new string[]
-    {
-        "You found your rhythm.",
-        "Time well spent.",
-        "You settled in nicely.",
-    };
-
-    public string[] balancedMessages = new string[]
-    {
-        "Real balance today.",
-        "Your calm really showed.",
-        "A grounded session.",
-    };
-
-    public string[] radiantMessages = new string[]
-    {
-        "Beautifully calm.",
-        "Truly present today.",
-        "A wonderfully steady session.",
-    };
 
     public void SelectPose(YogaPose pose)
     {
@@ -548,6 +542,8 @@ public class YogaManager : MonoBehaviour
         yield return null;
     }
 
+    PlayerProgression.SessionRewardResult sessionReward;
+
     void CalculateResult()
     {
         finalAlignment = yogaTracker.alignment;
@@ -557,49 +553,97 @@ public class YogaManager : MonoBehaviour
             finalAlignment * alignmentWeight +
             finalSteadiness * steadinessWeight;
 
-        finalBand = GetResultBand(finalCalmScore);
         finalScore = finalCalmScore;
-    }
 
-    string GetResultBand(float score)
-    {
-        if (score >= radiantThreshold) return "Radiant";
-        if (score >= balancedThreshold) return "Balanced";
-        if (score >= centeredThreshold) return "Centered";
-        return "Grounding";
-    }
-
-    string PickResultMessage(string band)
-    {
-        string[] pool = band switch
+        sessionReward = default;
+        if (PlayerProgression.Instance != null)
         {
-            "Radiant" => radiantMessages,
-            "Balanced" => balancedMessages,
-            "Centered" => centeredMessages,
-            _ => groundingMessages,
-        };
+            float performanceNormalized = finalCalmScore / 100f;
+            float durationMinutes = holdTime / 60f;
 
-        if (pool.Length == 0)
-            return "";
+            int xp = PlayerProgression.CalculateXP(performanceNormalized, durationMinutes);
+            int coins = PlayerProgression.Instance.CalculateCoins(
+                Mathf.RoundToInt(finalCalmScore), YogaIntensityUnits);
 
-        return pool[Random.Range(0, pool.Length)];
+            sessionReward = PlayerProgression.Instance.AddSessionResult(xp, coins);
+        }
     }
 
-    void ShowResult()
+    public void ShowResult()
     {
-        if (resultBandText != null)
-            resultBandText.text = finalBand;
-
-        if (resultMessageText != null)
-            resultMessageText.text = PickResultMessage(finalBand);
-
         if (alignmentText != null)
             alignmentText.text = Mathf.RoundToInt(finalAlignment) + "%";
 
         if (steadinessText != null)
             steadinessText.text = Mathf.RoundToInt(finalSteadiness) + "%";
 
+        if (resultScoreText != null)
+            resultScoreText.text = Mathf.RoundToInt(finalScore).ToString();
+
+        if (resultAccuracyText != null)
+            resultAccuracyText.text = Mathf.RoundToInt(finalAlignment) + "%";
+
+        if (resultCoinsEarnedText != null)
+            resultCoinsEarnedText.text = "+" + sessionReward.CoinsAwarded;
+
+        if (resultLevelText != null)
+            resultLevelText.text = sessionReward.Level.ToString();
+
+        if (resultLevelBarFill != null)
+        {
+            resultLevelBarFill.fillAmount = sessionReward.PreviousLevelProgress01;
+            StartCoroutine(AnimateLevelBar(resultLevelBarFill,
+                sessionReward.PreviousLevelProgress01, sessionReward.LevelProgress01, sessionReward.LeveledUp));
+        }
+
+        if (levelUpBanner != null)
+            levelUpBanner.SetActive(sessionReward.LeveledUp);
+
         if (resultGroup != null)
             uiFade.ShowUI(resultGroup);
+
+        StartCoroutine(ReturnToMenu());
+    }
+
+    // Animates the level bar filling up when the result panel appears, rather than snapping
+    // straight to the post-session value. On a level-up it fills to full, snaps back to empty,
+    // then continues filling into the new level, so a level-up reads as a level-up rather than
+    // the bar just landing on a lower-looking number.
+    IEnumerator AnimateLevelBar(Image bar, float fromProgress, float toProgress, bool leveledUp)
+    {
+        const float fillDuration = 0.5f;
+
+        if (leveledUp)
+        {
+            yield return LerpFill(bar, fromProgress, 1f, fillDuration);
+            bar.fillAmount = 0f;
+            yield return LerpFill(bar, 0f, toProgress, fillDuration);
+        }
+        else
+        {
+            yield return LerpFill(bar, fromProgress, toProgress, fillDuration);
+        }
+    }
+
+    IEnumerator LerpFill(Image bar, float from, float to, float duration)
+    {
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            bar.fillAmount = Mathf.Lerp(from, to, t / duration);
+            yield return null;
+        }
+        bar.fillAmount = to;
+    }
+
+    IEnumerator ReturnToMenu()
+    {
+        yield return new WaitForSecondsRealtime(resultScreenDuration);
+
+        if (SceneTransitionManager.Instance != null)
+            SceneTransitionManager.Instance.LoadScene(menuSceneName);
+        else
+            SceneManager.LoadScene(menuSceneName);
     }
 }

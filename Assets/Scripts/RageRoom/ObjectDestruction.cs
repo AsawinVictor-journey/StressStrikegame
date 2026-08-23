@@ -20,10 +20,11 @@ public class DestructibleObject : MonoBehaviour
     public float maxScale = 1.0f;
     public float hitCooldown = 0.15f;
 
-    [Tooltip("Seconds a spawned fragment survives before being destroyed. " +
-             "Fragments were never cleaned up before, so a long session's worth " +
-             "of broken objects accumulated Rigidbodies forever and the physics " +
-             "solver got steadily heavier the longer you played.")]
+    [Tooltip("Seconds a spawned fragment stays live before returning to the pool " +
+             "(or being destroyed, if no FragmentPool is in the scene). Fragments " +
+             "were never cleaned up before, so a long session's worth of broken " +
+             "objects accumulated Rigidbodies forever and the physics solver got " +
+             "steadily heavier the longer you played.")]
     public float fragmentLifetime = 5f;
 
     public float explosionForce = 6f;
@@ -50,6 +51,12 @@ public class DestructibleObject : MonoBehaviour
         if (Time.time - lastHitTime < hitCooldown)
             return;
         lastHitTime = Time.time;
+
+        // The dedicated punch Hitbox's own collision messages aren't reliable
+        // (see PunchController.SpawnImpactEffect), so the VFX is triggered from
+        // here instead — this OnCollisionEnter is what actually fires on every
+        // landed punch.
+        collision.rigidbody?.GetComponent<PunchController>()?.SpawnImpactEffect(collision);
 
         // Null-conditional to match GameManager's usage. A destructible can
         // outlive the ScoreSystem during scene teardown, and an unguarded call
@@ -81,7 +88,12 @@ public class DestructibleObject : MonoBehaviour
         {
             Vector3 spawnPos = transform.position + Random.insideUnitSphere * 0.2f;
 
-            GameObject frag = Instantiate(fragmentPrefab, spawnPos, Random.rotation);
+            // Pooled: reuses a deactivated fragment instead of Instantiate()'ing a fresh
+            // GameObject every break. Falls back to a plain Instantiate if no FragmentPool
+            // exists in the scene, so this still works without one wired up.
+            GameObject frag = FragmentPool.Instance != null
+                ? FragmentPool.Instance.Get(fragmentPrefab, spawnPos, Random.rotation)
+                : Instantiate(fragmentPrefab, spawnPos, Random.rotation);
 
             float scale = Random.Range(minScale, maxScale);
             frag.transform.localScale = Vector3.one * scale;
@@ -113,7 +125,13 @@ public class DestructibleObject : MonoBehaviour
                 rb.AddForce(dir * Random.Range(1f, 4f), ForceMode.Impulse);
             }
 
-            Destroy(frag, fragmentLifetime);
+            // Pooled fragments are deactivated and returned to FragmentPool instead of
+            // destroyed, so their GameObjects get reused by the next break instead of
+            // triggering a fresh Instantiate/GC cycle.
+            if (FragmentPool.Instance != null)
+                FragmentPool.Instance.Release(frag, fragmentPrefab, fragmentLifetime);
+            else
+                Destroy(frag, fragmentLifetime);
         }
         GameManager.Instance.ObjectDestroyed();
 

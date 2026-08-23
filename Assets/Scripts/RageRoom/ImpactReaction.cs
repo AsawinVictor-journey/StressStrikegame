@@ -66,6 +66,12 @@ public class ImpactReaction : MonoBehaviour
 
         ContactPoint contact = collision.GetContact(0);
 
+        // DestructibleObject spawns the same effect from its own OnCollisionEnter
+        // on this same Collision — skip here when both are on this GameObject so
+        // one hit doesn't double-spawn the impact VFX.
+        if (GetComponent<DestructibleObject>() == null)
+            collision.rigidbody?.GetComponent<PunchController>()?.SpawnImpactEffect(collision);
+
         // Clamp speed before force calculation to keep extreme hits stable.
         float clampedSpeed = Mathf.Min(impactSpeed, maxImpactSpeed);
 

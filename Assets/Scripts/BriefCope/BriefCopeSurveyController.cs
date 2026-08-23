@@ -8,18 +8,24 @@ using TMPro;
 // "Coach Byte" survey flow, laid out to match the designer's mockups in
 // Assets/UI/BriefCOPEExample (Frames 31-38):
 //   intro -> question (select an answer, then confirm with Next) -> halfway
-//   beat at the midpoint -> result showing the recommended mode's wordmark.
-// Always skippable. Every exit routes back to the main menu, which highlights
-// the recommended mode via RecommendedModeHighlighter reading the saved result.
+//   beat at the midpoint -> straight into this session's AI check-in.
+// Always skippable. Brief-COPE itself no longer shows a result screen - its
+// old ResultPanel/wordmark UI was handed off to CheckInResultPanel, shown once
+// the check-in actually decides a mode. Every exit still highlights the
+// recommended mode on the main menu via RecommendedModeHighlighter.
 public class BriefCopeSurveyController : MonoBehaviour
 {
     private const string MenuSceneName = "MainMenuScene";
+
+    [Header("Check-in handoff")]
+    [Tooltip("The check-in canvas living in this same scene. Activated once Brief-COPE " +
+             "finishes or is skipped (and immediately for a returning player).")]
+    [SerializeField] private GameObject checkInCanvas;
 
     [Header("Panels")]
     [SerializeField] private GameObject introPanel;
     [SerializeField] private GameObject questionPanel;
     [SerializeField] private GameObject halfwayPanel;
-    [SerializeField] private GameObject resultPanel;
 
     [Header("Intro")]
     [SerializeField] private TMP_Text introTextTop;
@@ -36,15 +42,6 @@ public class BriefCopeSurveyController : MonoBehaviour
     [Header("Halfway")]
     [SerializeField] private TMP_Text halfwayText;
     [SerializeField] private Button halfwayContinueButton;
-
-    [Header("Result")]
-    [SerializeField] private TMP_Text reasonText;
-    [SerializeField] private TMP_Text disclaimerText;
-    [SerializeField] private Image modeWordmark;
-    [SerializeField] private Sprite boxingWordmark;
-    [SerializeField] private Sprite rageRoomWordmark;
-    [SerializeField] private Sprite yogaWordmark;
-    [SerializeField] private Button finishButton;
 
     [Header("Answer selection tint")]
     [SerializeField] private Color answerIdleColor = Color.white;
@@ -70,7 +67,6 @@ public class BriefCopeSurveyController : MonoBehaviour
         if (questionSkipButton != null) questionSkipButton.onClick.AddListener(SkipSurvey);
         if (halfwayContinueButton != null) halfwayContinueButton.onClick.AddListener(OnHalfwayContinue);
         if (nextQuestionButton != null) nextQuestionButton.onClick.AddListener(ConfirmAnswer);
-        if (finishButton != null) finishButton.onClick.AddListener(CloseSurveyPopup);
 
         if (answerButtons != null)
         {
@@ -81,7 +77,28 @@ public class BriefCopeSurveyController : MonoBehaviour
             }
         }
 
-        // Ask/show survey popup every time the scene loads (active by default for now)
+        // Once this session's check-in has already resolved (survey finished/skipped,
+        // then check-in decided/skipped), don't show the survey popup again just because
+        // the player came back to the main menu (e.g. after finishing a mode) - both the
+        // survey and the check-in it hands off to should only appear once per app run.
+        if (CheckInManager.HasCheckedInThisSession)
+        {
+            HideSurveyPopup();
+            return;
+        }
+
+        var previous = LoadPreviousResult();
+        bool returning = previous != null && !previous.skipped && !string.IsNullOrEmpty(previous.mode);
+
+        // Brief-COPE only ever runs once. A returning player never sees the survey
+        // popup again - skip straight past it into this session's AI check-in.
+        if (returning)
+        {
+            HideSurveyPopup();
+            GoToCheckInIfNeeded();
+            return;
+        }
+
         if (introPanel != null && introPanel.transform.parent != null)
         {
             introPanel.transform.parent.gameObject.SetActive(true);
@@ -274,49 +291,17 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     private void Finish()
     {
-        ShowOnly(resultPanel);
-
         var rec = GameModeRecommendation.Recommend(answers);
 
-        if (reasonText != null) reasonText.text = rec.reason;
-        // Guardrail (see BRIEF_COPE_CONTEXT.md): the not-a-diagnosis disclaimer
-        // stays attached to every recommendation.
-        if (disclaimerText != null) disclaimerText.text = GameModeRecommendation.Disclaimer;
-
-        if (modeWordmark != null)
-        {
-            modeWordmark.sprite = WordmarkFor(rec.mode);
-            modeWordmark.preserveAspect = true;
-            modeWordmark.enabled = modeWordmark.sprite != null;
-        }
-
-        SaveResult(rec.mode, skipped: false);
+        SaveResult(rec.mode, skipped: false, rec.topBucket);
 
         // Local save above is the source of truth; this is the opt-in cloud mirror.
-        // A fresh id per completed survey, reused by the AI-text update below.
         currentSurveyId = Guid.NewGuid().ToString("N");
         SyncSurvey(rec, null);
 
-        // Deterministic text above is shown immediately (works with Ollama offline).
-        // If the local Ollama server answers in time, its reply replaces reasonText
-        // with a warmer, non-canned version - purely cosmetic, never blocks the flow.
-        if (useAiCoachMessage && reasonText != null)
-        {
-            StartCoroutine(OllamaClient.Generate(
-                ollamaModel,
-                BuildCoachPrompt(rec),
-                onSuccess: aiText =>
-                {
-                    if (string.IsNullOrWhiteSpace(aiText)) return;
-                    reasonText.text = aiText;
-                    CoachByteHistory.Append("BriefCopeSurvey", rec.mode.ToString(), aiText);
-                    // Mirror the AI-written version once it exists. Same surveyId as
-                    // the send below, so this updates that record instead of adding one.
-                    SyncSurvey(rec, aiText);
-                },
-                onError: err => Debug.LogWarning("[CoachByte] " + err)
-            ));
-        }
+        // No result screen here anymore - CheckInResultPanel shows the result,
+        // once the check-in that follows actually decides a mode.
+        CloseSurveyPopup();
     }
 
     // No-op unless the player has opted into cloud sync (CloudSyncService.SetConsent).
@@ -338,36 +323,12 @@ public class BriefCopeSurveyController : MonoBehaviour
         });
     }
 
-    private string BuildCoachPrompt(ModeRecommendation rec)
-    {
-        return "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief boxing game. " +
-               $"A player just took a short coping-style survey and the recommended mode is '{rec.modeName}'. " +
-               $"The reason: {rec.reason} " +
-               "Write 1-2 short, warm sentences (max 40 words) explaining this recommendation directly to the player. " +
-               "Do not diagnose them or use clinical language - this is just a game mode suggestion, not a diagnosis. " +
-               "No emojis, no quotation marks.";
-    }
-
-    private Sprite WordmarkFor(GameMode mode)
-    {
-        switch (mode)
-        {
-            case GameMode.Boxing: return boxingWordmark;
-            case GameMode.RageRoom: return rageRoomWordmark;
-            case GameMode.Meditate: return yogaWordmark;
-            default: return null;
-        }
-    }
-
     private void CloseSurveyPopup()
     {
-        if (introPanel != null && introPanel.transform.parent != null)
-        {
-            introPanel.transform.parent.gameObject.SetActive(false);
-        }
-        gameObject.SetActive(false);
+        HideSurveyPopup();
 
-        // Trigger highlights immediately without scene reload
+        // Trigger highlights immediately in case the check-in scene fails to load
+        // (see SceneTransitionManager's fallback) and the player stays on this menu.
 #if UNITY_2023_1_OR_NEWER
         var highlighter = FindFirstObjectByType<RecommendedModeHighlighter>();
 #else
@@ -377,6 +338,30 @@ public class BriefCopeSurveyController : MonoBehaviour
         {
             highlighter.TriggerHighlight();
         }
+
+        GoToCheckInIfNeeded();
+    }
+
+    private void HideSurveyPopup()
+    {
+        if (introPanel != null && introPanel.transform.parent != null)
+        {
+            introPanel.transform.parent.gameObject.SetActive(false);
+        }
+        gameObject.SetActive(false);
+    }
+
+    private void GoToCheckInIfNeeded()
+    {
+        if (CheckInManager.HasCheckedInThisSession) return;
+
+        if (checkInCanvas == null)
+        {
+            Debug.LogError("BriefCopeSurveyController: checkInCanvas not assigned.");
+            return;
+        }
+
+        checkInCanvas.SetActive(true);
     }
 
     private void ShowOnly(GameObject panel)
@@ -384,16 +369,16 @@ public class BriefCopeSurveyController : MonoBehaviour
         if (introPanel != null) introPanel.SetActive(panel == introPanel);
         if (questionPanel != null) questionPanel.SetActive(panel == questionPanel);
         if (halfwayPanel != null) halfwayPanel.SetActive(panel == halfwayPanel);
-        if (resultPanel != null) resultPanel.SetActive(panel == resultPanel);
     }
 
-    private void SaveResult(GameMode? mode, bool skipped)
+    private void SaveResult(GameMode? mode, bool skipped, CopeBucket? dominantCopingStyle = null)
     {
         var result = new BriefCopeResult
         {
             timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             mode = mode?.ToString() ?? "",
             skipped = skipped,
+            dominantCopingStyle = dominantCopingStyle?.ToString() ?? "",
         };
         PlayerPrefs.SetString(PrefsKey, JsonUtility.ToJson(result));
         PlayerPrefs.Save();
