@@ -38819,6 +38819,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleDuration: 0.5
   comboAdvanceFraction: 0.75
+  punchVFX: {fileID: 0}
 --- !u!1001 &679319602
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72786,6 +72787,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleDuration: 0.5
   comboAdvanceFraction: 0.75
+  punchVFX: {fileID: 0}
 --- !u!1001 &1221538707
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -86373,6 +86375,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleDuration: 0.5
   comboAdvanceFraction: 0.75
+  punchVFX: {fileID: 0}
 --- !u!114 &1448652531
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -88834,6 +88837,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleDuration: 0.5
   comboAdvanceFraction: 0.75
+  punchVFX: {fileID: 0}
 --- !u!1 &1494835868
 GameObject:
   m_ObjectHideFlags: 0
@@ -95760,7 +95764,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c7077f896a7bcc418d8813132e8c23f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sceneName: UI Mainmenu
+  sceneName: Training
 --- !u!114 &1595859196
 MonoBehaviour:
   m_ObjectHideFlags: 0
