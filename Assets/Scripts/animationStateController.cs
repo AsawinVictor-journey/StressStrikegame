@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class animationStateController : MonoBehaviour
 {
@@ -17,6 +19,14 @@ public class animationStateController : MonoBehaviour
     public AudioClip specialAbilitySound;
     public AudioClip secretAudioClip;
     private AudioSource audioSource;
+
+    [Header("Hit VFX")]
+    [Tooltip("Played every time the player lands a hit on the opponent.")]
+    public VisualEffect hitVfx;
+    [Tooltip("Where on the opponent the hit VFX should appear. The VFX is moved here before each play.")]
+    public Transform hitPoint;
+    [Tooltip("Delay (seconds) between throwing the punch and the VFX playing, so it appears once the punch actually lands instead of the moment the key is pressed.")]
+    public float hitVfxDelay = 0.34f;
 
     bool isValidSetup = false;
 
@@ -223,13 +233,29 @@ public class animationStateController : MonoBehaviour
 
     private void RegisterPunch()
     {
+        if (hitVfx != null)
+        {
+            StartCoroutine(PlayHitVfxDelayed(hitVfxDelay));
+        }
+
         if (punchCount < requiredPunchesForSpecial)
         {
             punchCount++;
-            if (combatHud != null) 
+            if (combatHud != null)
             {
                 combatHud.UpdateSpecialAbilityBar((float)punchCount / requiredPunchesForSpecial);
             }
         }
+    }
+
+    private IEnumerator PlayHitVfxDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (hitPoint != null)
+        {
+            hitVfx.transform.position = hitPoint.position;
+        }
+        hitVfx.Play();
     }
 }

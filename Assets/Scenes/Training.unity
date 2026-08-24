@@ -1447,10 +1447,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 6276432210690574450, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 735179963}
+    m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8539491042422357289, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
       insertIndex: -1
@@ -1462,11 +1459,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1791261150}
   m_SourcePrefab: {fileID: 3150474306388093854, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
---- !u!4 &386532644 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6276432210690574450, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
-  m_PrefabInstance: {fileID: 386532643}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &387191706
 GameObject:
   m_ObjectHideFlags: 0
@@ -2223,6 +2215,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 588236068}
   m_CullTransparentMesh: 1
+--- !u!1 &600000021
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 600000022}
+  - component: {fileID: 600000023}
+  m_Layer: 0
+  m_Name: ScoreManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &600000022
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 600000021}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &600000023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 600000021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c677577b2742c5408a9523d491096b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentScore: 0
+  highScore: 0
+  targetScoreForFullPerformance: 500
+  _comboTimeoutWindow: 1.5
+  _comboMultiplierStep: 0.1
+  _maxComboMultiplier: 3
+  scoreTextUI: {fileID: 0}
+  comboTextUI: {fileID: 0}
 --- !u!1 &658542212
 GameObject:
   m_ObjectHideFlags: 0
@@ -2525,12 +2569,16 @@ MonoBehaviour:
   _opponentMaxHealth: 2000
   _opponentMaxStamina: 100
   _koScreenPanel: {fileID: 0}
+  _koScreenCanvasGroup: {fileID: 0}
   _koWinnerText: {fileID: 0}
   _koScoreText: {fileID: 0}
+  _koComboStreakText: {fileID: 0}
   _koCoinsEarnedText: {fileID: 0}
-  _koHighScoreText: {fileID: 0}
+  _koLevelBarFill: {fileID: 0}
   _playerWinSound: {fileID: 8300000, guid: 00c6847c12366714b8923ab83cec9413, type: 3}
   _playerLoseSound: {fileID: 8300000, guid: 3a8e0727b2a521746978bc8fdc4618b0, type: 3}
+  _resultScreenDuration: 7
+  _menuSceneName: BoxingMenu
   _staminaRegenRate: 100
 --- !u!114 &723912810
 MonoBehaviour:
@@ -2649,12 +2697,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 735179962}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3418587, y: 0.8230167, z: 0.43343997, w: -0.13381298}
-  m_LocalPosition: {x: -0.728, y: -0.606, z: 1.161}
-  m_LocalScale: {x: -0.4, y: 0.39999998, z: 0.4}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.345, y: -3.1, z: 0.762}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 386532644}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!73398921 &735179964
 VFXRenderer:
@@ -5295,6 +5343,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1383444271}
   m_CullTransparentMesh: 1
+--- !u!1 &1386148601
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1386148602}
+  m_Layer: 0
+  m_Name: HitPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1386148602
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1386148601}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.113419026, y: 2.467242, z: 1.2249256}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1567722376}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1412978923
 GameObject:
   m_ObjectHideFlags: 0
@@ -5633,6 +5712,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: add2a1933160e9244bd5871791bf971f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1386148602}
     - targetCorrespondingSourceObject: {fileID: 7371613002070893710, guid: add2a1933160e9244bd5871791bf971f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1141781225}
@@ -6719,6 +6801,11 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 08ed63b2d35bebf4f8c4a2b2e99b6782, type: 3}
   - {fileID: 8300000, guid: 2e627056c3b2b7a4caf93638f0f2fbcb, type: 3}
   - {fileID: 8300000, guid: a06f0cef272b2fa4494ec89ec64adba4, type: 3}
+--- !u!4 &1567722376 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: add2a1933160e9244bd5871791bf971f, type: 3}
+  m_PrefabInstance: {fileID: 1421711189}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1570024081 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8539491042422357289, guid: d3333f6d80e742340bf980a646f1ffcf, type: 3}
@@ -6759,6 +6846,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   specialAbilitySound: {fileID: 8300000, guid: d65e24915bc50c646913180355acaddc, type: 3}
   secretAudioClip: {fileID: 0}
+  hitVfx: {fileID: 735179965}
+  hitPoint: {fileID: 1386148602}
+  hitVfxDelay: 0.34
 --- !u!95 &1570024084
 Animator:
   serializedVersion: 7
@@ -7898,6 +7988,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   specialAbilitySound: {fileID: 0}
   secretAudioClip: {fileID: 8300000, guid: 66b2d4090d3deb440b0ece096d77348a, type: 3}
+  hitVfx: {fileID: 0}
+  hitPoint: {fileID: 0}
+  hitVfxDelay: 0.35
 --- !u!95 &1791261148
 Animator:
   serializedVersion: 7
@@ -8508,58 +8601,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2146755979}
   m_CullTransparentMesh: 1
---- !u!1 &600000021
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 600000022}
-  - component: {fileID: 600000023}
-  m_Layer: 0
-  m_Name: ScoreManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &600000022
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 600000021}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &600000023
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 600000021}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0c677577b2742c5408a9523d491096b0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  currentScore: 0
-  highScore: 0
-  targetScoreForFullPerformance: 500
-  _comboTimeoutWindow: 1.5
-  _comboMultiplierStep: 0.1
-  _maxComboMultiplier: 3
-  scoreTextUI: {fileID: 0}
-  comboTextUI: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -8579,6 +8620,7 @@ SceneRoots:
   - {fileID: 832856226}
   - {fileID: 1657757151}
   - {fileID: 911613496}
+  - {fileID: 735179963}
   - {fileID: 386532643}
   - {fileID: 1412978927}
   - {fileID: 239288472}
