@@ -2,15 +2,16 @@ using UnityEngine;
 using TMPro;
 
 // Drop this on a GameObject near CoachByteWordmark in the main menu and assign
-// greetingText. On menu load it asks the local Ollama model for a short,
-// personalized greeting referencing the player's last Brief-COPE recommendation
-// (if any), and shows it. Silently does nothing if Ollama isn't running.
+// greetingText. On menu load it asks Gemini (via the StressStrike backend
+// proxy - see GeminiClient) for a short, personalized greeting referencing
+// the player's last Brief-COPE recommendation (if any), and shows it.
+// Silently does nothing if the backend isn't reachable.
 public class CoachByteMenuGreeting : MonoBehaviour
 {
     private const string PrefsKey = "BriefCope_LastResult";
 
     [SerializeField] private TMP_Text greetingText;
-    [SerializeField] private string ollamaModel = "gemma4:e4b";
+    [SerializeField] private string geminiModel = "gemini-2.5-flash-lite";
 
     private void Start()
     {
@@ -38,8 +39,8 @@ public class CoachByteMenuGreeting : MonoBehaviour
               "In one short, punchy sentence (max 20 words), welcome the player to the main menu. " +
               "No emojis, no quotation marks.";
 
-        StartCoroutine(OllamaClient.Generate(
-            ollamaModel,
+        StartCoroutine(GeminiClient.Generate(
+            geminiModel,
             prompt,
             onSuccess: text =>
             {

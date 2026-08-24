@@ -2424,7 +2424,7 @@ MonoBehaviour:
   checkInCanvas: {fileID: 820375933}
   checkInBody: {fileID: 2051153905}
   statusText: {fileID: 2124973181}
-  requestTimeoutSeconds: 10
+  requestTimeoutSeconds: 30
   fallbackProfile:
     timestamp: 0
     mode: 
@@ -6731,6 +6731,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleDuration: 0.5
   comboAdvanceFraction: 0.75
+  punchVFX: {fileID: 0}
 --- !u!1 &685698527
 GameObject:
   m_ObjectHideFlags: 0
@@ -7469,6 +7470,7 @@ MonoBehaviour:
   rotationSpeed: 30
   rotationAxis: {x: 1, y: 0, z: 0}
   pauseWhileDragging: 1
+  dragSensitivity: 0.3
 --- !u!1 &740204361
 GameObject:
   m_ObjectHideFlags: 0

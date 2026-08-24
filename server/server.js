@@ -10,10 +10,16 @@ const { MongoClient } = require('mongodb');
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.DB_NAME || 'stressstrike';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!MONGODB_URI) {
   console.error('MONGODB_URI is not set. Copy .env.example to .env and fill it in.');
   process.exit(1);
+}
+
+if (!GEMINI_API_KEY) {
+  // Non-fatal: cloud sync and stats still work without AI recommendations.
+  console.warn('GEMINI_API_KEY is not set - /api/gemini/generate will return 500.');
 }
 
 const app = express();
@@ -72,6 +78,63 @@ app.post('/api/sessions', upsertRoute('sessions', 'sessionId', validateSession))
 app.post('/api/surveys', upsertRoute('surveys', 'surveyId', validateSurvey));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+// Gemini proxy. The Unity client never holds GEMINI_API_KEY (a build's strings
+// can always be extracted) - it POSTs {model, prompt} here and this forwards
+// the call server-side. The system instruction is enforced here, not in the
+// client, so it can't be bypassed by editing the app: this app only ever
+// recommends an activity, never diagnoses or gives medical/clinical advice.
+const GEMINI_SYSTEM_INSTRUCTION =
+  'You are an activity-recommendation assistant inside StressStrike, a stress-relief app with ' +
+  "exactly three activities: boxing, rage room, and yoga/meditation. Only ever recommend which " +
+  'activity fits what the player reports, or write brief supportive copy for the app UI, in the ' +
+  'exact format the prompt asks for. Never diagnose, label, or give medical, clinical, or ' +
+  'mental-health advice.';
+
+function validateGeminiRequest(b) {
+  if (!b || typeof b !== 'object') return 'body must be an object';
+  if (!b.prompt || typeof b.prompt !== 'string') return 'prompt required';
+  if (b.prompt.length > 4000) return 'prompt too long';
+  return null;
+}
+
+app.post('/api/gemini/generate', async (req, res) => {
+  if (!GEMINI_API_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY not configured on server' });
+
+  const problem = validateGeminiRequest(req.body);
+  if (problem) return res.status(400).json({ error: problem });
+
+  const model = typeof req.body.model === 'string' && req.body.model ? req.body.model : 'gemini-2.5-flash-lite';
+  const maxOutputTokens = Math.min(Math.max(Number(req.body.maxOutputTokens) || 64, 1), 256);
+  const temperature = Math.min(Math.max(Number(req.body.temperature) || 0.2, 0), 1);
+
+  try {
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: req.body.prompt }] }],
+          systemInstruction: { parts: [{ text: GEMINI_SYSTEM_INSTRUCTION }] },
+          generationConfig: { temperature, maxOutputTokens },
+        }),
+      }
+    );
+
+    const data = await geminiRes.json();
+    if (!geminiRes.ok) {
+      console.error('Gemini API error:', data);
+      return res.status(502).json({ error: data.error?.message || 'Gemini API error' });
+    }
+
+    const text = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
+    res.json({ text });
+  } catch (err) {
+    console.error('Gemini request failed:', err.message);
+    res.status(502).json({ error: 'Gemini request failed' });
+  }
+});
 
 // Statistics board. Aggregate across all players by default; pass ?playerId=... for
 // one device's own history.

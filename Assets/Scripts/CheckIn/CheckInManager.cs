@@ -7,8 +7,9 @@ using UnityEngine.UI;
 using TMPro;
 
 // Per-session AI check-in: player taps a mood chip and/or types free text, then
-// a local llama.cpp server picks a mode. Brief-COPE's last saved result is the
-// fallback whenever the AI call fails, times out, or the player skips.
+// Gemini (via the StressStrike backend proxy - see GeminiClient) picks a mode.
+// Brief-COPE's last saved result is the fallback whenever the AI call fails,
+// times out, or the player skips.
 public class CheckInManager : MonoBehaviour
 {
     private const string BriefCopePrefsKey = "BriefCope_LastResult"; // shared with BriefCopeSurveyController
@@ -45,7 +46,7 @@ public class CheckInManager : MonoBehaviour
     [Header("Status (optional)")]
     [SerializeField] private TMP_Text statusText;
 
-    [Header("AI Server (llama.cpp, local)")]
+    [Header("AI Server (Gemini, via backend)")]
     [SerializeField] private float requestTimeoutSeconds = 10f;
 
     [Header("Fallback")]
@@ -136,7 +137,7 @@ public class CheckInManager : MonoBehaviour
         string decidedMode = null;
         string aiStressType = null;
 
-        yield return LlamaCppClient.Generate(
+        yield return GeminiClient.Generate(
             prompt,
             requestTimeoutSeconds,
             onSuccess: text =>
