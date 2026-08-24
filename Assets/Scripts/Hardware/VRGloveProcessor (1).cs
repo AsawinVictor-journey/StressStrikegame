@@ -1,12 +1,12 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+// using UnityEngine.InputSystem; // Removed in favor of legacy Input
 
 public class VRGloveProcessor : MonoBehaviour
 {
+    [Header("Keyboard Controls")]
+    public float turnSpeed = 150f;
+
     [Header("Punch Detection")]
-    public float punchDeadzone = 15.0f; 
-    public float forceToDistanceMultiplier = 0.05f; 
-    [Tooltip("The absolute maximum distance the virtual hand can travel in meters.")]
     public float maxPunchDistance = 1.5f; 
 
     [Header("Punch Animation Timeline")]
@@ -17,8 +17,6 @@ public class VRGloveProcessor : MonoBehaviour
     [Tooltip("Cooldown before you can throw another punch")]
     public float punchCooldown = 0.1f;
 
-    private ESP32Glove gloveDevice;
-    private Quaternion manualZeroOffset = Quaternion.identity;
     private Vector3 anchorPosition;
     
     // State Machine Variables
@@ -37,43 +35,22 @@ public class VRGloveProcessor : MonoBehaviour
 
     void Update()
     {
-        if (gloveDevice == null)
+        // --- 1. ROTATION (TURNING) ---
+        if (Input.GetKey(KeyCode.H))
         {
-            gloveDevice = InputSystem.GetDevice<ESP32Glove>();
-            if (gloveDevice == null) return;
+            transform.Rotate(Vector3.up, turnSpeed * Time.deltaTime);
         }
-
-        // --- 1. PURE QUATERNION MATH ---
-        float qX = gloveDevice.x.ReadValue(); 
-        float qY = gloveDevice.y.ReadValue(); 
-        float qZ = gloveDevice.z.ReadValue(); 
-        float qW = gloveDevice.w.ReadValue(); 
-
-        Quaternion rawSensorRotation = new Quaternion(-qY, -qZ, qX, qW); 
-        rawSensorRotation = rawSensorRotation.normalized;
-
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Input.GetKey(KeyCode.K))
         {
-            manualZeroOffset = rawSensorRotation;
-            Debug.Log("Glove Rotation Zeroed!");
+            transform.Rotate(Vector3.up, -turnSpeed * Time.deltaTime);
         }
-
-        transform.localRotation = Quaternion.Inverse(manualZeroOffset) * rawSensorRotation;
 
         // --- 2. PUNCH DETECTION & STATE MACHINE ---
-        float fY = gloveDevice.forceY.ReadValue() * 327.67f;
-        float fZ = gloveDevice.forceZ.ReadValue() * 327.67f;
-        float totalPunchForce = new Vector2(fY, fZ).magnitude;
-
-        // Manage the cooldown timer
         if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
 
-        // Trigger a new punch if we are idle and swing hard enough
-        if (currentState == PunchState.Idle && totalPunchForce > punchDeadzone && cooldownTimer <= 0f)
+        if (currentState == PunchState.Idle && (Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.M)) && cooldownTimer <= 0f)
         {
-            // Calculate how far to go, but clamp it to the max distance
-            targetPunchDistance = Mathf.Clamp(totalPunchForce * forceToDistanceMultiplier, 0f, maxPunchDistance);
-            
+            targetPunchDistance = maxPunchDistance; 
             currentState = PunchState.Extending;
             animTimer = 0f;
         }
@@ -99,7 +76,7 @@ public class VRGloveProcessor : MonoBehaviour
             {
                 currentState = PunchState.Idle;
                 currentPunchDistance = 0f;
-                cooldownTimer = punchCooldown; // Start cooldown ONLY after punch finishes
+                cooldownTimer = punchCooldown;
             }
         }
 

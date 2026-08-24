@@ -88,39 +88,17 @@ public class RageRoomCameraRotation : MonoBehaviour
     void Update()
     {
         float dt = Time.deltaTime;
-        if (dt <= 0f) return;
-
-        if (cooldownTimerLeft  > 0f) cooldownTimerLeft  -= dt;
-        if (cooldownTimerRight > 0f) cooldownTimerRight -= dt;
-
-        // A punch takes priority: while a hand is punching (and briefly after),
-        // suppress flick detection so an imperfect, slightly-sideways punch
-        // doesn't also spin the camera. Signal() still runs below so the yaw
-        // baseline keeps tracking through the punch — no spurious flick fires
-        // the instant suppression ends.
-        if (IsHandPunching(leftHand) || IsHandPunching(rightHand))
-            punchSuppressTimer = punchSuppressTime;
-        else if (punchSuppressTimer > 0f)
-            punchSuppressTimer -= dt;
-        bool suppressed = punchSuppressTimer > 0f;
-
-        float vLeft  = Signal(leftHand,  ref prevLeft,  ref hasLeft,  dt);
-        float vRight = Signal(rightHand, ref prevRight, ref hasRight, dt);
-
-        float threshold = triggerSource == TriggerSource.GloveTurnSpeed
-            ? turnSpeedThreshold
-            : slideSpeedThreshold;
-
-        // In HandSlideSpeed mode, only a player-driven slide should be able to
-        // fire a flick. Without this, HandTarget's recovery spring pulling the
-        // anchor back toward home the instant a movement key is released can
-        // itself cross slideSpeedThreshold and fire an opposite flick that
-        // undoes the one the player just made — see HasActiveInput's remarks.
-        bool leftSuppressed  = suppressed || (triggerSource == TriggerSource.HandSlideSpeed && leftHand  != null && !leftHand.HasActiveInput);
-        bool rightSuppressed = suppressed || (triggerSource == TriggerSource.HandSlideSpeed && rightHand != null && !rightHand.HasActiveInput);
-
-        TryFlick(vLeft,  threshold, leftSuppressed,  ref armedLeft,  ref cooldownTimerLeft);
-        TryFlick(vRight, threshold, rightSuppressed, ref armedRight, ref cooldownTimerRight);
+        
+        // Tap to snap-turn using the existing Inspector variables (stepDegrees, turnDuration)
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            pending += stepDegrees;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            pending -= stepDegrees;
+        }
 
         // Smoothly consume the pending snap.
         if (Mathf.Abs(pending) > 0.001f)

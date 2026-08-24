@@ -79,6 +79,9 @@ public class BiometricEngine : MonoBehaviour
 
     void Update()
     {
+        // DISABLED: Using keyboard controller instead
+        return;
+
         // 1. Find the connected Glove. Re-check `added` too, not just null: when
         // the glove disconnects mid-session the Input System removes the device,
         // but our cached reference stays non-null. Reading a removed device throws

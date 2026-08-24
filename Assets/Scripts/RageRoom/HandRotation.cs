@@ -54,6 +54,10 @@ public class HandRotation : MonoBehaviour
 
     void Update()
     {
+        // Lock rotation to the player/camera (origin) so fists always face forward
+        if (origin != null) transform.rotation = origin.rotation;
+        return;
+        
         if (input != null && input.ProvidesOrientation)
         {
             // GetOrientation() is a delta from the recentered zero pose. Apply
