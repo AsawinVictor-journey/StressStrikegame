@@ -15,8 +15,6 @@ public class TargetCircleView : MonoBehaviour
     public Image image;
     [Tooltip("Assets/UI/Yoga/Red circle.png -- if left empty, falls back to a generated placeholder ring.")]
     public Sprite ringSprite;
-    [Tooltip("Tint applied on top of ringSprite. White = the art's own color, unmodified.")]
-    public Color color = Color.white;
 
     private RectTransform _rect;
     private static Sprite _fallbackRingSprite;
@@ -29,7 +27,7 @@ public class TargetCircleView : MonoBehaviour
         {
             image.sprite = ringSprite != null ? ringSprite : GetFallbackRingSprite();
             image.type = Image.Type.Simple;
-            image.color = color;
+            image.color = Color.white; // no tint -- shows the art's own colors/alpha as-is
             image.raycastTarget = false;
         }
     }
@@ -40,16 +38,9 @@ public class TargetCircleView : MonoBehaviour
         if (_rect == null) _rect = (RectTransform)transform;
         _rect.anchoredPosition = localPosition;
         _rect.sizeDelta = new Vector2(radius * 2f, radius * 2f);
-
-        if (image != null)
-        {
-            // Minimal per-joint feedback: more opaque as the joint nears its
-            // target. Full visual styling explicitly deferred per the plan.
-            float t = Mathf.Clamp01(score / 100f);
-            var c = color;
-            c.a = Mathf.Lerp(0.35f, 1f, t);
-            image.color = c;
-        }
+        // No per-score tint/alpha here anymore -- the sprite renders at its own
+        // native colors and transparency. Score-based visual feedback (if wanted
+        // later) should be a separate, deliberate visual pass, not a runtime tint.
     }
 
     public void SetVisible(bool visible)

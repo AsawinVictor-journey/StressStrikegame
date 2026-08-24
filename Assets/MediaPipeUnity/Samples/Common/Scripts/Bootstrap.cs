@@ -17,6 +17,29 @@ namespace Mediapipe.Unity.Sample
     public bool isFinished { get; private set; }
     private bool _isGlogInitialized;
 
+    // Static, "late-subscribe-safe" ready signal for ImageSourceProvider.ImageSource.
+    // Static (not instance-level) because a consumer may run before any Bootstrap
+    // GameObject exists yet. In CPU inference mode, Init() below can run entirely
+    // synchronously with no yield before this point -- by the time Instantiate()
+    // returns in FindBootstrap(), OnEnable()/Init() may have already fully run, so
+    // a plain instance event could be missed entirely. SubscribeImageSourceReady
+    // fires immediately if the image source is already ready, otherwise queues the
+    // callback for when it becomes ready -- correct regardless of subscribe order.
+    private static bool _imageSourceReady;
+    private static event System.Action _onImageSourceReady;
+
+    /// <summary>
+    /// Registers a callback for when ImageSourceProvider.ImageSource first becomes
+    /// valid (right after Bootstrap wires it up, before isFinished is set). Safe to
+    /// call whether or not Bootstrap has run yet -- if it already has, callback
+    /// fires immediately and synchronously.
+    /// </summary>
+    public static void SubscribeImageSourceReady(System.Action callback)
+    {
+      if (_imageSourceReady) { callback(); return; }
+      _onImageSourceReady += callback;
+    }
+
     private void OnEnable()
     {
       var _ = StartCoroutine(Init());
@@ -85,6 +108,10 @@ namespace Mediapipe.Unity.Sample
       ImageSourceProvider.Initialize(
         _appSettings.BuildWebCamSource(), _appSettings.BuildStaticImageSource(), _appSettings.BuildVideoSource());
       ImageSourceProvider.Switch(_appSettings.defaultImageSource);
+
+      _imageSourceReady = true;
+      _onImageSourceReady?.Invoke();
+      _onImageSourceReady = null;
 
       isFinished = true;
     }
