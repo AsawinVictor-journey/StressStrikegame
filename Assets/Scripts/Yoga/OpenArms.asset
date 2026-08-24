@@ -27,3 +27,9 @@ MonoBehaviour:
   blendDuration: 0.35
   midPoseCycles: 3
   targetArmRotation: {x: 0, y: 0, z: 0}
+  hasMediaPipeTarget: 1
+  targetLeftElbowAngle: 180
+  targetRightElbowAngle: 179.83807
+  targetLeftShoulderAngle: 69.1273
+  targetRightShoulderAngle: 66.232635
+  targetTorsoLean: -3.0349944

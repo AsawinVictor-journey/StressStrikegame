@@ -28,8 +28,9 @@ public static class YogaJointAngles
     /// Computes the 5 MVP joint angles from 8 canonical joint world positions.
     /// Elbow/shoulder angles are unsigned (0-180 deg, Vector3.Angle). Torso lean
     /// is signed (negative = left lean, positive = right lean), derived from the
-    /// subject's own hip-to-hip axis so it doesn't depend on any assumed
-    /// camera/world orientation beyond world-up.
+    /// subject's own shoulder-to-shoulder axis (not hip-to-hip -- see TorsoLean)
+    /// so it doesn't depend on any assumed camera/world orientation beyond
+    /// world-up.
     /// </summary>
     public static JointAngles Compute(
         Vector3 leftShoulder, Vector3 rightShoulder,
@@ -46,7 +47,7 @@ public static class YogaJointAngles
             rightElbow = ElbowFlexion(rightShoulder, rightElbow, rightWrist),
             leftShoulder = ShoulderAngle(hipMid, leftShoulder, leftElbow),
             rightShoulder = ShoulderAngle(hipMid, rightShoulder, rightElbow),
-            torsoLean = TorsoLean(hipMid, shoulderMid, leftHip, rightHip)
+            torsoLean = TorsoLean(hipMid, shoulderMid, leftShoulder, rightShoulder)
         };
     }
 
@@ -75,14 +76,20 @@ public static class YogaJointAngles
     // hip-to-hip lateral axis, not an assumed fixed camera axis). Negative =
     // left lean, positive = right lean, 0 = upright. Must be signed -- an
     // unsigned lean can't distinguish SideBendLeft from SideBendRight.
-    private static float TorsoLean(Vector3 hipMid, Vector3 shoulderMid, Vector3 leftHip, Vector3 rightHip)
+    private static float TorsoLean(Vector3 hipMid, Vector3 shoulderMid, Vector3 leftShoulder, Vector3 rightShoulder)
     {
         var torsoVec = (shoulderMid - hipMid).normalized;
-        var lateral = (rightHip - leftHip).normalized;
+        // Lateral axis from the SHOULDERS, not the hips: live-tested against the
+        // instructor rig, ORG-pelvis.L/R turned out to sit at the exact same
+        // world position (never separated laterally in this rig), which made a
+        // hip-based lateral vector zero/degenerate and forced torsoLean to 0 for
+        // every pose, including genuine side bends. Shoulders are reliably
+        // separated on both the rig and real MediaPipe landmarks.
+        var lateral = (rightShoulder - leftShoulder).normalized;
         var forward = Vector3.Cross(lateral, Vector3.up).normalized;
 
         if (forward.sqrMagnitude < 0.0001f)
-            return 0f; // degenerate (hips coincident, or lateral axis parallel to world-up) -- hold neutral rather than NaN
+            return 0f; // degenerate (shoulders coincident, or lateral axis parallel to world-up) -- hold neutral rather than NaN
 
         return Vector3.SignedAngle(Vector3.up, torsoVec, forward);
     }

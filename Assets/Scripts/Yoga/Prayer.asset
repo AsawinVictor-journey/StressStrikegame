@@ -32,4 +32,4 @@ MonoBehaviour:
   targetRightElbowAngle: 92.2505
   targetLeftShoulderAngle: 92.17965
   targetRightShoulderAngle: 94.13515
-  targetTorsoLean: 0
+  targetTorsoLean: -3.2843182

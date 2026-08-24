@@ -47,6 +47,8 @@ public class MediaPipePoseTracker : MonoBehaviour
     // almost every frame. 0.25 is a deliberately forgiving starting point.
     [Range(0f, 1f)] public float minLandmarkConfidence = 0.25f;
     public float smoothSpeed = 5f;
+    [Tooltip("How quickly the live joint angles (used for scoring AND target-circle placement) settle toward each new MediaPipe reading, damping frame-to-frame landmark jitter before it reaches the accuracy score. Higher = snappier but jitterier; lower = smoother but laggier.")]
+    public float jointSmoothSpeed = 10f;
 
     public bool tracking { get; private set; }
 
@@ -62,6 +64,15 @@ public class MediaPipePoseTracker : MonoBehaviour
     public TargetCircleView rightElbowCircle;
     public TargetCircleView leftWristCircle;
     public TargetCircleView rightWristCircle;
+    [Tooltip("How quickly each target circle's on-screen position settles toward its newly computed position -- damps jitter/rotation noise on top of the joint-angle smoothing above.")]
+    public float circleSmoothSpeed = 12f;
+
+    [Header("Actual Position Dots (live-detected, separate from targets)")]
+    [Tooltip("Solid dot = where MediaPipe currently detects this joint. Hollow circle above = where it should be. They are deliberately two separate markers that do not follow each other.")]
+    public ActualPositionDotView leftElbowDot;
+    public ActualPositionDotView rightElbowDot;
+    public ActualPositionDotView leftWristDot;
+    public ActualPositionDotView rightWristDot;
 
     private readonly List<float> _accuracySamples = new List<float>();
     private float _sampleTimer;
@@ -90,6 +101,22 @@ public class MediaPipePoseTracker : MonoBehaviour
     private bool _hasLeftElbow, _hasRightElbow, _hasLeftShoulder, _hasRightShoulder, _hasTorsoLean;
     private Vector2 _targetPosLeftElbow, _targetPosRightElbow, _targetPosLeftWrist, _targetPosRightWrist;
     private bool _hasTargetPositions;
+
+    // Smoothing state -- separate from the per-point "ever seen" cache above,
+    // which handles missing data, not noise. These damp frame-to-frame jitter in
+    // otherwise-valid, currently-tracked readings. Reset on StartTracking() so a
+    // freshly-selected pose doesn't visibly drift in from the previous pose's
+    // settled values.
+    private YogaJointAngles.JointAngles _smoothedJoints;
+    private bool _hasSmoothedJoints;
+    private bool _hasSmLeftElbowPos, _hasSmRightElbowPos, _hasSmLeftWristPos, _hasSmRightWristPos;
+
+    // Actual (live, un-rotated) 2D positions for the solid dots -- distinct from
+    // _targetPos* above (which are rotated toward the baked target). Smoothed the
+    // same way so the solid dot doesn't visibly jitter more than the hollow
+    // target circle it sits next to.
+    private Vector2 _livePosLeftElbow, _livePosRightElbow, _livePosLeftWrist, _livePosRightWrist;
+    private bool _hasSmLeftElbowLive, _hasSmRightElbowLive, _hasSmLeftWristLive, _hasSmRightWristLive;
 
     private void OnEnable()
     {
@@ -155,6 +182,9 @@ public class MediaPipePoseTracker : MonoBehaviour
         tracking = true;
         _accuracySamples.Clear();
         _sampleTimer = 0f;
+        _hasSmoothedJoints = false;
+        _hasSmLeftElbowPos = _hasSmRightElbowPos = _hasSmLeftWristPos = _hasSmRightWristPos = false;
+        _hasSmLeftElbowLive = _hasSmRightElbowLive = _hasSmLeftWristLive = _hasSmRightWristLive = false;
     }
 
     public void StopTracking()
@@ -258,7 +288,7 @@ public class MediaPipePoseTracker : MonoBehaviour
         // all. Compute() itself is safe to call with never-seen points still at
         // their Vector3 default -- those values just won't feed any score whose
         // _seen* gate below excludes them.
-        var current = YogaJointAngles.Compute(lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip);
+        var current = SmoothJoints(YogaJointAngles.Compute(lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip));
 
         if (_seenLShoulder && _seenLElbow && _seenLWrist) { _scoreLeftElbow = Score(current.leftElbow, _target.leftElbow, elbowTolerance); _hasLeftElbow = true; }
         if (_seenRShoulder && _seenRElbow && _seenRWrist) { _scoreRightElbow = Score(current.rightElbow, _target.rightElbow, elbowTolerance); _hasRightElbow = true; }
@@ -294,6 +324,56 @@ public class MediaPipePoseTracker : MonoBehaviour
         UpdateTargetPositions(result, current);
     }
 
+    // Exponential-moving-average toward each new reading, at a rate independent
+    // of the final accuracy-number smoothing above (smoothSpeed) -- this one runs
+    // early, before jitter can propagate into the score or the circle rotation
+    // math below. First reading snaps immediately rather than ramping in from
+    // zero/default.
+    private YogaJointAngles.JointAngles SmoothJoints(YogaJointAngles.JointAngles raw)
+    {
+        if (!_hasSmoothedJoints)
+        {
+            _smoothedJoints = raw;
+            _hasSmoothedJoints = true;
+            return _smoothedJoints;
+        }
+        float t = ExpSmoothT(jointSmoothSpeed);
+        _smoothedJoints.leftElbow = Mathf.Lerp(_smoothedJoints.leftElbow, raw.leftElbow, t);
+        _smoothedJoints.rightElbow = Mathf.Lerp(_smoothedJoints.rightElbow, raw.rightElbow, t);
+        _smoothedJoints.leftShoulder = Mathf.Lerp(_smoothedJoints.leftShoulder, raw.leftShoulder, t);
+        _smoothedJoints.rightShoulder = Mathf.Lerp(_smoothedJoints.rightShoulder, raw.rightShoulder, t);
+        _smoothedJoints.torsoLean = Mathf.Lerp(_smoothedJoints.torsoLean, raw.torsoLean, t);
+        return _smoothedJoints;
+    }
+
+    // Same idea as SmoothJoints, applied to each circle's final screen position --
+    // catches residual jitter from the live 2D landmark anchors (shoulderL/elbowL/
+    // wristL etc.) that joint-angle smoothing alone doesn't reach, since those
+    // anchors feed UpdateTargetPositions() directly rather than through
+    // YogaJointAngles.Compute().
+    private static Vector2 SmoothCirclePos(ref Vector2 current, Vector2 target, ref bool hasValue, float smoothSpeedDeg)
+    {
+        if (!hasValue)
+        {
+            current = target;
+            hasValue = true;
+            return current;
+        }
+        float t = ExpSmoothT(smoothSpeedDeg);
+        current = Vector2.Lerp(current, target, t);
+        return current;
+    }
+
+    // Framerate-independent smoothing factor for Lerp-toward-target: 1-e^(-speed*dt)
+    // is the correct time-constant formula (matches a continuous exponential decay
+    // at rate 'speed'), unlike the naive 'speed * Time.deltaTime' approximation,
+    // which overshoots/clamps inconsistently at low framerate and settles at a
+    // different effective rate depending on frame rate.
+    private static float ExpSmoothT(float speed)
+    {
+        return 1f - Mathf.Exp(-speed * Time.deltaTime);
+    }
+
     private void UpdateTargetPositions(PoseLandmarkerResult result, YogaJointAngles.JointAngles current)
     {
         _hasTargetPositions = false;
@@ -318,10 +398,23 @@ public class MediaPipePoseTracker : MonoBehaviour
         // which is the important convergence property for an MVP; the rotational
         // direction for partial mismatches is an approximation to be checked
         // visually, not a precise IK solve.
-        _targetPosLeftElbow = shoulderL + RotateBy(elbowL - shoulderL, _target.leftShoulder - current.leftShoulder);
-        _targetPosRightElbow = shoulderR + RotateBy(elbowR - shoulderR, _target.rightShoulder - current.rightShoulder);
-        _targetPosLeftWrist = elbowL + RotateBy(wristL - elbowL, _target.leftElbow - current.leftElbow);
-        _targetPosRightWrist = elbowR + RotateBy(wristR - elbowR, _target.rightElbow - current.rightElbow);
+        Vector2 rawLeftElbow = shoulderL + RotateBy(elbowL - shoulderL, _target.leftShoulder - current.leftShoulder);
+        Vector2 rawRightElbow = shoulderR + RotateBy(elbowR - shoulderR, _target.rightShoulder - current.rightShoulder);
+        Vector2 rawLeftWrist = elbowL + RotateBy(wristL - elbowL, _target.leftElbow - current.leftElbow);
+        Vector2 rawRightWrist = elbowR + RotateBy(wristR - elbowR, _target.rightElbow - current.rightElbow);
+
+        _targetPosLeftElbow = SmoothCirclePos(ref _targetPosLeftElbow, rawLeftElbow, ref _hasSmLeftElbowPos, circleSmoothSpeed);
+        _targetPosRightElbow = SmoothCirclePos(ref _targetPosRightElbow, rawRightElbow, ref _hasSmRightElbowPos, circleSmoothSpeed);
+        _targetPosLeftWrist = SmoothCirclePos(ref _targetPosLeftWrist, rawLeftWrist, ref _hasSmLeftWristPos, circleSmoothSpeed);
+        _targetPosRightWrist = SmoothCirclePos(ref _targetPosRightWrist, rawRightWrist, ref _hasSmRightWristPos, circleSmoothSpeed);
+
+        // Actual (un-rotated) live positions for the solid dots -- these must NOT
+        // chase the target, only the player's real detected position.
+        _livePosLeftElbow = SmoothCirclePos(ref _livePosLeftElbow, elbowL, ref _hasSmLeftElbowLive, circleSmoothSpeed);
+        _livePosRightElbow = SmoothCirclePos(ref _livePosRightElbow, elbowR, ref _hasSmRightElbowLive, circleSmoothSpeed);
+        _livePosLeftWrist = SmoothCirclePos(ref _livePosLeftWrist, wristL, ref _hasSmLeftWristLive, circleSmoothSpeed);
+        _livePosRightWrist = SmoothCirclePos(ref _livePosRightWrist, wristR, ref _hasSmRightWristLive, circleSmoothSpeed);
+
         _hasTargetPositions = true;
     }
 
@@ -366,6 +459,23 @@ public class MediaPipePoseTracker : MonoBehaviour
         SetCircle(rightElbowCircle, show, _targetPosRightElbow, _scoreRightElbow, elbowTolerance);
         SetCircle(leftWristCircle, show, _targetPosLeftWrist, _scoreLeftElbow, elbowTolerance);
         SetCircle(rightWristCircle, show, _targetPosRightWrist, _scoreRightElbow, elbowTolerance);
+
+        SetDot(leftElbowDot, show, _livePosLeftElbow);
+        SetDot(rightElbowDot, show, _livePosRightElbow);
+        SetDot(leftWristDot, show, _livePosLeftWrist);
+        SetDot(rightWristDot, show, _livePosRightWrist);
+    }
+
+    private void SetDot(ActualPositionDotView dot, bool show, Vector2 normPos)
+    {
+        if (dot == null) return;
+        dot.SetVisible(show);
+        if (!show) return;
+
+        float w = targetSpace.rect.width;
+        float h = targetSpace.rect.height;
+        Vector2 local = new Vector2((normPos.x - 0.5f) * w, (0.5f - normPos.y) * h);
+        dot.SetPosition(local);
     }
 
     private void SetCircle(TargetCircleView circle, bool show, Vector2 normPos, float score, float toleranceDeg)
