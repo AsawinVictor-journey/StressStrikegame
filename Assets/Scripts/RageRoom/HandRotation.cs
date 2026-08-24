@@ -40,7 +40,16 @@ public class HandRotation : MonoBehaviour
              "ignored. 0 disables the deadzone.")]
     public float holdDeadzoneDegrees = 3f;
 
+    [Header("Idle Motion (no input)")]
+    [Tooltip("Degrees of gentle sway added on top of the origin-locked rotation, " +
+             "so the fist doesn't look frozen when there's no input to drive it.")]
+    public float idleAmplitude = 10f;
+    [Tooltip("Speed of the idle sway.")]
+    public float idleSpeed = 1f;
+
     float accPitch, accYaw;
+    float idleSeed;
+    Quaternion baseLocalRot;
 
     void Start()
     {
@@ -50,14 +59,34 @@ public class HandRotation : MonoBehaviour
         Vector3 euler = localRot.eulerAngles;
         accPitch = euler.x > 180f ? euler.x - 360f : euler.x;
         accYaw   = euler.y > 180f ? euler.y - 360f : euler.y;
+
+        // Remember the hand's starting rotation relative to origin, as placed
+        // in the scene, so idle sway is layered on top of it rather than on
+        // a hard-coded zero offset.
+        baseLocalRot = localRot;
+
+        // Random per-hand phase so left/right hands don't sway in lockstep
+        idleSeed = Random.Range(0f, 100f);
     }
 
     void Update()
     {
-        // Lock rotation to the player/camera (origin) so fists always face forward
-        if (origin != null) transform.rotation = origin.rotation;
+        // Follow the player/camera (origin), keeping the hand's scene-authored
+        // starting offset, with a small idle sway layered on top instead of
+        // snapping straight to origin.rotation every frame.
+        if (origin != null)
+        {
+            float t = Time.time * idleSpeed + idleSeed;
+            float idlePitch = Mathf.Sin(t) * idleAmplitude;
+            float idleYaw   = Mathf.Sin(t * 0.7f + 1.3f) * idleAmplitude;
+            float idleRoll  = Mathf.Sin(t * 0.5f + 2.6f) * idleAmplitude * 0.5f;
+
+            Quaternion idleOffset = Quaternion.Euler(idlePitch, idleYaw, idleRoll);
+            Quaternion idleTarget = origin.rotation * baseLocalRot * idleOffset;
+            transform.rotation = Quaternion.Slerp(transform.rotation, idleTarget, Time.deltaTime * smooth);
+        }
         return;
-        
+
         if (input != null && input.ProvidesOrientation)
         {
             // GetOrientation() is a delta from the recentered zero pose. Apply

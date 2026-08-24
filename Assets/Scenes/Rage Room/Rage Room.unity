@@ -6998,6 +6998,8 @@ MonoBehaviour:
   invertYaw: 0
   invertRoll: 0
   holdDeadzoneDegrees: 3
+  idleAmplitude: 5
+  idleSpeed: 1.25
 --- !u!114 &815928611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14634,6 +14636,8 @@ MonoBehaviour:
   invertYaw: 0
   invertRoll: 0
   holdDeadzoneDegrees: 2
+  idleAmplitude: 5
+  idleSpeed: 1.25
 --- !u!114 &1680595308
 MonoBehaviour:
   m_ObjectHideFlags: 0

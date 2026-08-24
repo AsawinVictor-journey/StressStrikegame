@@ -47,11 +47,9 @@ public class BriefCopeSurveyController : MonoBehaviour
     [SerializeField] private Color answerIdleColor = Color.white;
     [SerializeField] private Color answerSelectedColor = new Color(1f, 0.35f, 0.37f);
 
-    [Header("AI Coach (Ollama, local)")]
+    [Header("AI Coach (Gemini, via backend)")]
     [SerializeField] private bool useAiCoachMessage = true;
-    // Must be a model actually pulled on this machine (`ollama list`). gemma3:4b was
-    // never installed here, so every request failed silently into the onError path.
-    [SerializeField] private string ollamaModel = "gemma4:e4b";
+    [SerializeField] private string geminiModel = "gemini-2.5-flash-lite";
 
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
     private int currentQuestionIndex;
@@ -133,8 +131,8 @@ public class BriefCopeSurveyController : MonoBehaviour
             "Write 1 short sentence (max 25 words) to show above the survey intro. " +
             "Do not diagnose them or use clinical language. No emojis, no quotation marks.";
 
-        StartCoroutine(OllamaClient.Generate(
-            ollamaModel, prompt,
+        StartCoroutine(GeminiClient.Generate(
+            geminiModel, prompt,
             onSuccess: aiText =>
             {
                 if (string.IsNullOrWhiteSpace(aiText) || introTextTop == null) return;
@@ -259,8 +257,8 @@ public class BriefCopeSurveyController : MonoBehaviour
             "Do NOT name or suggest any game mode yet. Do not diagnose them or use clinical " +
             "language. No emojis, no quotation marks.";
 
-        StartCoroutine(OllamaClient.Generate(
-            ollamaModel, prompt,
+        StartCoroutine(GeminiClient.Generate(
+            geminiModel, prompt,
             onSuccess: aiText =>
             {
                 if (string.IsNullOrWhiteSpace(aiText) || halfwayText == null) return;
@@ -319,7 +317,7 @@ public class BriefCopeSurveyController : MonoBehaviour
             recommendedMode = rec.mode.ToString(),
             topSubscale = rec.topSubscale.ToString(),
             aiMessage = aiMessage ?? "",
-            aiModel = string.IsNullOrEmpty(aiMessage) ? "" : ollamaModel,
+            aiModel = string.IsNullOrEmpty(aiMessage) ? "" : geminiModel,
         });
     }
 
