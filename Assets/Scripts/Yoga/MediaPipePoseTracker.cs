@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Mediapipe.Tasks.Vision.PoseLandmarker;
@@ -68,7 +69,9 @@ public class MediaPipePoseTracker : MonoBehaviour
     public float circleSmoothSpeed = 12f;
 
     [Header("Actual Position Dots (live-detected, separate from targets)")]
-    [Tooltip("Solid dot = where MediaPipe currently detects this joint. Hollow circle above = where it should be. They are deliberately two separate markers that do not follow each other.")]
+    [Tooltip("Solid dot = where MediaPipe currently detects this joint, live. Hollow circle above = the " +
+        "FIXED calibrated target -- static, from the exact screen position MediaPipe saw this joint the " +
+        "moment you pressed Calibrate. Only shown once that joint has an actual saved calibration.")]
     public ActualPositionDotView leftElbowDot;
     public ActualPositionDotView rightElbowDot;
     public ActualPositionDotView leftWristDot;
@@ -79,6 +82,14 @@ public class MediaPipePoseTracker : MonoBehaviour
 
     private YogaJointAngles.JointAngles _target;
     private bool _hasTarget;
+
+    // Second target for poses with a genuine held second state (e.g. Open Arms
+    // <-> Closed Arms). Scoring picks whichever of _target/_targetMid the
+    // player is currently closer to as a WHOLE pose (see ChooseActiveTarget),
+    // not per-joint -- see design discussion: mixing pieces of two different
+    // states could "pass" a pose that doesn't actually match either one.
+    private YogaJointAngles.JointAngles _targetMid;
+    private bool _hasMidTarget;
 
     // Written from the LIVE_STREAM callback, which per PoseLandmarkerRunner's
     // Run() coroutine may fire off Unity's main thread (see AnnotationController's
@@ -99,8 +110,6 @@ public class MediaPipePoseTracker : MonoBehaviour
     // independently per joint (e.g. hips never in frame permanently excludes
     // torso lean/shoulder angle but must not block elbow scoring).
     private bool _hasLeftElbow, _hasRightElbow, _hasLeftShoulder, _hasRightShoulder, _hasTorsoLean;
-    private Vector2 _targetPosLeftElbow, _targetPosRightElbow, _targetPosLeftWrist, _targetPosRightWrist;
-    private bool _hasTargetPositions;
 
     // Smoothing state -- separate from the per-point "ever seen" cache above,
     // which handles missing data, not noise. These damp frame-to-frame jitter in
@@ -109,14 +118,24 @@ public class MediaPipePoseTracker : MonoBehaviour
     // settled values.
     private YogaJointAngles.JointAngles _smoothedJoints;
     private bool _hasSmoothedJoints;
-    private bool _hasSmLeftElbowPos, _hasSmRightElbowPos, _hasSmLeftWristPos, _hasSmRightWristPos;
 
-    // Actual (live, un-rotated) 2D positions for the solid dots -- distinct from
-    // _targetPos* above (which are rotated toward the baked target). Smoothed the
-    // same way so the solid dot doesn't visibly jitter more than the hollow
-    // target circle it sits next to.
+    // Live (un-rotated) 2D positions for the solid actual-position dots.
     private Vector2 _livePosLeftElbow, _livePosRightElbow, _livePosLeftWrist, _livePosRightWrist;
     private bool _hasSmLeftElbowLive, _hasSmRightElbowLive, _hasSmLeftWristLive, _hasSmRightWristLive;
+
+    // Fixed calibrated-target screen positions -- captured (a snapshot of the
+    // live position fields above) once at Calibrate/Calibrate Mid time, then
+    // static until recalibrated. Two independent sets since a pose can have two
+    // calibrated states; which one is shown each frame follows the same
+    // open/mid decision scoring already makes (_activeIsMid, set in
+    // ChooseActiveTarget). Per-joint has-flags: a pose might have its open
+    // elbow calibrated but never its wrist, if the wrist wasn't tracked at the
+    // moment Calibrate was pressed.
+    private Vector2 _fixedPosOpenLeftElbow, _fixedPosOpenRightElbow, _fixedPosOpenLeftWrist, _fixedPosOpenRightWrist;
+    private Vector2 _fixedPosMidLeftElbow, _fixedPosMidRightElbow, _fixedPosMidLeftWrist, _fixedPosMidRightWrist;
+    private bool _hasFixedOpenLeftElbow, _hasFixedOpenRightElbow, _hasFixedOpenLeftWrist, _hasFixedOpenRightWrist;
+    private bool _hasFixedMidLeftElbow, _hasFixedMidRightElbow, _hasFixedMidLeftWrist, _hasFixedMidRightWrist;
+    private bool _activeIsMid;
 
     private void OnEnable()
     {
@@ -151,11 +170,21 @@ public class MediaPipePoseTracker : MonoBehaviour
     private float _diagLastLogTime;
     private string _diagLastFailReason = "";
 
+    // Local persistence for player-calibrated targets (see CalibrateFromCurrentPose
+    // below). PlayerPrefs, not the YogaPose asset: writing back into a
+    // ScriptableObject asset only works via AssetDatabase, which is Editor-only
+    // and does not exist in a built player. Keyed per pose by asset name, since
+    // that's already how every pose is uniquely identified elsewhere (bake tool,
+    // pose selection buttons).
+    private const string CalibrationPrefPrefix = "YogaCalib_";
+    private string _currentPoseKey;
+
     public void SetTargetPose(YogaPose pose)
     {
         if (pose == null)
         {
             _hasTarget = false;
+            _currentPoseKey = null;
             return;
         }
         if (!pose.hasMediaPipeTarget)
@@ -163,18 +192,308 @@ public class MediaPipePoseTracker : MonoBehaviour
             Debug.LogWarning($"[MediaPipePoseTracker] '{pose.name}' has no baked MediaPipe target " +
                 "(run Tools > Yoga > Bake MediaPipe Target For Selected Pose first) -- accuracy will stay 0.", pose);
             _hasTarget = false;
+            _currentPoseKey = null;
             return;
         }
 
-        _target = new YogaJointAngles.JointAngles
+        _currentPoseKey = pose.name;
+
+        _target = LoadTarget("", pose.targetLeftElbowAngle, pose.targetRightElbowAngle,
+            pose.targetLeftShoulderAngle, pose.targetRightShoulderAngle, pose.targetTorsoLean);
+
+        _hasMidTarget = pose.hasMediaPipeMidTarget;
+        if (_hasMidTarget)
         {
-            leftElbow = pose.targetLeftElbowAngle,
-            rightElbow = pose.targetRightElbowAngle,
-            leftShoulder = pose.targetLeftShoulderAngle,
-            rightShoulder = pose.targetRightShoulderAngle,
-            torsoLean = pose.targetTorsoLean
-        };
+            _targetMid = LoadTarget("Mid", pose.targetLeftElbowAngleMid, pose.targetRightElbowAngleMid,
+                pose.targetLeftShoulderAngleMid, pose.targetRightShoulderAngleMid, pose.targetTorsoLeanMid);
+        }
+
+        // Fixed calibrated-target dot positions -- independent of the angle
+        // targets above (no baked-instructor fallback: a pose that's never been
+        // calibrated simply has no fixed dot to show, per joint).
+        LoadFixedPositions("", out _fixedPosOpenLeftElbow, out _hasFixedOpenLeftElbow, out _fixedPosOpenRightElbow, out _hasFixedOpenRightElbow,
+            out _fixedPosOpenLeftWrist, out _hasFixedOpenLeftWrist, out _fixedPosOpenRightWrist, out _hasFixedOpenRightWrist);
+        if (_hasMidTarget)
+        {
+            LoadFixedPositions("Mid", out _fixedPosMidLeftElbow, out _hasFixedMidLeftElbow, out _fixedPosMidRightElbow, out _hasFixedMidRightElbow,
+                out _fixedPosMidLeftWrist, out _hasFixedMidLeftWrist, out _fixedPosMidRightWrist, out _hasFixedMidRightWrist);
+        }
+        else
+        {
+            _hasFixedMidLeftElbow = _hasFixedMidRightElbow = _hasFixedMidLeftWrist = _hasFixedMidRightWrist = false;
+        }
+
         _hasTarget = true;
+    }
+
+    private void LoadFixedPositions(string suffix,
+        out Vector2 leftElbow, out bool hasLeftElbow, out Vector2 rightElbow, out bool hasRightElbow,
+        out Vector2 leftWrist, out bool hasLeftWrist, out Vector2 rightWrist, out bool hasRightWrist)
+    {
+        hasLeftElbow = PlayerPrefs.GetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosLEl" + suffix, 0) == 1;
+        leftElbow = hasLeftElbow
+            ? new Vector2(PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLElX" + suffix),
+                           PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLElY" + suffix))
+            : default;
+
+        hasRightElbow = PlayerPrefs.GetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosREl" + suffix, 0) == 1;
+        rightElbow = hasRightElbow
+            ? new Vector2(PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRElX" + suffix),
+                           PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRElY" + suffix))
+            : default;
+
+        hasLeftWrist = PlayerPrefs.GetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosLWr" + suffix, 0) == 1;
+        leftWrist = hasLeftWrist
+            ? new Vector2(PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLWrX" + suffix),
+                           PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLWrY" + suffix))
+            : default;
+
+        hasRightWrist = PlayerPrefs.GetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosRWr" + suffix, 0) == 1;
+        rightWrist = hasRightWrist
+            ? new Vector2(PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRWrX" + suffix),
+                           PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRWrY" + suffix))
+            : default;
+    }
+
+    // Shared by both the open and mid target: baked value from the pose asset,
+    // overridden wholesale by a saved player calibration if one exists for this
+    // pose+suffix (suffix "" = open state, "Mid" = second state).
+    private YogaJointAngles.JointAngles LoadTarget(string suffix,
+        float bakedLeftElbow, float bakedRightElbow, float bakedLeftShoulder, float bakedRightShoulder, float bakedTorsoLean)
+    {
+        var t = new YogaJointAngles.JointAngles
+        {
+            leftElbow = bakedLeftElbow,
+            rightElbow = bakedRightElbow,
+            leftShoulder = bakedLeftShoulder,
+            rightShoulder = bakedRightShoulder,
+            torsoLean = bakedTorsoLean
+        };
+
+        if (PlayerPrefs.GetInt(CalibrationPrefPrefix + _currentPoseKey + "_Has" + suffix, 0) == 1)
+        {
+            t.leftElbow = PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_LEl" + suffix);
+            t.rightElbow = PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_REl" + suffix);
+            t.leftShoulder = PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_LSh" + suffix);
+            t.rightShoulder = PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_RSh" + suffix);
+            t.torsoLean = PlayerPrefs.GetFloat(CalibrationPrefPrefix + _currentPoseKey + "_Torso" + suffix);
+            Debug.Log($"[MediaPipePoseTracker] Loaded saved calibration for '{_currentPoseKey}'" +
+                (string.IsNullOrEmpty(suffix) ? "" : $" ({suffix} state)") + ".");
+        }
+
+        return t;
+    }
+
+    private void SaveCalibration(YogaJointAngles.JointAngles values, string suffix)
+    {
+        if (string.IsNullOrEmpty(_currentPoseKey)) return;
+
+        PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_LEl" + suffix, values.leftElbow);
+        PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_REl" + suffix, values.rightElbow);
+        PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_LSh" + suffix, values.leftShoulder);
+        PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_RSh" + suffix, values.rightShoulder);
+        PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_Torso" + suffix, values.torsoLean);
+        PlayerPrefs.SetInt(CalibrationPrefPrefix + _currentPoseKey + "_Has" + suffix, 1);
+        PlayerPrefs.Save();
+    }
+
+    // Fixed calibrated-target screen positions -- a separate PlayerPrefs record
+    // from the angle values above (different consumer: the fixed dot markers,
+    // not scoring). Saved/has-flagged per JOINT, not as one combined flag like
+    // the angles: a position only needs that one landmark visible, so e.g. an
+    // elbow calibrated while the wrist happened to be out of frame should still
+    // save the elbow dot, not silently save a bogus (0,0) for the wrist too.
+    private void SaveFixedPositions(Vector2 leftElbow, bool hasLeftElbow, Vector2 rightElbow, bool hasRightElbow,
+        Vector2 leftWrist, bool hasLeftWrist, Vector2 rightWrist, bool hasRightWrist, string suffix)
+    {
+        if (string.IsNullOrEmpty(_currentPoseKey)) return;
+
+        if (hasLeftElbow)
+        {
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLElX" + suffix, leftElbow.x);
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLElY" + suffix, leftElbow.y);
+            PlayerPrefs.SetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosLEl" + suffix, 1);
+        }
+        if (hasRightElbow)
+        {
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRElX" + suffix, rightElbow.x);
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRElY" + suffix, rightElbow.y);
+            PlayerPrefs.SetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosREl" + suffix, 1);
+        }
+        if (hasLeftWrist)
+        {
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLWrX" + suffix, leftWrist.x);
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosLWrY" + suffix, leftWrist.y);
+            PlayerPrefs.SetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosLWr" + suffix, 1);
+        }
+        if (hasRightWrist)
+        {
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRWrX" + suffix, rightWrist.x);
+            PlayerPrefs.SetFloat(CalibrationPrefPrefix + _currentPoseKey + "_PosRWrY" + suffix, rightWrist.y);
+            PlayerPrefs.SetInt(CalibrationPrefPrefix + _currentPoseKey + "_HasPosRWr" + suffix, 1);
+        }
+        PlayerPrefs.Save();
+    }
+
+    /// <summary>Clears BOTH saved calibrations (open and mid, if any) for the given pose, reverting it to the baked instructor target(s) next time it's selected.</summary>
+    public static void ClearSavedCalibration(string poseName)
+    {
+        foreach (var suffix in new[] { "", "Mid" })
+        {
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_LEl" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_REl" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_LSh" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_RSh" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_Torso" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_Has" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosLElX" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosLElY" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosRElX" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosRElY" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosLWrX" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosLWrY" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosRWrX" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_PosRWrY" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_HasPosLEl" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_HasPosREl" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_HasPosLWr" + suffix);
+            PlayerPrefs.DeleteKey(CalibrationPrefPrefix + poseName + "_HasPosRWr" + suffix);
+        }
+        PlayerPrefs.Save();
+    }
+
+    /// <summary>
+    /// Overwrites the OPEN (main) target with the player's own live (smoothed)
+    /// joint angles -- lets a player calibrate "correct" to their own body/
+    /// mobility instead of the baked instructor-rig target. Only overwrites
+    /// joints that are currently reliably tracked (same _hasX gating used for
+    /// scoring); a joint with no live data yet keeps whatever target it had
+    /// before, rather than being corrupted with garbage default-Vector3 angles.
+    /// Persisted locally (PlayerPrefs, keyed by pose name) -- selecting this
+    /// pose again, including in a future session, loads the saved calibration
+    /// instead of the baked instructor target. Does NOT touch the YogaPose
+    /// asset itself (can't, from a build) or affect any other player's device.
+    /// </summary>
+    public bool CalibrateFromCurrentPose()
+    {
+        bool anyJointTracked = _hasLeftElbow || _hasRightElbow || _hasLeftShoulder || _hasRightShoulder || _hasTorsoLean;
+        if (!anyJointTracked)
+        {
+            Debug.LogWarning("[MediaPipePoseTracker] CalibrateFromCurrentPose: no joints currently tracked -- " +
+                "make sure you're visible in the camera first.", this);
+            if (accuracyText != null) accuracyText.text = "Calibration failed - get in frame first";
+            return false;
+        }
+
+        if (_hasLeftElbow) _target.leftElbow = _smoothedJoints.leftElbow;
+        if (_hasRightElbow) _target.rightElbow = _smoothedJoints.rightElbow;
+        if (_hasLeftShoulder) _target.leftShoulder = _smoothedJoints.leftShoulder;
+        if (_hasRightShoulder) _target.rightShoulder = _smoothedJoints.rightShoulder;
+        if (_hasTorsoLean) _target.torsoLean = _smoothedJoints.torsoLean;
+        _hasTarget = true;
+        SaveCalibration(_target, "");
+
+        // Fixed on-screen target dot: a snapshot of where each joint's live
+        // position IS right now, not a recomputed angle-based estimate. Gated
+        // on the raw "ever seen" landmark flags (not the angle-scoring _hasX
+        // flags above), since a position only needs that one joint visible.
+        if (_seenLElbow) { _fixedPosOpenLeftElbow = _livePosLeftElbow; _hasFixedOpenLeftElbow = true; }
+        if (_seenRElbow) { _fixedPosOpenRightElbow = _livePosRightElbow; _hasFixedOpenRightElbow = true; }
+        if (_seenLWrist) { _fixedPosOpenLeftWrist = _livePosLeftWrist; _hasFixedOpenLeftWrist = true; }
+        if (_seenRWrist) { _fixedPosOpenRightWrist = _livePosRightWrist; _hasFixedOpenRightWrist = true; }
+        SaveFixedPositions(
+            _fixedPosOpenLeftElbow, _seenLElbow, _fixedPosOpenRightElbow, _seenRElbow,
+            _fixedPosOpenLeftWrist, _seenLWrist, _fixedPosOpenRightWrist, _seenRWrist, "");
+
+        if (accuracyText != null) accuracyText.text = "Calibrated to your pose ✓";
+        Debug.Log("[MediaPipePoseTracker] Calibrated OPEN target from current live pose.", this);
+        return true;
+    }
+
+    /// <summary>
+    /// Same as CalibrateFromCurrentPose, but for the MID (second) state -- only
+    /// meaningful for a pose with a genuine second held position (_hasMidTarget).
+    /// The Calibrate Mid button is hidden for poses without one, but this guards
+    /// against it being called anyway (e.g. a stale UnityEvent).
+    /// </summary>
+    public bool CalibrateMidFromCurrentPose()
+    {
+        if (!_hasMidTarget)
+        {
+            Debug.LogWarning("[MediaPipePoseTracker] CalibrateMidFromCurrentPose: this pose has no second state to calibrate.", this);
+            return false;
+        }
+
+        bool anyJointTracked = _hasLeftElbow || _hasRightElbow || _hasLeftShoulder || _hasRightShoulder || _hasTorsoLean;
+        if (!anyJointTracked)
+        {
+            Debug.LogWarning("[MediaPipePoseTracker] CalibrateMidFromCurrentPose: no joints currently tracked -- " +
+                "make sure you're visible in the camera first.", this);
+            if (accuracyText != null) accuracyText.text = "Calibration failed - get in frame first";
+            return false;
+        }
+
+        if (_hasLeftElbow) _targetMid.leftElbow = _smoothedJoints.leftElbow;
+        if (_hasRightElbow) _targetMid.rightElbow = _smoothedJoints.rightElbow;
+        if (_hasLeftShoulder) _targetMid.leftShoulder = _smoothedJoints.leftShoulder;
+        if (_hasRightShoulder) _targetMid.rightShoulder = _smoothedJoints.rightShoulder;
+        if (_hasTorsoLean) _targetMid.torsoLean = _smoothedJoints.torsoLean;
+        SaveCalibration(_targetMid, "Mid");
+
+        if (_seenLElbow) { _fixedPosMidLeftElbow = _livePosLeftElbow; _hasFixedMidLeftElbow = true; }
+        if (_seenRElbow) { _fixedPosMidRightElbow = _livePosRightElbow; _hasFixedMidRightElbow = true; }
+        if (_seenLWrist) { _fixedPosMidLeftWrist = _livePosLeftWrist; _hasFixedMidLeftWrist = true; }
+        if (_seenRWrist) { _fixedPosMidRightWrist = _livePosRightWrist; _hasFixedMidRightWrist = true; }
+        SaveFixedPositions(
+            _fixedPosMidLeftElbow, _seenLElbow, _fixedPosMidRightElbow, _seenRElbow,
+            _fixedPosMidLeftWrist, _seenLWrist, _fixedPosMidRightWrist, _seenRWrist, "Mid");
+
+        if (accuracyText != null) accuracyText.text = "Calibrated mid pose ✓";
+        Debug.Log("[MediaPipePoseTracker] Calibrated MID target from current live pose.", this);
+        return true;
+    }
+
+    [Tooltip("Seconds shown per step of the 3-2-1 countdown before a Calibrate button actually captures the pose.")]
+    public float calibrateCountdownStepSeconds = 1f;
+
+    private Coroutine _calibrateCountdownCoroutine;
+
+    /// <summary>
+    /// UnityEvent-friendly wrapper for the Calibrate button. Runs a 3-2-1
+    /// countdown (via accuracyText, same as the pre-pose countdown elsewhere in
+    /// the game) so the player has a moment to settle into position before the
+    /// actual capture, rather than calibrating whatever they happened to be
+    /// doing the instant they clicked. Re-clicking either Calibrate button while
+    /// a countdown is already running restarts it.
+    /// </summary>
+    public void CalibrateButtonClicked()
+    {
+        StartCalibrationCountdown(CalibrateFromCurrentPose);
+    }
+
+    /// <summary>UnityEvent-friendly wrapper for the Calibrate Mid button -- same countdown, captures the second state instead.</summary>
+    public void CalibrateMidButtonClicked()
+    {
+        StartCalibrationCountdown(CalibrateMidFromCurrentPose);
+    }
+
+    private void StartCalibrationCountdown(System.Func<bool> onComplete)
+    {
+        if (_calibrateCountdownCoroutine != null) StopCoroutine(_calibrateCountdownCoroutine);
+        _calibrateCountdownCoroutine = StartCoroutine(CalibrateCountdownRoutine(onComplete));
+    }
+
+    private IEnumerator CalibrateCountdownRoutine(System.Func<bool> onComplete)
+    {
+        for (int i = 3; i > 0; i--)
+        {
+            if (accuracyText != null) accuracyText.text = i.ToString();
+            yield return new WaitForSeconds(calibrateCountdownStepSeconds);
+        }
+
+        onComplete(); // sets accuracyText to "Calibrated..." or a failure message on its own
+
+        _calibrateCountdownCoroutine = null;
     }
 
     public void StartTracking()
@@ -183,7 +502,6 @@ public class MediaPipePoseTracker : MonoBehaviour
         _accuracySamples.Clear();
         _sampleTimer = 0f;
         _hasSmoothedJoints = false;
-        _hasSmLeftElbowPos = _hasSmRightElbowPos = _hasSmLeftWristPos = _hasSmRightWristPos = false;
         _hasSmLeftElbowLive = _hasSmRightElbowLive = _hasSmLeftWristLive = _hasSmRightWristLive = false;
     }
 
@@ -290,11 +608,16 @@ public class MediaPipePoseTracker : MonoBehaviour
         // _seen* gate below excludes them.
         var current = SmoothJoints(YogaJointAngles.Compute(lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip));
 
-        if (_seenLShoulder && _seenLElbow && _seenLWrist) { _scoreLeftElbow = Score(current.leftElbow, _target.leftElbow, elbowTolerance); _hasLeftElbow = true; }
-        if (_seenRShoulder && _seenRElbow && _seenRWrist) { _scoreRightElbow = Score(current.rightElbow, _target.rightElbow, elbowTolerance); _hasRightElbow = true; }
-        if (_seenLHip && _seenRHip && _seenLShoulder && _seenLElbow) { _scoreLeftShoulder = Score(current.leftShoulder, _target.leftShoulder, shoulderTolerance); _hasLeftShoulder = true; }
-        if (_seenLHip && _seenRHip && _seenRShoulder && _seenRElbow) { _scoreRightShoulder = Score(current.rightShoulder, _target.rightShoulder, shoulderTolerance); _hasRightShoulder = true; }
-        if (_seenLHip && _seenRHip && _seenLShoulder && _seenRShoulder) { _scoreTorsoLean = Score(current.torsoLean, _target.torsoLean, torsoLeanTolerance); _hasTorsoLean = true; }
+        // Poses with a genuine second held state (Open Arms <-> Closed Arms,
+        // etc.) get scored against whichever of _target/_targetMid the player's
+        // WHOLE current pose is closer to, not per-joint (see ChooseActiveTarget).
+        var activeTarget = ChooseActiveTarget(current);
+
+        if (_seenLShoulder && _seenLElbow && _seenLWrist) { _scoreLeftElbow = Score(current.leftElbow, activeTarget.leftElbow, elbowTolerance); _hasLeftElbow = true; }
+        if (_seenRShoulder && _seenRElbow && _seenRWrist) { _scoreRightElbow = Score(current.rightElbow, activeTarget.rightElbow, elbowTolerance); _hasRightElbow = true; }
+        if (_seenLHip && _seenRHip && _seenLShoulder && _seenLElbow) { _scoreLeftShoulder = Score(current.leftShoulder, activeTarget.leftShoulder, shoulderTolerance); _hasLeftShoulder = true; }
+        if (_seenLHip && _seenRHip && _seenRShoulder && _seenRElbow) { _scoreRightShoulder = Score(current.rightShoulder, activeTarget.rightShoulder, shoulderTolerance); _hasRightShoulder = true; }
+        if (_seenLHip && _seenRHip && _seenLShoulder && _seenRShoulder) { _scoreTorsoLean = Score(current.torsoLean, activeTarget.torsoLean, torsoLeanTolerance); _hasTorsoLean = true; }
 
         if (!(_hasLeftElbow || _hasRightElbow || _hasLeftShoulder || _hasRightShoulder || _hasTorsoLean))
         {
@@ -317,11 +640,71 @@ public class MediaPipePoseTracker : MonoBehaviour
 
         _hasLivePose = true;
 
-        // Screen-space (normalized 0-1 image coords) for the target circles --
-        // deliberately from poseLandmarks, not poseWorldLandmarks: angle math and
-        // on-screen placement are kept as separate concerns even though they share
-        // a source frame (see design notes).
-        UpdateTargetPositions(result, current);
+        // Screen-space (normalized 0-1 image coords) live positions for the solid
+        // actual-position dots. The hollow circles no longer come from here --
+        // they show the FIXED calibrated position instead (set directly in
+        // CalibrateFromCurrentPose/CalibrateMidFromCurrentPose, read in
+        // UpdateTargetCircles).
+        UpdateLivePositions(result);
+    }
+
+    // Decides which of _target (open) / _targetMid (second state) the player's
+    // current WHOLE pose is closer to, so scoring/circles use ONE coherent
+    // target rather than mixing joints from two different held positions (e.g.
+    // an elbow that happens to match "closed" while the shoulder matches
+    // "open" -- neither of which is the pose actually being performed).
+    // Distance is normalized per-joint by that joint's own tolerance so no
+    // single joint's scale dominates the comparison. Only compares joints that
+    // are currently trackable (same _seenX gates used for scoring); a pose with
+    // no second state, or nothing trackable yet, always uses the open target.
+    private YogaJointAngles.JointAngles ChooseActiveTarget(YogaJointAngles.JointAngles current)
+    {
+        if (!_hasMidTarget) return _target;
+
+        float distOpen = 0f, distMid = 0f;
+        bool any = false;
+
+        if (_seenLShoulder && _seenLElbow && _seenLWrist)
+        {
+            distOpen += SqNorm(current.leftElbow, _target.leftElbow, elbowTolerance);
+            distMid += SqNorm(current.leftElbow, _targetMid.leftElbow, elbowTolerance);
+            any = true;
+        }
+        if (_seenRShoulder && _seenRElbow && _seenRWrist)
+        {
+            distOpen += SqNorm(current.rightElbow, _target.rightElbow, elbowTolerance);
+            distMid += SqNorm(current.rightElbow, _targetMid.rightElbow, elbowTolerance);
+            any = true;
+        }
+        if (_seenLHip && _seenRHip && _seenLShoulder && _seenLElbow)
+        {
+            distOpen += SqNorm(current.leftShoulder, _target.leftShoulder, shoulderTolerance);
+            distMid += SqNorm(current.leftShoulder, _targetMid.leftShoulder, shoulderTolerance);
+            any = true;
+        }
+        if (_seenLHip && _seenRHip && _seenRShoulder && _seenRElbow)
+        {
+            distOpen += SqNorm(current.rightShoulder, _target.rightShoulder, shoulderTolerance);
+            distMid += SqNorm(current.rightShoulder, _targetMid.rightShoulder, shoulderTolerance);
+            any = true;
+        }
+        if (_seenLHip && _seenRHip && _seenLShoulder && _seenRShoulder)
+        {
+            distOpen += SqNorm(current.torsoLean, _target.torsoLean, torsoLeanTolerance);
+            distMid += SqNorm(current.torsoLean, _targetMid.torsoLean, torsoLeanTolerance);
+            any = true;
+        }
+
+        if (!any) return _target; // nothing trackable yet -- doesn't matter which, avoid a meaningless comparison
+
+        _activeIsMid = distMid < distOpen;
+        return _activeIsMid ? _targetMid : _target;
+    }
+
+    private static float SqNorm(float value, float target, float tolerance)
+    {
+        float n = (value - target) / Mathf.Max(1f, tolerance);
+        return n * n;
     }
 
     // Exponential-moving-average toward each new reading, at a rate independent
@@ -374,56 +757,25 @@ public class MediaPipePoseTracker : MonoBehaviour
         return 1f - Mathf.Exp(-speed * Time.deltaTime);
     }
 
-    private void UpdateTargetPositions(PoseLandmarkerResult result, YogaJointAngles.JointAngles current)
+    // Screen-space (normalized 0-1 image coords) live positions for the solid
+    // actual-position dots, smoothed the same way everything else here is.
+    // These are also what CalibrateFromCurrentPose/CalibrateMidFromCurrentPose
+    // snapshot into the fixed calibrated-target positions.
+    private void UpdateLivePositions(PoseLandmarkerResult result)
     {
-        _hasTargetPositions = false;
         if (result.poseLandmarks == null || result.poseLandmarks.Count == 0) return;
         var norm = result.poseLandmarks[0].landmarks;
         if (norm == null || norm.Count < RequiredLandmarkCount) return;
 
-        Vector2 shoulderL = new Vector2(norm[LeftShoulder].x, norm[LeftShoulder].y);
-        Vector2 shoulderR = new Vector2(norm[RightShoulder].x, norm[RightShoulder].y);
         Vector2 elbowL = new Vector2(norm[LeftElbow].x, norm[LeftElbow].y);
         Vector2 elbowR = new Vector2(norm[RightElbow].x, norm[RightElbow].y);
         Vector2 wristL = new Vector2(norm[LeftWrist].x, norm[LeftWrist].y);
         Vector2 wristR = new Vector2(norm[RightWrist].x, norm[RightWrist].y);
 
-        // Target position = the player's OWN live anchor + own live limb length,
-        // rotated by (target angle - current angle) from the instructor. Angle
-        // comes from the instructor; position/scale comes from the player's own
-        // live geometry -- deliberately not a reprojection of the instructor's
-        // Unity world position (see design notes' explicit clarification on this).
-        // This is a simplified 2D heuristic, not a rigorous 3D reprojection: at
-        // score=100 (delta=0) the target exactly coincides with the live point,
-        // which is the important convergence property for an MVP; the rotational
-        // direction for partial mismatches is an approximation to be checked
-        // visually, not a precise IK solve.
-        Vector2 rawLeftElbow = shoulderL + RotateBy(elbowL - shoulderL, _target.leftShoulder - current.leftShoulder);
-        Vector2 rawRightElbow = shoulderR + RotateBy(elbowR - shoulderR, _target.rightShoulder - current.rightShoulder);
-        Vector2 rawLeftWrist = elbowL + RotateBy(wristL - elbowL, _target.leftElbow - current.leftElbow);
-        Vector2 rawRightWrist = elbowR + RotateBy(wristR - elbowR, _target.rightElbow - current.rightElbow);
-
-        _targetPosLeftElbow = SmoothCirclePos(ref _targetPosLeftElbow, rawLeftElbow, ref _hasSmLeftElbowPos, circleSmoothSpeed);
-        _targetPosRightElbow = SmoothCirclePos(ref _targetPosRightElbow, rawRightElbow, ref _hasSmRightElbowPos, circleSmoothSpeed);
-        _targetPosLeftWrist = SmoothCirclePos(ref _targetPosLeftWrist, rawLeftWrist, ref _hasSmLeftWristPos, circleSmoothSpeed);
-        _targetPosRightWrist = SmoothCirclePos(ref _targetPosRightWrist, rawRightWrist, ref _hasSmRightWristPos, circleSmoothSpeed);
-
-        // Actual (un-rotated) live positions for the solid dots -- these must NOT
-        // chase the target, only the player's real detected position.
         _livePosLeftElbow = SmoothCirclePos(ref _livePosLeftElbow, elbowL, ref _hasSmLeftElbowLive, circleSmoothSpeed);
         _livePosRightElbow = SmoothCirclePos(ref _livePosRightElbow, elbowR, ref _hasSmRightElbowLive, circleSmoothSpeed);
         _livePosLeftWrist = SmoothCirclePos(ref _livePosLeftWrist, wristL, ref _hasSmLeftWristLive, circleSmoothSpeed);
         _livePosRightWrist = SmoothCirclePos(ref _livePosRightWrist, wristR, ref _hasSmRightWristLive, circleSmoothSpeed);
-
-        _hasTargetPositions = true;
-    }
-
-    private static Vector2 RotateBy(Vector2 v, float degrees)
-    {
-        float rad = degrees * Mathf.Deg2Rad;
-        float cos = Mathf.Cos(rad);
-        float sin = Mathf.Sin(rad);
-        return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
     }
 
     private bool TryGetPoint(List<Landmark> landmarks, int index, out Vector3 point)
@@ -453,18 +805,39 @@ public class MediaPipePoseTracker : MonoBehaviour
 
     private void UpdateTargetCircles()
     {
-        bool show = tracking && _hasLivePose && _hasTargetPositions && targetSpace != null;
+        bool show = tracking && _hasLivePose && targetSpace != null;
 
-        SetCircle(leftElbowCircle, show, _targetPosLeftElbow, _scoreLeftElbow, elbowTolerance);
-        SetCircle(rightElbowCircle, show, _targetPosRightElbow, _scoreRightElbow, elbowTolerance);
-        SetCircle(leftWristCircle, show, _targetPosLeftWrist, _scoreLeftElbow, elbowTolerance);
-        SetCircle(rightWristCircle, show, _targetPosRightWrist, _scoreRightElbow, elbowTolerance);
+        // The hollow red circles now show the FIXED calibrated position (static,
+        // from whichever state -- open/mid -- is currently active, see
+        // ChooseActiveTarget), not a live rotation-math estimate. A joint only
+        // shows once it actually has a saved calibration for that state; there
+        // is no more "moving target" fallback for an uncalibrated pose.
+        Vector2 fixedLeftElbow = _activeIsMid ? _fixedPosMidLeftElbow : _fixedPosOpenLeftElbow;
+        Vector2 fixedRightElbow = _activeIsMid ? _fixedPosMidRightElbow : _fixedPosOpenRightElbow;
+        Vector2 fixedLeftWrist = _activeIsMid ? _fixedPosMidLeftWrist : _fixedPosOpenLeftWrist;
+        Vector2 fixedRightWrist = _activeIsMid ? _fixedPosMidRightWrist : _fixedPosOpenRightWrist;
+        bool hasFixedLeftElbow = _activeIsMid ? _hasFixedMidLeftElbow : _hasFixedOpenLeftElbow;
+        bool hasFixedRightElbow = _activeIsMid ? _hasFixedMidRightElbow : _hasFixedOpenRightElbow;
+        bool hasFixedLeftWrist = _activeIsMid ? _hasFixedMidLeftWrist : _hasFixedOpenLeftWrist;
+        bool hasFixedRightWrist = _activeIsMid ? _hasFixedMidRightWrist : _hasFixedOpenRightWrist;
+
+        SetCircle(leftElbowCircle, show && hasFixedLeftElbow, fixedLeftElbow, 0f, FixedTargetToleranceEquivalent);
+        SetCircle(rightElbowCircle, show && hasFixedRightElbow, fixedRightElbow, 0f, FixedTargetToleranceEquivalent);
+        SetCircle(leftWristCircle, show && hasFixedLeftWrist, fixedLeftWrist, 0f, FixedTargetToleranceEquivalent);
+        SetCircle(rightWristCircle, show && hasFixedRightWrist, fixedRightWrist, 0f, FixedTargetToleranceEquivalent);
 
         SetDot(leftElbowDot, show, _livePosLeftElbow);
         SetDot(rightElbowDot, show, _livePosRightElbow);
         SetDot(leftWristDot, show, _livePosLeftWrist);
         SetDot(rightWristDot, show, _livePosRightWrist);
     }
+
+    // SetCircle sizes its radius from a "tolerance" value (Mathf.Clamp(tol*2, 20,
+    // 120)) originally meant for the old live rotation-math circle's
+    // accuracy-zone sizing. The fixed dot isn't a zone, just a pinpoint marker --
+    // this constant picks a fixed 44px radius (88x88 -- matches the solid dot's
+    // size) via the same code path, rather than duplicating the sizing logic.
+    private const float FixedTargetToleranceEquivalent = 22f;
 
     private void SetDot(ActualPositionDotView dot, bool show, Vector2 normPos)
     {

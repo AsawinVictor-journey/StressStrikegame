@@ -151,6 +151,9 @@ public static class YogaJointAngles
         }
 
         JointAngles angles;
+        JointAngles midAngles = default;
+        bool hasMid = pose.MidPoseAnimation != null;
+
         AnimationMode.StartAnimationMode();
         try
         {
@@ -163,6 +166,26 @@ public static class YogaJointAngles
                 leftElbow.position, rightElbow.position,
                 leftWrist.position, rightWrist.position,
                 leftHip.position, rightHip.position);
+
+            // Second bake pass for poses with a genuine second held state (e.g.
+            // Open Arms <-> Closed Arms) -- sampled in the SAME AnimationMode
+            // bracket, just re-posing the rig to the mid clip's frame before
+            // reading bone positions again. Poses whose MidPoseAnimation is only
+            // a transition/rest clip (not a second position meant to be graded)
+            // still get baked here -- whether to actually USE it for scoring is
+            // a runtime/tracker decision, not a baking one.
+            if (hasMid)
+            {
+                AnimationMode.BeginSampling();
+                AnimationMode.SampleAnimationClip(rigRoot, pose.MidPoseAnimation, 0f);
+                AnimationMode.EndSampling();
+
+                midAngles = Compute(
+                    leftShoulder.position, rightShoulder.position,
+                    leftElbow.position, rightElbow.position,
+                    leftWrist.position, rightWrist.position,
+                    leftHip.position, rightHip.position);
+            }
         }
         finally
         {
@@ -176,11 +199,29 @@ public static class YogaJointAngles
         pose.targetTorsoLean = angles.torsoLean;
         pose.hasMediaPipeTarget = true;
 
+        if (hasMid)
+        {
+            pose.targetLeftElbowAngleMid = midAngles.leftElbow;
+            pose.targetRightElbowAngleMid = midAngles.rightElbow;
+            pose.targetLeftShoulderAngleMid = midAngles.leftShoulder;
+            pose.targetRightShoulderAngleMid = midAngles.rightShoulder;
+            pose.targetTorsoLeanMid = midAngles.torsoLean;
+            pose.hasMediaPipeMidTarget = true;
+        }
+        else
+        {
+            pose.hasMediaPipeMidTarget = false;
+        }
+
         EditorUtility.SetDirty(pose);
         AssetDatabase.SaveAssets();
 
+        string midLog = hasMid
+            ? $" | MID: L-elbow={midAngles.leftElbow:F1} R-elbow={midAngles.rightElbow:F1} " +
+              $"L-shoulder={midAngles.leftShoulder:F1} R-shoulder={midAngles.rightShoulder:F1} torsoLean={midAngles.torsoLean:F1}"
+            : "";
         Debug.Log($"[YogaJointAngles] Baked '{pose.name}': L-elbow={angles.leftElbow:F1} R-elbow={angles.rightElbow:F1} " +
-            $"L-shoulder={angles.leftShoulder:F1} R-shoulder={angles.rightShoulder:F1} torsoLean={angles.torsoLean:F1}", pose);
+            $"L-shoulder={angles.leftShoulder:F1} R-shoulder={angles.rightShoulder:F1} torsoLean={angles.torsoLean:F1}{midLog}", pose);
         return true;
     }
 

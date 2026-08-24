@@ -50,4 +50,16 @@ public class YogaPose : ScriptableObject
     public float targetLeftShoulderAngle;
     public float targetRightShoulderAngle;
     public float targetTorsoLean;
+
+    [Header("MediaPipe Target - Mid Pose (only baked/used if MidPoseAnimation is set)")]
+    [Tooltip("Set alongside the target above when this pose has a MidPoseAnimation. MediaPipePoseTracker " +
+             "scores against whichever of the two states (open vs mid) the player is currently closer to, " +
+             "so a pose with a genuine second position (e.g. Open Arms <-> Closed Arms) gets both counted " +
+             "instead of only ever grading the open state.")]
+    public bool hasMediaPipeMidTarget;
+    public float targetLeftElbowAngleMid;
+    public float targetRightElbowAngleMid;
+    public float targetLeftShoulderAngleMid;
+    public float targetRightShoulderAngleMid;
+    public float targetTorsoLeanMid;
 }

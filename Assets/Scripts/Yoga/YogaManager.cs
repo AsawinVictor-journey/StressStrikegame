@@ -159,12 +159,18 @@ public class YogaManager : MonoBehaviour
     public float finalSteadiness;
     public float finalCalmScore;
 
+    [Tooltip("Shown only for poses that have a MidPoseAnimation (a genuine second held state to calibrate, e.g. Open Arms <-> Closed Arms) -- hidden for poses with only one state.")]
+    public GameObject calibrateMidButton;
+
     public void SelectPose(YogaPose pose)
     {
         selectedPose = pose;
         descriptionImage.sprite = selectedPose.icon;
 
         yogaTracker.SetTargetPose(selectedPose);
+
+        if (calibrateMidButton != null)
+            calibrateMidButton.SetActive(pose.MidPoseAnimation != null);
     }
 
     public void StartPose()

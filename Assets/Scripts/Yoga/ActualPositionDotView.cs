@@ -20,9 +20,9 @@ public class ActualPositionDotView : MonoBehaviour
     public Image image;
     [Tooltip("Solid filled circle sprite -- if left empty, falls back to a generated placeholder disc.")]
     public Sprite dotSprite;
-    public Color color = new Color(1f, 1f, 1f, 0.9f);
-    [Tooltip("Fixed on-screen radius, in target-space local units -- deliberately NOT tolerance-scaled like TargetCircleView's radius, since this marks a precise point, not a zone.")]
-    public float radius = 10f;
+    public Color color = new Color(0.9f, 0.1f, 0.1f, 0.95f); // solid red -- live tracking indicator
+    [Tooltip("Fixed on-screen radius, in target-space local units. Matches the fixed hollow ring's size (44) so the two markers read as the same scale.")]
+    public float radius = 44f;
 
     private RectTransform _rect;
     private static Sprite _fallbackDotSprite;

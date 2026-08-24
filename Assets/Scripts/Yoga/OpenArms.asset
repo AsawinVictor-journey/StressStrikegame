@@ -33,3 +33,9 @@ MonoBehaviour:
   targetLeftShoulderAngle: 69.1273
   targetRightShoulderAngle: 66.232635
   targetTorsoLean: -3.0349944
+  hasMediaPipeMidTarget: 1
+  targetLeftElbowAngleMid: 180
+  targetRightElbowAngleMid: 180
+  targetLeftShoulderAngleMid: 93.749565
+  targetRightShoulderAngleMid: 93.86182
+  targetTorsoLeanMid: 2.9424436
