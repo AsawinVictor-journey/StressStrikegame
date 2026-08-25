@@ -35,6 +35,8 @@ public class MediaPipePoseTracker : MonoBehaviour
     [Header("Score")]
     public float accuracy;
     public TMPro.TMP_Text accuracyText;
+    [Tooltip("Shown alongside accuracyText only on a successful Calibrate/Calibrate-Mid -- hidden the moment a new countdown starts, and never shown on a failed calibration.")]
+    public GameObject accuracyCheckmark;
 
     [Header("Calibration (tunable -- not yet playtested)")]
     public float elbowTolerance = 25f;
@@ -381,7 +383,7 @@ public class MediaPipePoseTracker : MonoBehaviour
         {
             Debug.LogWarning("[MediaPipePoseTracker] CalibrateFromCurrentPose: no joints currently tracked -- " +
                 "make sure you're visible in the camera first.", this);
-            if (accuracyText != null) accuracyText.text = "Calibration failed - get in frame first";
+            if (accuracyText != null) accuracyText.text = "Failed! Get into frame!";
             return false;
         }
 
@@ -405,7 +407,8 @@ public class MediaPipePoseTracker : MonoBehaviour
             _fixedPosOpenLeftElbow, _seenLElbow, _fixedPosOpenRightElbow, _seenRElbow,
             _fixedPosOpenLeftWrist, _seenLWrist, _fixedPosOpenRightWrist, _seenRWrist, "");
 
-        if (accuracyText != null) accuracyText.text = "Calibrated to your pose ✓";
+        if (accuracyText != null) accuracyText.text = "Done!";
+        if (accuracyCheckmark != null) accuracyCheckmark.SetActive(true);
         Debug.Log("[MediaPipePoseTracker] Calibrated OPEN target from current live pose.", this);
         return true;
     }
@@ -429,7 +432,7 @@ public class MediaPipePoseTracker : MonoBehaviour
         {
             Debug.LogWarning("[MediaPipePoseTracker] CalibrateMidFromCurrentPose: no joints currently tracked -- " +
                 "make sure you're visible in the camera first.", this);
-            if (accuracyText != null) accuracyText.text = "Calibration failed - get in frame first";
+            if (accuracyText != null) accuracyText.text = "Failed! Get into frame!";
             return false;
         }
 
@@ -448,7 +451,8 @@ public class MediaPipePoseTracker : MonoBehaviour
             _fixedPosMidLeftElbow, _seenLElbow, _fixedPosMidRightElbow, _seenRElbow,
             _fixedPosMidLeftWrist, _seenLWrist, _fixedPosMidRightWrist, _seenRWrist, "Mid");
 
-        if (accuracyText != null) accuracyText.text = "Calibrated mid pose ✓";
+        if (accuracyText != null) accuracyText.text = "Done!";
+        if (accuracyCheckmark != null) accuracyCheckmark.SetActive(true);
         Debug.Log("[MediaPipePoseTracker] Calibrated MID target from current live pose.", this);
         return true;
     }
@@ -485,13 +489,22 @@ public class MediaPipePoseTracker : MonoBehaviour
 
     private IEnumerator CalibrateCountdownRoutine(System.Func<bool> onComplete)
     {
+        if (accuracyCheckmark != null) accuracyCheckmark.SetActive(false); // clear any leftover checkmark from a prior calibration before this one runs
+
         for (int i = 3; i > 0; i--)
         {
             if (accuracyText != null) accuracyText.text = i.ToString();
             yield return new WaitForSeconds(calibrateCountdownStepSeconds);
         }
 
-        onComplete(); // sets accuracyText to "Calibrated..." or a failure message on its own
+        onComplete(); // sets accuracyText + shows accuracyCheckmark on success, or a failure message on its own
+
+        // "Done!"/failure text is transient feedback, not a persistent state --
+        // revert back to the normal accuracy readout on its own instead of
+        // sitting there until something else happens to overwrite it.
+        yield return new WaitForSeconds(2f);
+        if (accuracyCheckmark != null) accuracyCheckmark.SetActive(false);
+        if (accuracyText != null) accuracyText.text = "Accuracy: " + Mathf.RoundToInt(accuracy) + "%";
 
         _calibrateCountdownCoroutine = null;
     }
