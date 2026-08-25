@@ -86,10 +86,11 @@ public class MediaPipePoseTracker : MonoBehaviour
     private bool _hasTarget;
 
     // Second target for poses with a genuine held second state (e.g. Open Arms
-    // <-> Closed Arms). Scoring picks whichever of _target/_targetMid the
-    // player is currently closer to as a WHOLE pose (see ChooseActiveTarget),
-    // not per-joint -- see design discussion: mixing pieces of two different
-    // states could "pass" a pose that doesn't actually match either one.
+    // <-> Closed Arms). Which of _target/_targetMid scoring uses is decided by
+    // the exercise phase, not by the player's proximity to either -- see
+    // SetMidBlend / ResolveActiveTarget. Blending is whole-pose, never per-joint:
+    // mixing pieces of two different states could "pass" a pose that doesn't
+    // actually match either one.
     private YogaJointAngles.JointAngles _targetMid;
     private bool _hasMidTarget;
 
@@ -129,14 +130,35 @@ public class MediaPipePoseTracker : MonoBehaviour
     // live position fields above) once at Calibrate/Calibrate Mid time, then
     // static until recalibrated. Two independent sets since a pose can have two
     // calibrated states; which one is shown each frame follows the same
-    // open/mid decision scoring already makes (_activeIsMid, set in
-    // ChooseActiveTarget). Per-joint has-flags: a pose might have its open
+    // open/mid state scoring is using (_activeIsMid, derived from the
+    // phase-driven _midBlend). Per-joint has-flags: a pose might have its open
     // elbow calibrated but never its wrist, if the wrist wasn't tracked at the
     // moment Calibrate was pressed.
     private Vector2 _fixedPosOpenLeftElbow, _fixedPosOpenRightElbow, _fixedPosOpenLeftWrist, _fixedPosOpenRightWrist;
     private Vector2 _fixedPosMidLeftElbow, _fixedPosMidRightElbow, _fixedPosMidLeftWrist, _fixedPosMidRightWrist;
     private bool _hasFixedOpenLeftElbow, _hasFixedOpenRightElbow, _hasFixedOpenLeftWrist, _hasFixedOpenRightWrist;
     private bool _hasFixedMidLeftElbow, _hasFixedMidRightElbow, _hasFixedMidLeftWrist, _hasFixedMidRightWrist;
+
+    // Which held state scoring currently evaluates against, as a 0..1 blend
+    // (0 = open target, 1 = mid target). Driven ONLY by the exercise phase --
+    // YogaManager.PoseLoopRoutine calls SetMidBlend() as it moves the instructor
+    // between states. It is deliberately NOT derived from how close the player
+    // happens to be to either target: the exercise is a prescribed sequence
+    // (open -> mid -> open), so the thing being graded is whether the player is
+    // in the state the routine is currently asking for. Picking whichever target
+    // the player was already nearest to made the grade flip mid-transition and
+    // let a player who never moved score well against whichever state they
+    // happened to be standing in.
+    private float _midBlend;
+    private float _midBlendFrom;
+    private float _midBlendTo;
+    private float _midBlendDuration;
+    private float _midBlendElapsed;
+
+    // Derived from _midBlend, not decided independently. UpdateTargetCircles
+    // reads this to pick which set of fixed calibrated rings to draw; there is
+    // only one ring set per state, so it snaps at the halfway point rather than
+    // trying to interpolate two different saved screen positions.
     private bool _activeIsMid;
 
     private void OnEnable()
@@ -204,7 +226,7 @@ public class MediaPipePoseTracker : MonoBehaviour
         // UpdateTargetCircles reads _activeIsMid directly, so a stale 'true' left
         // over from a two-state pose makes a single-state pose look at the (now
         // cleared) _hasFixedMid* flags and never draw its target rings at all.
-        _activeIsMid = false;
+        ResetPosePhase();
 
         _target = LoadTarget("", pose.targetLeftElbowAngle, pose.targetRightElbowAngle,
             pose.targetLeftShoulderAngle, pose.targetRightShoulderAngle, pose.targetTorsoLean);
@@ -553,6 +575,9 @@ public class MediaPipePoseTracker : MonoBehaviour
         _sampleTimer = 0f;
         _hasSmoothedJoints = false;
         _hasSmLeftElbowLive = _hasSmRightElbowLive = _hasSmLeftWristLive = _hasSmRightWristLive = false;
+
+        // Every session opens in the open state; PoseLoopRoutine drives it from here.
+        ResetPosePhase();
     }
 
     public void StopTracking()
@@ -563,6 +588,10 @@ public class MediaPipePoseTracker : MonoBehaviour
 
     private void Update()
     {
+        // Before TryProcessResult, so this frame's score is graded against this
+        // frame's blend rather than the previous frame's.
+        AdvanceMidBlend();
+
         if (_hasPendingResult)
         {
             var result = _pendingResult;
@@ -573,7 +602,8 @@ public class MediaPipePoseTracker : MonoBehaviour
         if (Time.unscaledTime - _diagLastLogTime > 1f)
         {
             _diagLastLogTime = Time.unscaledTime;
-            Debug.Log($"[MediaPipePoseTracker DIAG] resultsReceived={_diagResultsReceived} tracking={tracking} " +
+            Debug.Log($"[MediaPipePoseTracker DIAG] midBlend={_midBlend:F2} ({(_activeIsMid ? "MID" : "OPEN")}) " +
+                $"resultsReceived={_diagResultsReceived} tracking={tracking} " +
                 $"hasTarget={_hasTarget} lastFrame={_diagLastFailReason} rawAccuracy={_rawAccuracy:F0} accuracy={accuracy:F0}");
         }
 
@@ -665,10 +695,11 @@ public class MediaPipePoseTracker : MonoBehaviour
         // _seen* gate below excludes them.
         var current = SmoothJoints(YogaJointAngles.Compute(lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip));
 
-        // Poses with a genuine second held state (Open Arms <-> Closed Arms,
-        // etc.) get scored against whichever of _target/_targetMid the player's
-        // WHOLE current pose is closer to, not per-joint (see ChooseActiveTarget).
-        var activeTarget = ChooseActiveTarget(current);
+        // Poses with a genuine second held state (Open Arms <-> Closed Arms, etc.)
+        // are scored against the state the EXERCISE PHASE is currently asking for
+        // (see SetMidBlend / ResolveActiveTarget), not against whichever target the
+        // player happens to be nearest.
+        var activeTarget = ResolveActiveTarget();
 
         if (_seenLShoulder && _seenLElbow && _seenLWrist) { _scoreLeftElbow = Score(current.leftElbow, activeTarget.leftElbow, elbowTolerance); _hasLeftElbow = true; }
         if (_seenRShoulder && _seenRElbow && _seenRWrist) { _scoreRightElbow = Score(current.rightElbow, activeTarget.rightElbow, elbowTolerance); _hasRightElbow = true; }
@@ -705,67 +736,76 @@ public class MediaPipePoseTracker : MonoBehaviour
         UpdateLivePositions(result);
     }
 
-    // Decides which of _target (open) / _targetMid (second state) the player's
-    // current WHOLE pose is closer to, so scoring/circles use ONE coherent
-    // target rather than mixing joints from two different held positions (e.g.
-    // an elbow that happens to match "closed" while the shoulder matches
-    // "open" -- neither of which is the pose actually being performed).
-    // Distance is normalized per-joint by that joint's own tolerance so no
-    // single joint's scale dominates the comparison. Only compares joints that
-    // are currently trackable (same _seenX gates used for scoring); a pose with
-    // no second state, or nothing trackable yet, always uses the open target.
-    private YogaJointAngles.JointAngles ChooseActiveTarget(YogaJointAngles.JointAngles current)
+    /// <summary>
+    /// Drive which held state scoring evaluates against, from the exercise phase.
+    /// Called by YogaManager.PoseLoopRoutine: 0 at the start of the open hold,
+    /// 1 at the start of the mid hold, with the travel time passed as
+    /// <paramref name="transitionSeconds"/> so the graded target sweeps across
+    /// in step with the instructor instead of snapping. Pass 0 seconds to set it
+    /// immediately.
+    /// </summary>
+    public void SetMidBlend(float target01, float transitionSeconds)
     {
-        // Every exit from this method must leave _activeIsMid consistent with the
-        // target it returns -- UpdateTargetCircles reads the flag, not the return
-        // value, so an early return that skips it silently shows the wrong (or no)
-        // target ring set.
-        if (!_hasMidTarget) { _activeIsMid = false; return _target; }
+        _midBlendFrom = _midBlend;
+        _midBlendTo = Mathf.Clamp01(target01);
+        _midBlendDuration = Mathf.Max(0f, transitionSeconds);
+        _midBlendElapsed = 0f;
 
-        float distOpen = 0f, distMid = 0f;
-        bool any = false;
-
-        if (_seenLShoulder && _seenLElbow && _seenLWrist)
+        if (_midBlendDuration <= 0f)
         {
-            distOpen += SqNorm(current.leftElbow, _target.leftElbow, elbowTolerance);
-            distMid += SqNorm(current.leftElbow, _targetMid.leftElbow, elbowTolerance);
-            any = true;
+            _midBlend = _midBlendTo;
+            _activeIsMid = _midBlend >= 0.5f;
         }
-        if (_seenRShoulder && _seenRElbow && _seenRWrist)
-        {
-            distOpen += SqNorm(current.rightElbow, _target.rightElbow, elbowTolerance);
-            distMid += SqNorm(current.rightElbow, _targetMid.rightElbow, elbowTolerance);
-            any = true;
-        }
-        if (_seenLHip && _seenRHip && _seenLShoulder && _seenLElbow)
-        {
-            distOpen += SqNorm(current.leftShoulder, _target.leftShoulder, shoulderTolerance);
-            distMid += SqNorm(current.leftShoulder, _targetMid.leftShoulder, shoulderTolerance);
-            any = true;
-        }
-        if (_seenLHip && _seenRHip && _seenRShoulder && _seenRElbow)
-        {
-            distOpen += SqNorm(current.rightShoulder, _target.rightShoulder, shoulderTolerance);
-            distMid += SqNorm(current.rightShoulder, _targetMid.rightShoulder, shoulderTolerance);
-            any = true;
-        }
-        if (_seenLHip && _seenRHip && _seenLShoulder && _seenRShoulder)
-        {
-            distOpen += SqNorm(current.torsoLean, _target.torsoLean, torsoLeanTolerance);
-            distMid += SqNorm(current.torsoLean, _targetMid.torsoLean, torsoLeanTolerance);
-            any = true;
-        }
-
-        if (!any) { _activeIsMid = false; return _target; } // nothing trackable yet -- avoid a meaningless comparison, and fall back to the open state rather than holding a stale mid decision
-
-        _activeIsMid = distMid < distOpen;
-        return _activeIsMid ? _targetMid : _target;
     }
 
-    private static float SqNorm(float value, float target, float tolerance)
+    /// <summary>Snap back to the open state with no travel. Used whenever a pose is (re)selected or a session starts, so a half-finished sweep from a previous run never leaks in.</summary>
+    public void ResetPosePhase()
     {
-        float n = (value - target) / Mathf.Max(1f, tolerance);
-        return n * n;
+        _midBlend = 0f;
+        _midBlendFrom = 0f;
+        _midBlendTo = 0f;
+        _midBlendDuration = 0f;
+        _midBlendElapsed = 0f;
+        _activeIsMid = false;
+    }
+
+    // Advances an in-flight sweep. Kept in Update() rather than a coroutine so it
+    // cannot outlive a disable/scene change or double-run if a phase is set twice.
+    private void AdvanceMidBlend()
+    {
+        if (_midBlendDuration <= 0f || _midBlend == _midBlendTo) return;
+
+        _midBlendElapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(_midBlendElapsed / _midBlendDuration);
+        _midBlend = Mathf.Lerp(_midBlendFrom, _midBlendTo, Mathf.SmoothStep(0f, 1f, t));
+
+        if (t >= 1f)
+        {
+            _midBlend = _midBlendTo;
+            _midBlendDuration = 0f;
+        }
+
+        _activeIsMid = _midBlend >= 0.5f;
+    }
+
+    // The target scoring actually grades against this frame. A pose with no
+    // gradable second state is always its open target; otherwise the two targets
+    // are interpolated by the phase-driven blend, so a player mid-transition is
+    // graded against where the routine expects them to be right now rather than
+    // against whichever endpoint they happen to be nearer.
+    private YogaJointAngles.JointAngles ResolveActiveTarget()
+    {
+        if (!_hasMidTarget || _midBlend <= 0f) return _target;
+        if (_midBlend >= 1f) return _targetMid;
+
+        return new YogaJointAngles.JointAngles
+        {
+            leftElbow = Mathf.Lerp(_target.leftElbow, _targetMid.leftElbow, _midBlend),
+            rightElbow = Mathf.Lerp(_target.rightElbow, _targetMid.rightElbow, _midBlend),
+            leftShoulder = Mathf.Lerp(_target.leftShoulder, _targetMid.leftShoulder, _midBlend),
+            rightShoulder = Mathf.Lerp(_target.rightShoulder, _targetMid.rightShoulder, _midBlend),
+            torsoLean = Mathf.Lerp(_target.torsoLean, _targetMid.torsoLean, _midBlend)
+        };
     }
 
     // Exponential-moving-average toward each new reading, at a rate independent
@@ -868,8 +908,8 @@ public class MediaPipePoseTracker : MonoBehaviour
         bool show = tracking && _hasLivePose && targetSpace != null;
 
         // The hollow red circles now show the FIXED calibrated position (static,
-        // from whichever state -- open/mid -- is currently active, see
-        // ChooseActiveTarget), not a live rotation-math estimate. A joint only
+        // from whichever state -- open/mid -- the exercise phase currently asks
+        // for, see SetMidBlend), not a live rotation-math estimate. A joint only
         // shows once it actually has a saved calibration for that state; there
         // is no more "moving target" fallback for an uncalibrated pose.
         Vector2 fixedLeftElbow = _activeIsMid ? _fixedPosMidLeftElbow : _fixedPosOpenLeftElbow;

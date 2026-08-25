@@ -375,16 +375,25 @@ public class YogaManager : MonoBehaviour
 
         // The pose clips loop, so holding longer than the clip just keeps them
         // breathing rather than freezing on the last frame.
+        // This loop is the single source of truth for which state the exercise is
+        // asking for, so it also drives what the tracker grades against. The
+        // tracker used to decide that itself by picking whichever target the
+        // player was nearest, which flipped unpredictably mid-transition and
+        // rewarded standing still in either end state. Travel times are handed
+        // over so the graded target sweeps in step with the instructor.
         for (int cycle = 0; cycle < Cycles; cycle++)
         {
+            if (yogaTracker != null) yogaTracker.SetMidBlend(0f, 0f);
             yield return new WaitForSeconds(OpenHold);
 
+            if (yogaTracker != null) yogaTracker.SetMidBlend(1f, ToClosed);
             if (midTransition != null)
                 yield return StartCoroutine(PlayForward(midTransition, ToClosed));
 
             instructorAnimator.CrossFadeInFixedTime(selectedPose.MidPoseAnimation.name, Blend);
             yield return new WaitForSeconds(ClosedHold);
 
+            if (yogaTracker != null) yogaTracker.SetMidBlend(0f, ToOpen);
             // Same clip in reverse instead of a separately authored return clip.
             if (midTransition != null)
                 yield return StartCoroutine(
