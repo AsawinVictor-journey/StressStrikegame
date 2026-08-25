@@ -14297,7 +14297,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1531701787
 RectTransform:
   m_ObjectHideFlags: 0
@@ -19273,7 +19273,7 @@ MonoBehaviour:
   answerIdleColor: {r: 1, g: 1, b: 1, a: 1}
   answerSelectedColor: {r: 1, g: 0.35, b: 0.37, a: 1}
   useAiCoachMessage: 1
-  ollamaModel: gemma3:4b
+  geminiModel: gemini-2.5-flash-lite
 --- !u!4 &2053801835
 Transform:
   m_ObjectHideFlags: 0
