@@ -200,10 +200,21 @@ public class MediaPipePoseTracker : MonoBehaviour
 
         _currentPoseKey = pose.name;
 
+        // A pose switch must not inherit the previous pose's open/mid decision --
+        // UpdateTargetCircles reads _activeIsMid directly, so a stale 'true' left
+        // over from a two-state pose makes a single-state pose look at the (now
+        // cleared) _hasFixedMid* flags and never draw its target rings at all.
+        _activeIsMid = false;
+
         _target = LoadTarget("", pose.targetLeftElbowAngle, pose.targetRightElbowAngle,
             pose.targetLeftShoulderAngle, pose.targetRightShoulderAngle, pose.targetTorsoLean);
 
-        _hasMidTarget = pose.hasMediaPipeMidTarget;
+        // NOT pose.hasMediaPipeMidTarget on its own: the baker fills the Mid angles
+        // in for ANY pose that merely has a MidPoseAnimation, including ones whose
+        // mid clip is only a transition/rest position. Grading against a rest clip
+        // hands the player a ~100% score for standing in it. YogaPose.gradeMidPose
+        // is the author's explicit opt-in that the second state is a real held pose.
+        _hasMidTarget = pose.HasGradableMidPose;
         if (_hasMidTarget)
         {
             _targetMid = LoadTarget("Mid", pose.targetLeftElbowAngleMid, pose.targetRightElbowAngleMid,
@@ -378,6 +389,19 @@ public class MediaPipePoseTracker : MonoBehaviour
     /// </summary>
     public bool CalibrateFromCurrentPose()
     {
+        // Without a loaded pose, _target still holds the PREVIOUS pose's angles and
+        // _currentPoseKey is null -- calibrating here would switch scoring back on
+        // (_hasTarget = true) against a hybrid of the old pose's target and the
+        // player's live angles, while SaveCalibration silently discarded the result
+        // because it has no key to save under.
+        if (!_hasTarget || string.IsNullOrEmpty(_currentPoseKey))
+        {
+            Debug.LogWarning("[MediaPipePoseTracker] CalibrateFromCurrentPose: no pose selected, or the " +
+                "selected pose has no baked MediaPipe target -- nothing to calibrate against.", this);
+            if (accuracyText != null) accuracyText.text = "Failed! No pose selected.";
+            return false;
+        }
+
         bool anyJointTracked = _hasLeftElbow || _hasRightElbow || _hasLeftShoulder || _hasRightShoulder || _hasTorsoLean;
         if (!anyJointTracked)
         {
@@ -392,7 +416,6 @@ public class MediaPipePoseTracker : MonoBehaviour
         if (_hasLeftShoulder) _target.leftShoulder = _smoothedJoints.leftShoulder;
         if (_hasRightShoulder) _target.rightShoulder = _smoothedJoints.rightShoulder;
         if (_hasTorsoLean) _target.torsoLean = _smoothedJoints.torsoLean;
-        _hasTarget = true;
         SaveCalibration(_target, "");
 
         // Fixed on-screen target dot: a snapshot of where each joint's live
@@ -424,6 +447,10 @@ public class MediaPipePoseTracker : MonoBehaviour
         if (!_hasMidTarget)
         {
             Debug.LogWarning("[MediaPipePoseTracker] CalibrateMidFromCurrentPose: this pose has no second state to calibrate.", this);
+            // Must give the same on-screen feedback as the other failure path below:
+            // this runs at the END of a 3-2-1 countdown the player just sat through,
+            // so returning silently reads as the button being broken.
+            if (accuracyText != null) accuracyText.text = "Failed! No second pose.";
             return false;
         }
 
@@ -491,10 +518,12 @@ public class MediaPipePoseTracker : MonoBehaviour
     {
         if (accuracyCheckmark != null) accuracyCheckmark.SetActive(false); // clear any leftover checkmark from a prior calibration before this one runs
 
+        // Realtime, not scaled: this countdown is UI feedback the player is waiting
+        // on, and a paused/slowed Time.timeScale would stall it indefinitely.
         for (int i = 3; i > 0; i--)
         {
             if (accuracyText != null) accuracyText.text = i.ToString();
-            yield return new WaitForSeconds(calibrateCountdownStepSeconds);
+            yield return new WaitForSecondsRealtime(calibrateCountdownStepSeconds);
         }
 
         onComplete(); // sets accuracyText + shows accuracyCheckmark on success, or a failure message on its own
@@ -502,11 +531,19 @@ public class MediaPipePoseTracker : MonoBehaviour
         // "Done!"/failure text is transient feedback, not a persistent state --
         // revert back to the normal accuracy readout on its own instead of
         // sitting there until something else happens to overwrite it.
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSecondsRealtime(2f);
         if (accuracyCheckmark != null) accuracyCheckmark.SetActive(false);
-        if (accuracyText != null) accuracyText.text = "Accuracy: " + Mathf.RoundToInt(accuracy) + "%";
 
+        // Cleared BEFORE the text write so Update() is free to drive the readout
+        // again from the very next frame (it suppresses its own write while a
+        // countdown is in flight, so that the 3-2-1 is not overwritten per-frame).
         _calibrateCountdownCoroutine = null;
+
+        // Only restore a live readout when one actually exists. Outside a tracking
+        // session 'accuracy' is not being updated at all, so writing it here would
+        // park a stale/zero "Accuracy: 0%" on the description panel.
+        if (accuracyText != null)
+            accuracyText.text = tracking ? "Accuracy: " + Mathf.RoundToInt(accuracy) + "%" : "";
     }
 
     public void StartTracking()
@@ -540,20 +577,27 @@ public class MediaPipePoseTracker : MonoBehaviour
                 $"hasTarget={_hasTarget} lastFrame={_diagLastFailReason} rawAccuracy={_rawAccuracy:F0} accuracy={accuracy:F0}");
         }
 
-        if (!tracking) return;
-
-        accuracy = Mathf.Lerp(accuracy, _rawAccuracy, Time.deltaTime * smoothSpeed);
-
-        if (accuracyText != null)
-            accuracyText.text = "Accuracy: " + Mathf.RoundToInt(accuracy) + "%";
-
-        _sampleTimer += Time.deltaTime;
-        if (_sampleTimer >= sampleInterval)
+        if (tracking)
         {
-            _sampleTimer = 0f;
-            _accuracySamples.Add(accuracy);
+            accuracy = Mathf.Lerp(accuracy, _rawAccuracy, Time.deltaTime * smoothSpeed);
+
+            // Suppressed while a calibration countdown owns the label: this write
+            // runs every frame and would otherwise stomp the 3-2-1 / "Done!" text
+            // the instant a Calibrate button is used during a live session.
+            if (accuracyText != null && _calibrateCountdownCoroutine == null)
+                accuracyText.text = "Accuracy: " + Mathf.RoundToInt(accuracy) + "%";
+
+            _sampleTimer += Time.deltaTime;
+            if (_sampleTimer >= sampleInterval)
+            {
+                _sampleTimer = 0f;
+                _accuracySamples.Add(accuracy);
+            }
         }
 
+        // Runs even when not tracking: UpdateTargetCircles is what HIDES the dots
+        // and rings (show = tracking && ...). Skipping it after StopTracking() left
+        // the last frame's markers frozen on screen over the result panel.
         UpdateTargetCircles();
     }
 
@@ -672,7 +716,11 @@ public class MediaPipePoseTracker : MonoBehaviour
     // no second state, or nothing trackable yet, always uses the open target.
     private YogaJointAngles.JointAngles ChooseActiveTarget(YogaJointAngles.JointAngles current)
     {
-        if (!_hasMidTarget) return _target;
+        // Every exit from this method must leave _activeIsMid consistent with the
+        // target it returns -- UpdateTargetCircles reads the flag, not the return
+        // value, so an early return that skips it silently shows the wrong (or no)
+        // target ring set.
+        if (!_hasMidTarget) { _activeIsMid = false; return _target; }
 
         float distOpen = 0f, distMid = 0f;
         bool any = false;
@@ -708,7 +756,7 @@ public class MediaPipePoseTracker : MonoBehaviour
             any = true;
         }
 
-        if (!any) return _target; // nothing trackable yet -- doesn't matter which, avoid a meaningless comparison
+        if (!any) { _activeIsMid = false; return _target; } // nothing trackable yet -- avoid a meaningless comparison, and fall back to the open state rather than holding a stale mid decision
 
         _activeIsMid = distMid < distOpen;
         return _activeIsMid ? _targetMid : _target;
@@ -742,11 +790,10 @@ public class MediaPipePoseTracker : MonoBehaviour
         return _smoothedJoints;
     }
 
-    // Same idea as SmoothJoints, applied to each circle's final screen position --
-    // catches residual jitter from the live 2D landmark anchors (shoulderL/elbowL/
-    // wristL etc.) that joint-angle smoothing alone doesn't reach, since those
-    // anchors feed UpdateTargetPositions() directly rather than through
-    // YogaJointAngles.Compute().
+    // Same idea as SmoothJoints, applied to each marker's final screen position --
+    // catches residual jitter from the live 2D landmark anchors (elbowL/wristL etc.)
+    // that joint-angle smoothing alone doesn't reach, since those anchors feed
+    // UpdateLivePositions() directly rather than through YogaJointAngles.Compute().
     private static Vector2 SmoothCirclePos(ref Vector2 current, Vector2 target, ref bool hasValue, float smoothSpeedDeg)
     {
         if (!hasValue)

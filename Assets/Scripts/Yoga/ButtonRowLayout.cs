@@ -42,8 +42,15 @@ public class ButtonRowLayout : MonoBehaviour
         // active state actually flipped since last check (e.g. YogaManager
         // toggling the Calibrate-Mid button per selected pose).
         int n = _rect.childCount;
-        if (_lastActive == null || _lastActive.Length != n) _lastActive = new bool[n];
+        // A changed child COUNT is itself a reason to re-lay-out: without forcing it
+        // here, a freshly sized (all-false) array compared against a row whose
+        // children are all inactive reports "no change" and the row never repacks.
         bool changed = false;
+        if (_lastActive == null || _lastActive.Length != n)
+        {
+            _lastActive = new bool[n];
+            changed = true;
+        }
         for (int i = 0; i < n; i++)
         {
             bool active = _rect.GetChild(i).gameObject.activeSelf;
@@ -66,7 +73,11 @@ public class ButtonRowLayout : MonoBehaviour
             var child = (RectTransform)_rect.GetChild(i);
             if (!child.gameObject.activeSelf) continue;
             active.Add(child);
-            totalWidth += child.sizeDelta.x;
+            // rect.width, NOT sizeDelta.x: sizeDelta is only the width for a
+            // point-anchored child. For any child with stretched anchors it is the
+            // offset from those anchors (often 0 or negative), which packs the row
+            // on top of itself. rect.width is the resolved width either way.
+            totalWidth += child.rect.width;
         }
         if (active.Count == 0) return;
         totalWidth += spacing * (active.Count - 1);
@@ -74,7 +85,7 @@ public class ButtonRowLayout : MonoBehaviour
         float x = -totalWidth * 0.5f;
         foreach (var child in active)
         {
-            float w = child.sizeDelta.x;
+            float w = child.rect.width;
             var pos = child.anchoredPosition;
             pos.x = x + w * 0.5f;
             pos.y = 0f;

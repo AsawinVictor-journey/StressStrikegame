@@ -159,18 +159,35 @@ public class YogaManager : MonoBehaviour
     public float finalSteadiness;
     public float finalCalmScore;
 
-    [Tooltip("Shown only for poses that have a MidPoseAnimation (a genuine second held state to calibrate, e.g. Open Arms <-> Closed Arms) -- hidden for poses with only one state.")]
+    [Tooltip("Shown only for poses whose second state is baked AND opted in via YogaPose.gradeMidPose " +
+             "(a genuine second held state to calibrate, e.g. Open Arms <-> Closed Arms) -- hidden for " +
+             "poses with only one state, and for poses whose mid clip is just a transition/rest pose.")]
     public GameObject calibrateMidButton;
 
     public void SelectPose(YogaPose pose)
     {
         selectedPose = pose;
-        descriptionImage.sprite = selectedPose.icon;
 
-        yogaTracker.SetTargetPose(selectedPose);
+        if (pose == null)
+        {
+            if (yogaTracker != null) yogaTracker.SetTargetPose(null);
+            if (calibrateMidButton != null) calibrateMidButton.SetActive(false);
+            return;
+        }
 
+        if (descriptionImage != null)
+            descriptionImage.sprite = pose.icon;
+
+        if (yogaTracker != null)
+            yogaTracker.SetTargetPose(pose);
+
+        // HasGradableMidPose, not 'MidPoseAnimation != null': the tracker refuses to
+        // calibrate a second state unless the pose was baked AND opted in, so gating
+        // the button on the looser condition showed it for poses (e.g. ClosedArms,
+        // which has a mid clip but was never baked) where pressing it runs the whole
+        // 3-2-1 countdown and then does nothing.
         if (calibrateMidButton != null)
-            calibrateMidButton.SetActive(pose.MidPoseAnimation != null);
+            calibrateMidButton.SetActive(pose.HasGradableMidPose);
     }
 
     public void StartPose()

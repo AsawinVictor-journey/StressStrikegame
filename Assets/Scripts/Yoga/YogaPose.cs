@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Yoga Pose", menuName = "Yoga/Pose")]
@@ -62,4 +61,21 @@ public class YogaPose : ScriptableObject
     public float targetLeftShoulderAngleMid;
     public float targetRightShoulderAngleMid;
     public float targetTorsoLeanMid;
+
+    [Tooltip("OPT-IN: tick only when MidPoseAnimation is a genuine second HELD position that the " +
+             "player is meant to be graded on (Open Arms <-> Closed Arms). Leave off when it is just " +
+             "a transition/rest clip -- the baker fills the Mid angles in for any pose that has a " +
+             "MidPoseAnimation at all, and grading against a rest clip lets the player score ~100% " +
+             "by standing in the rest position instead of performing the pose.")]
+    public bool gradeMidPose;
+
+    /// <summary>
+    /// Single source of truth for "this pose has a second state worth scoring/calibrating against".
+    /// Both MediaPipePoseTracker (scoring + Calibrate Mid) and YogaManager (Calibrate-Mid button
+    /// visibility) must agree, or the button shows for poses the tracker will refuse to calibrate.
+    /// </summary>
+    public bool HasGradableMidPose
+    {
+        get { return hasMediaPipeMidTarget && gradeMidPose && MidPoseAnimation != null; }
+    }
 }

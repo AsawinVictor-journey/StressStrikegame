@@ -173,7 +173,10 @@ public static class YogaJointAngles
             // reading bone positions again. Poses whose MidPoseAnimation is only
             // a transition/rest clip (not a second position meant to be graded)
             // still get baked here -- whether to actually USE it for scoring is
-            // a runtime/tracker decision, not a baking one.
+            // the author's explicit opt-in, YogaPose.gradeMidPose, which this
+            // baker deliberately does NOT set. MediaPipePoseTracker gates on
+            // YogaPose.HasGradableMidPose rather than on hasMediaPipeMidTarget
+            // below, precisely so a rest clip cannot become a free 100% score.
             if (hasMid)
             {
                 AnimationMode.BeginSampling();

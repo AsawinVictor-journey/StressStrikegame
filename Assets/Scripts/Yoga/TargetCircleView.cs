@@ -15,9 +15,9 @@ public class TargetCircleView : MonoBehaviour
     public Image image;
     [Tooltip("Assets/UI/Yoga/Red circle.png -- if left empty, falls back to a generated placeholder ring.")]
     public Sprite ringSprite;
-    [Tooltip("White = show the art's own colors/alpha as-is (the default, used by the live rotation-math " +
-        "'cursor' circles). Set to something else to distinguish a different-purpose ring instance -- e.g. " +
-        "the fixed calibrated-target dots use a distinct tint so they're not confused with the cursor.")]
+    [Tooltip("White = show the art's own colors/alpha as-is (the default). Set to something else to " +
+        "distinguish this ring instance from the solid live-position dot it sits next to -- both markers " +
+        "are the same size, so a tint is the only thing separating them once they overlap.")]
     public Color tint = Color.white;
 
     private RectTransform _rect;

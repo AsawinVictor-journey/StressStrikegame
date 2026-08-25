@@ -39,3 +39,4 @@ MonoBehaviour:
   targetLeftShoulderAngleMid: 93.749565
   targetRightShoulderAngleMid: 93.86182
   targetTorsoLeanMid: 2.9424436
+  gradeMidPose: 1
