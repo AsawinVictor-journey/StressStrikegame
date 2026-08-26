@@ -185,6 +185,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 350
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
@@ -644,6 +645,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 5
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.3
   fragmentPrefab: {fileID: 9222857323883427541, guid: 88f2edc15a3f106448a2ca6ddb54b171, type: 3}
@@ -1129,6 +1131,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 350
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2519620713083779645, guid: 0ec04cd535a4b3846bc3eaf5300cca62, type: 3}
@@ -7032,7 +7035,7 @@ MonoBehaviour:
   punchDetector: {fileID: 815928613}
   handTarget: {fileID: 1875450672}
   hitbox: {fileID: 1547913603}
-  hitboxDuration: 0.3
+  hitboxDuration: 0.05
   impactEffectPrefab: {fileID: 7859783844026771296, guid: 7d95abe371c9c544e8bebcc9b9594e8e, type: 3}
   impactEffectRotationOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &815928613
@@ -14670,7 +14673,7 @@ MonoBehaviour:
   punchDetector: {fileID: 1680595310}
   handTarget: {fileID: 125392733}
   hitbox: {fileID: 781497044}
-  hitboxDuration: 0.3
+  hitboxDuration: 0.05
   impactEffectPrefab: {fileID: 7859783844026771296, guid: 7d95abe371c9c544e8bebcc9b9594e8e, type: 3}
   impactEffectRotationOffset: {x: 90, y: 0, z: 0}
 --- !u!114 &1680595310
@@ -14826,6 +14829,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 5
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.3
   fragmentPrefab: {fileID: 9222857323883427541, guid: 88f2edc15a3f106448a2ca6ddb54b171, type: 3}
@@ -15168,6 +15172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 5
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.3
   fragmentPrefab: {fileID: 9222857323883427541, guid: 88f2edc15a3f106448a2ca6ddb54b171, type: 3}
@@ -15630,6 +15635,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 300
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 2287188301885227932, guid: 93291ea0345084b46ab1775a92a961cb, type: 3}
@@ -16124,6 +16130,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 350
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 1843036316886344235, guid: c7aae0a6ed14a0043be9de2c29219c4f, type: 3}
@@ -16274,6 +16281,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 1000
+  minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
   fragmentPrefab: {fileID: 8596415664769589966, guid: fe49d118871c02c4f9c02c0bb907fb60, type: 3}

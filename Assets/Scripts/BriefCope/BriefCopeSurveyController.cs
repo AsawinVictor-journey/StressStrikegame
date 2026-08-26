@@ -49,7 +49,7 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     [Header("AI Coach (Gemini, via backend)")]
     [SerializeField] private bool useAiCoachMessage = true;
-    [SerializeField] private string geminiModel = "gemini-2.5-flash-lite";
+    [SerializeField] private string geminiModel = "gemini-3.5-flash-lite";
 
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
     private int currentQuestionIndex;

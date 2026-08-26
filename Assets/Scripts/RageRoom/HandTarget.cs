@@ -403,7 +403,19 @@ public class HandTarget : MonoBehaviour
         retracting     = false;
         extendFrom     = localPos;
         extendTo       = Clamp(destination);
-        extendDuration = speed > 0.01f ? punchDistance / speed : 0f;
+        // Duration comes from the distance this punch ACTUALLY travels, not
+        // from the constant punchDistance. extendTo is anchored to a fixed
+        // depth, so a punch thrown while the hand is still partly extended
+        // covers less ground — but dividing the FULL stroke by the speed gave
+        // it the full stroke's duration regardless, stretching a short punch
+        // out over a long lerp. The fist then travelled proportionally slower
+        // than minPunchSpeed/punchSpeed claim, and every downstream speed gate
+        // (DestructibleObject.minImpactSpeed, ImpactReaction.minImpactSpeed)
+        // rejected the contact — so a rapid second punch connected visually
+        // and did nothing at all. Measuring the real distance makes those two
+        // speed fields mean what they say for every punch, not just the first.
+        float distance = Vector3.Distance(extendFrom, extendTo);
+        extendDuration = speed > 0.01f ? distance / speed : 0f;
         extendElapsed  = 0f;
         extendHeldTime = 0f;
         extending      = true;

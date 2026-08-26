@@ -6,6 +6,16 @@ public class YogaPose : ScriptableObject
     [TextArea]
     public string description;
     public Sprite icon;
+
+    [Tooltip("The description card shown while the Demo is playing -- the wider layout with the " +
+             "portrait moved to the top-right. Assigned explicitly rather than looked up by name, " +
+             "because the demo art filenames are inconsistent (PrayerDemo vs 'Open-Arms Demo' vs " +
+             "'Side-Band-Left Demo', which is itself a typo of Bend). Null = this pose has no demo.")]
+    public Sprite demoImage;
+
+    [Tooltip("Real-person clip shown inside the demo card's empty right-hand area. " +
+             "Assigned explicitly, like demoImage. Null = that pose shows the instructor only.")]
+    public UnityEngine.Video.VideoClip demoVideo;
     public AnimationClip transitionAnimation;
     public AnimationClip reverseTransitionAnimation;
     public AnimationClip poseAnimation;

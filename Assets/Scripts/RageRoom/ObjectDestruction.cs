@@ -6,6 +6,12 @@ public class DestructibleObject : MonoBehaviour
     public float Health = 5f;
 
     [Header("Damage")]
+    [Tooltip("Minimum relative impact speed (m/s) required to damage this object. " +
+             "Was hardcoded at 7, which is high enough that any punch covering " +
+             "less than roughly half its full stroke was silently ignored — the " +
+             "hit landed, the fist visibly connected, and nothing happened. Keep " +
+             "it above resting-contact noise but well under a real punch's peak.")]
+    public float minImpactSpeed = 4f;
     [Tooltip("Power curve applied to impact speed. 2 = damage scales with speed² so fast hits deal disproportionately more damage than slow ones.")]
     public float damageExponent = 2f;
     [Tooltip("Multiplier on the final damage value. Lower this when using exponent > 1 to rebalance.")]
@@ -46,7 +52,7 @@ public class DestructibleObject : MonoBehaviour
 
         float velocity = collision.relativeVelocity.magnitude;
 
-        if (velocity < 7f) return;
+        if (velocity < minImpactSpeed) return;
 
         if (Time.time - lastHitTime < hitCooldown)
             return;

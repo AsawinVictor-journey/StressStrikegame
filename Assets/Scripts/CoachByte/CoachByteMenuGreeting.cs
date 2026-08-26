@@ -11,7 +11,7 @@ public class CoachByteMenuGreeting : MonoBehaviour
     private const string PrefsKey = "BriefCope_LastResult";
 
     [SerializeField] private TMP_Text greetingText;
-    [SerializeField] private string geminiModel = "gemini-2.5-flash-lite";
+    [SerializeField] private string geminiModel = "gemini-3.5-flash-lite";
 
     private void Start()
     {

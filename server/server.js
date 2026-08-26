@@ -1,8 +1,11 @@
-// StressStrike cloud sync API.
+// StressStrike API: a Gemini proxy plus optional cloud sync.
 //
-// Sits between the Unity client and MongoDB so the connection string never ships
-// in a game build. Unity POSTs records it already stored locally; this mirrors
-// them into Atlas for long-term analytics and the statistics board.
+// Sits between the Unity client and both Google and MongoDB so neither the API
+// key nor the connection string ever ships in a game build. Unity POSTs records
+// it already stored locally; this mirrors them into Atlas for long-term
+// analytics and the statistics board.
+//
+// The two halves are independent - see the startup checks below.
 
 const express = require('express');
 const { MongoClient } = require('mongodb');
@@ -12,20 +15,33 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.DB_NAME || 'stressstrike';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// Both integrations are optional and independent, so someone who only wants the
+// Coach Byte / check-in copy working can run this with GEMINI_API_KEY alone and
+// never set up Atlas. Whatever is unconfigured reports on its own routes instead
+// of taking the entire server down at boot.
 if (!MONGODB_URI) {
-  console.error('MONGODB_URI is not set. Copy .env.example to .env and fill it in.');
-  process.exit(1);
+  console.warn('MONGODB_URI is not set - cloud sync and /api/stats will return 503. Gemini still works.');
 }
 
 if (!GEMINI_API_KEY) {
-  // Non-fatal: cloud sync and stats still work without AI recommendations.
-  console.warn('GEMINI_API_KEY is not set - /api/gemini/generate will return 500.');
+  console.warn('GEMINI_API_KEY is not set - /api/gemini/generate will return 500. Cloud sync still works.');
 }
 
 const app = express();
 app.use(express.json({ limit: '64kb' }));
 
+// Stays undefined when MONGODB_URI is absent. The Mongo-backed routes check this
+// and say so plainly, rather than throwing an opaque "cannot read properties of
+// undefined" from deep inside the driver. 503 (not 4xx) so the Unity client keeps
+// the record queued for a retry once the server is configured, instead of
+// treating it as permanently invalid and dropping it.
 let db;
+
+function requireDb(res) {
+  if (db) return true;
+  res.status(503).json({ error: 'cloud sync is not configured on this server (MONGODB_URI is not set)' });
+  return false;
+}
 
 const VALID_MODES = new Set(['Boxing', 'RageRoom', 'Meditate']);
 
@@ -55,6 +71,8 @@ function validateSurvey(b) {
 // overwrites rather than inserting a second copy.
 function upsertRoute(collectionName, idField, validate) {
   return async (req, res) => {
+    if (!requireDb(res)) return;
+
     const problem = validate(req.body);
     if (problem) return res.status(400).json({ error: problem });
 
@@ -77,7 +95,11 @@ function upsertRoute(collectionName, idField, validate) {
 app.post('/api/sessions', upsertRoute('sessions', 'sessionId', validateSession));
 app.post('/api/surveys', upsertRoute('surveys', 'surveyId', validateSurvey));
 
-app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req, res) => res.json({
+  ok: true,
+  gemini: GEMINI_API_KEY ? 'ready' : 'not configured',
+  cloudSync: db ? 'ready' : 'not configured',
+}));
 
 // Gemini proxy. The Unity client never holds GEMINI_API_KEY (a build's strings
 // can always be extracted) - it POSTs {model, prompt} here and this forwards
@@ -104,7 +126,7 @@ app.post('/api/gemini/generate', async (req, res) => {
   const problem = validateGeminiRequest(req.body);
   if (problem) return res.status(400).json({ error: problem });
 
-  const model = typeof req.body.model === 'string' && req.body.model ? req.body.model : 'gemini-2.5-flash-lite';
+  const model = typeof req.body.model === 'string' && req.body.model ? req.body.model : 'gemini-3.5-flash-lite';
   const maxOutputTokens = Math.min(Math.max(Number(req.body.maxOutputTokens) || 64, 1), 256);
   const temperature = Math.min(Math.max(Number(req.body.temperature) || 0.2, 0), 1);
 
@@ -139,6 +161,8 @@ app.post('/api/gemini/generate', async (req, res) => {
 // Statistics board. Aggregate across all players by default; pass ?playerId=... for
 // one device's own history.
 app.get('/api/stats', async (req, res) => {
+  if (!requireDb(res)) return;
+
   const match = req.query.playerId ? { playerId: String(req.query.playerId) } : {};
 
   try {
@@ -203,16 +227,18 @@ app.get('/api/stats', async (req, res) => {
 });
 
 async function start() {
-  const client = new MongoClient(MONGODB_URI);
-  await client.connect();
-  db = client.db(DB_NAME);
+  if (MONGODB_URI) {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    db = client.db(DB_NAME);
 
-  // Unique ids make the upserts genuinely idempotent even under concurrent retries;
-  // the compound indexes back the stats aggregations and per-player lookups.
-  await db.collection('sessions').createIndex({ sessionId: 1 }, { unique: true });
-  await db.collection('surveys').createIndex({ surveyId: 1 }, { unique: true });
-  await db.collection('sessions').createIndex({ playerId: 1, timestamp: -1 });
-  await db.collection('surveys').createIndex({ playerId: 1, timestamp: -1 });
+    // Unique ids make the upserts genuinely idempotent even under concurrent retries;
+    // the compound indexes back the stats aggregations and per-player lookups.
+    await db.collection('sessions').createIndex({ sessionId: 1 }, { unique: true });
+    await db.collection('surveys').createIndex({ surveyId: 1 }, { unique: true });
+    await db.collection('sessions').createIndex({ playerId: 1, timestamp: -1 });
+    await db.collection('surveys').createIndex({ playerId: 1, timestamp: -1 });
+  }
 
   app.listen(PORT, () => console.log(`StressStrike API listening on :${PORT}`));
 }

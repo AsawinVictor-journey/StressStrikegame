@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   description: Sit tall and slowly open your arms wide to the sides.
   icon: {fileID: 21300000, guid: 937fae04c88964d4380990aedf6ef715, type: 3}
+  demoImage: {fileID: 21300000, guid: 4dbbac035cb4a9941bdb9d2256f56165, type: 3}
+  demoVideo: {fileID: 32900000, guid: 19533133df1612b458e05e38b7c0a552, type: 3}
   transitionAnimation: {fileID: -6153676151713625571, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
   reverseTransitionAnimation: {fileID: 3786946549255016745, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
   poseAnimation: {fileID: -5645900116750920211, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
@@ -26,7 +28,7 @@ MonoBehaviour:
   toOpenDuration: 2.5
   blendDuration: 0.5
   midPoseCycles: 2
-  targetArmRotation: {x: 0, y: 0, z: 0}
+  targetArmRotation: {x: -0, y: 0, z: 0}
   hasMediaPipeTarget: 1
   targetLeftElbowAngle: 180
   targetRightElbowAngle: 179.83807

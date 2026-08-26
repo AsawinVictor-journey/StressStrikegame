@@ -47,10 +47,14 @@ public class PunchController : MonoBehaviour
     public Collider hitbox;
 
     [Header("Hitbox Window")]
-    [Tooltip("How long the hitbox stays live if nothing gets hit before the " +
-             "punch is called a miss and retracted anyway.")]
-    [Range(0.1f, 0.3f)]
-    public float hitboxDuration = 0.2f;
+    [Tooltip("Grace held AFTER the lunge finishes before a punch that hasn't " +
+             "connected is called a miss and retracted. The total live window " +
+             "is the lunge duration PLUS this. Keep it small: the fist is " +
+             "motionless at full extension for this entire period, so it can " +
+             "only delay the retract — and a late retract is exactly what " +
+             "leaves the next punch with no stroke left to throw.")]
+    [Range(0f, 0.2f)]
+    public float hitboxDuration = 0.05f;
 
     [Header("Impact VFX")]
     [Tooltip("Particle system spawned at the contact point every time this glove " +
@@ -129,15 +133,18 @@ public class PunchController : MonoBehaviour
         if (handTarget != null)
             handTarget.BeginPunch(strength);
 
-        // The window must outlast the lunge itself. hitboxDuration alone is
-        // authored independently of punchDistance/punchSpeed, so a slow (tap)
-        // punch can take longer to extend than the window stays open, and the
-        // hand would be told to retract while still travelling outward — the
-        // punch visibly stalls and reverses mid-swing. Taking the max of the two
-        // keeps hitboxDuration meaningful as a floor for fast punches while
-        // guaranteeing the swing always completes.
+        // The window is the lunge plus a short grace, and nothing more. Once
+        // the lerp reaches full extension the fist has STOPPED — it cannot land
+        // a new contact from a standstill, so every extra millisecond the
+        // window stays open is pure cost: the hand is pinned out front, and the
+        // next punch (legal again after PunchDetector.cooldown) starts from a
+        // position already AT extendTo and therefore travels ~0 m. Holding a
+        // flat 0.3 s here is what made rapid punches silently do nothing.
+        // Sizing the window off the lunge still guarantees the swing completes,
+        // while starting the retract early enough that the following punch has
+        // real stroke left to throw.
         float lunge  = handTarget != null ? handTarget.ExtendDuration : 0f;
-        float window = Mathf.Max(hitboxDuration, lunge + hitboxDuration * 0.5f);
+        float window = lunge + hitboxDuration;
 
         hitbox.enabled  = true;
         hitboxPending   = true;
@@ -148,6 +155,37 @@ public class PunchController : MonoBehaviour
     {
         hitboxPending = false;
         if (hitbox != null) hitbox.enabled = false;
+    }
+
+    // Unity delivers collision callbacks to the GameObject owning the
+    // RIGIDBODY, not the one owning the collider. The punch Hitbox is a child
+    // collider of this hand's Rigidbody with no Rigidbody of its own, so
+    // PunchHitbox.OnCollisionEnter sitting on it was never called — which
+    // silently killed retract-on-hit: every punch, including one that connected
+    // on its first frame, held full extension for the whole window instead of
+    // snapping back. That left the hand out front when the next punch became
+    // legal, and a punch thrown from full extension travels nowhere.
+    //
+    // This component lives on the Rigidbody's GameObject, so the message does
+    // arrive here. All that is left is to confirm the contact actually involved
+    // the hitbox and not the hand's own persistent collider.
+    //
+    // PunchHitbox is left in place and still subscribed: it is harmless (a
+    // duplicate HandleHit is a no-op once CloseWindow has cleared
+    // hitboxPending) and it remains correct for any setup where the hitbox is
+    // given its own Rigidbody.
+    void OnCollisionEnter(Collision collision)
+    {
+        if (!hitboxPending || hitbox == null) return;
+
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            if (collision.GetContact(i).thisCollider == hitbox)
+            {
+                HandleHit(collision);
+                return;
+            }
+        }
     }
 
     void HandleHit(Collision collision)

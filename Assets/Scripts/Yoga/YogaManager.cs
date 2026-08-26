@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.Video;
 using UnityEngine.SceneManagement;
 
 public class YogaManager : MonoBehaviour
@@ -159,10 +160,11 @@ public class YogaManager : MonoBehaviour
     public float finalSteadiness;
     public float finalCalmScore;
 
-    [Tooltip("Shown only for poses whose second state is baked AND opted in via YogaPose.gradeMidPose " +
-             "(a genuine second held state to calibrate, e.g. Open Arms <-> Closed Arms) -- hidden for " +
-             "poses with only one state, and for poses whose mid clip is just a transition/rest pose.")]
-    public GameObject calibrateMidButton;
+    // The Calibrate-Mid button's visibility now belongs to YogaUIFlow, which
+    // shows it only during the AwaitingMid step. It used to be toggled here from
+    // pose data alone, which meant two owners fighting over the same object once
+    // the step-based UI landed -- and "does this pose have a mid state" is a
+    // weaker condition than "we are asking for the mid capture right now".
 
     [Tooltip("Gated by calibration: hidden until the selected pose has every calibration it needs. " +
              "MUST be assigned -- StartPose() refuses to run uncalibrated either way, so leaving this " +
@@ -264,7 +266,6 @@ public class YogaManager : MonoBehaviour
         if (pose == null)
         {
             if (yogaTracker != null) yogaTracker.SetTargetPose(null);
-            if (calibrateMidButton != null) calibrateMidButton.SetActive(false);
             SetCalibrationState(CalibrationState.AwaitingOpen);
             return;
         }
@@ -275,15 +276,201 @@ public class YogaManager : MonoBehaviour
         if (yogaTracker != null)
             yogaTracker.SetTargetPose(pose);
 
-        // HasGradableMidPose, not 'MidPoseAnimation != null': the tracker refuses to
-        // calibrate a second state unless the pose was baked AND opted in, so gating
-        // the button on the looser condition showed it for poses (e.g. ClosedArms,
-        // which has a mid clip but was never baked) where pressing it runs the whole
-        // 3-2-1 countdown and then does nothing.
-        if (calibrateMidButton != null)
-            calibrateMidButton.SetActive(pose.HasGradableMidPose);
-
+        // Seeds the step, which in turn drives the whole button row through
+        // YogaUIFlow. Note this fires CalibrationStateChanged even when the state
+        // is unchanged from the previous pose, which is what re-renders the row
+        // for the newly selected pose (e.g. Prayer has no mid step, Open-Arms does).
         ResetCalibrationStateForSelectedPose();
+    }
+
+    // ---------------- DEMO ----------------
+    //
+    // Demo swaps the description card for that pose's wider demo art (portrait
+    // moved top-right) and lets the instructor perform the movement behind it,
+    // with only a Back button offered. Deliberately NOT a separate panel: the
+    // art is a drop-in replacement for the same Image, so reusing the existing
+    // description object keeps one layout to maintain instead of two that drift.
+    //
+    // Tracking is never started here -- Demo is "watch", not "do".
+
+    [Header("Demo Video")]
+    [Tooltip("RawImage sitting in the demo card's empty right-hand area. Hidden unless the pose has a demoVideo.")]
+    public RawImage demoVideoDisplay;
+    public VideoPlayer demoVideoPlayer;
+
+    public bool isDemoPlaying { get; private set; }
+
+    /// <summary>Raised when demo mode opens (true) or closes (false), so the UI can swap its button row.</summary>
+    public event System.Action<bool> DemoStateChanged;
+
+    private Coroutine demoCoroutine;
+    private Sprite _descriptionSpriteBeforeDemo;
+
+    public void ShowDemo()
+    {
+        if (selectedPose == null) return;
+        if (isDemoPlaying) return;
+
+        if (selectedPose.demoImage == null)
+        {
+            Debug.LogWarning($"[YogaManager] '{selectedPose.name}' has no Demo Image assigned -- nothing to show.", selectedPose);
+            return;
+        }
+
+        isDemoPlaying = true;
+
+        if (descriptionImage != null)
+        {
+            _descriptionSpriteBeforeDemo = descriptionImage.sprite;
+            descriptionImage.sprite = selectedPose.demoImage;
+        }
+
+        // Start is owned here, so hide it here -- YogaUIFlow handles the rest of the row.
+        if (startButton != null) startButton.SetActive(false);
+
+        StartDemoVideo();
+
+        var changed = DemoStateChanged;
+        if (changed != null) changed(true);
+
+        demoCoroutine = StartCoroutine(DemoRoutine());
+    }
+
+    /// <summary>Back button. Stops the demo and restores the normal description card and button row.</summary>
+    public void HideDemo()
+    {
+        if (!isDemoPlaying) return;
+        isDemoPlaying = false;
+
+        if (demoCoroutine != null) { StopCoroutine(demoCoroutine); demoCoroutine = null; }
+
+        StopDemoVideo();
+
+        if (descriptionImage != null && _descriptionSpriteBeforeDemo != null)
+            descriptionImage.sprite = _descriptionSpriteBeforeDemo;
+
+        // Restore Start only if the pose actually earned it; demo must not unlock it.
+        if (startButton != null) startButton.SetActive(IsStartReady);
+
+        var changed = DemoStateChanged;
+        if (changed != null) changed(false);
+    }
+
+    // Runs the instructor through the movement once. Reuses PlayForward/PlayReversed
+    // and the same per-pose timings gameplay uses, so retuning a pose retunes its
+    // demo too -- a hand-copied sequence here would drift the moment either changed.
+    // APIOnly rather than a RenderTexture asset: the clips differ in resolution
+    // (720p and 1080p so far) and a RenderTexture is fixed-size, so it would
+    // letterbox or crop whichever clips did not match whatever size we authored.
+    // APIOnly hands us the decoder's own texture at the clip's native size.
+    private void StartDemoVideo()
+    {
+        if (demoVideoPlayer == null || demoVideoDisplay == null) return;
+
+        var clip = selectedPose != null ? selectedPose.demoVideo : null;
+        if (clip == null)
+        {
+            demoVideoDisplay.gameObject.SetActive(false);
+            return;
+        }
+
+        // Activate BEFORE Prepare(). The VideoPlayer lives on this same GameObject,
+        // and Prepare() on an inactive object silently does nothing -- prepareCompleted
+        // never fires, the texture never arrives, and the RawImage sits there
+        // rendering its own solid white.
+        demoVideoDisplay.gameObject.SetActive(true);
+
+        // Transparent until the first frame exists, otherwise the card shows a
+        // white block for however long decoding takes.
+        demoVideoDisplay.texture = null;
+        demoVideoDisplay.color = Color.clear;
+
+        demoVideoPlayer.clip = clip;
+        demoVideoPlayer.isLooping = true;          // demo repeats until Back
+        demoVideoPlayer.renderMode = VideoRenderMode.APIOnly;
+        demoVideoPlayer.prepareCompleted -= OnDemoVideoPrepared;
+        demoVideoPlayer.prepareCompleted += OnDemoVideoPrepared;
+        demoVideoPlayer.errorReceived -= OnDemoVideoError;
+        demoVideoPlayer.errorReceived += OnDemoVideoError;
+        demoVideoPlayer.Prepare();
+    }
+
+    // Without this a decode failure is indistinguishable from "still loading" --
+    // both just leave the card blank.
+    private void OnDemoVideoError(VideoPlayer vp, string message)
+    {
+        Debug.LogError($"[YogaManager] Demo video failed for '{(selectedPose == null ? "?" : selectedPose.name)}': {message}", this);
+        if (demoVideoDisplay != null) demoVideoDisplay.gameObject.SetActive(false);
+    }
+
+    // The decoder texture only exists once prepared -- assigning before this
+    // point leaves the RawImage showing nothing.
+    private void OnDemoVideoPrepared(VideoPlayer vp)
+    {
+        if (demoVideoDisplay != null)
+        {
+            demoVideoDisplay.texture = vp.texture;
+            demoVideoDisplay.color = Color.white;   // reveal now that there is a frame
+        }
+        vp.Play();
+    }
+
+    private void StopDemoVideo()
+    {
+        if (demoVideoPlayer != null)
+        {
+            demoVideoPlayer.prepareCompleted -= OnDemoVideoPrepared;
+            demoVideoPlayer.errorReceived -= OnDemoVideoError;
+            demoVideoPlayer.Stop();
+        }
+        if (demoVideoDisplay != null)
+        {
+            demoVideoDisplay.texture = null;
+            demoVideoDisplay.gameObject.SetActive(false);
+        }
+    }
+
+    IEnumerator DemoRoutine()
+    {
+        if (instructorAnimator == null || selectedPose == null) yield break;
+
+        // A real-person clip is the demo when one exists; running the instructor
+        // underneath as well would show two different demonstrations at once.
+        if (selectedPose.demoVideo != null) yield break;
+
+        if (selectedPose.transitionAnimation != null)
+        {
+            instructorAnimator.Play(selectedPose.transitionAnimation.name);
+            yield return new WaitForSeconds(selectedPose.transitionAnimation.length);
+        }
+
+        if (selectedPose.poseAnimation != null)
+            instructorAnimator.CrossFade(selectedPose.poseAnimation.name, 0.3f);
+
+        // A pose with a genuine second state gets one full out-and-back so the
+        // player sees the whole movement, not just the end position.
+        if (selectedPose.MidPoseAnimation != null)
+        {
+            AnimationClip midTransition = selectedPose.reverseTransitionAnimation;
+
+            yield return new WaitForSeconds(OpenHold);
+            if (midTransition != null) yield return StartCoroutine(PlayForward(midTransition, ToClosed));
+
+            instructorAnimator.CrossFadeInFixedTime(selectedPose.MidPoseAnimation.name, Blend);
+            yield return new WaitForSeconds(ClosedHold);
+
+            if (midTransition != null)
+                yield return StartCoroutine(PlayReversed(midTransition, ToOpen, selectedPose.poseAnimation.name));
+            else
+                instructorAnimator.CrossFadeInFixedTime(selectedPose.poseAnimation.name, Blend);
+        }
+        else
+        {
+            yield return new WaitForSeconds(OpenHold);
+        }
+
+        demoCoroutine = null;
+        // Deliberately does NOT auto-close: the player decides when to leave via Back.
     }
 
     public void StartPose()
@@ -461,15 +648,47 @@ public class YogaManager : MonoBehaviour
         toOpenDuration = Mathf.Max(0.05f, toOpenDuration);
         midPoseCycles = Mathf.Max(0, midPoseCycles);
 
-        // The hold timer ends the pose no matter where the cycle has got to, so
-        // warn rather than let the last rep silently get cut off.
-        float needed = CycleDuration * midPoseCycles;
-        if (needed > holdTime)
-            Debug.LogWarning(
-                "[YogaManager] " + midPoseCycles + " cycles need " + needed.ToString("F1") +
-                "s but holdTime is " + holdTime.ToString("F1") + "s - the last rep will be cut short. " +
-                "Raise holdTime to at least " + Mathf.Ceil(needed) + " or shorten the cycle.", this);
+#if UNITY_EDITOR
+        // Deferred: Unity forbids AssetDatabase access from inside OnValidate.
+        UnityEditor.EditorApplication.delayCall += () => { if (this != null) WarnOnCycleOverrun(); };
+#endif
     }
+
+#if UNITY_EDITOR
+    /// <summary>
+    /// The hold timer ends the pose wherever the cycle has got to, so warn rather
+    /// than let the last rep silently get cut off.
+    ///
+    /// Checks EVERY pose asset, not just the defaults on this component. Each
+    /// YogaPose can override all four durations and the cycle count, so validating
+    /// only these fields missed the exact case the check exists for: SideBendLeft's
+    /// own timings need ~38s against a 30s hold and never once warned.
+    /// </summary>
+    private void WarnOnCycleOverrun()
+    {
+        foreach (string guid in UnityEditor.AssetDatabase.FindAssets("t:YogaPose"))
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            YogaPose pose = UnityEditor.AssetDatabase.LoadAssetAtPath<YogaPose>(path);
+
+            // A pose with no mid clip never cycles -- it just holds, so it cannot overrun.
+            if (pose == null || pose.MidPoseAnimation == null) continue;
+
+            float cycle = Resolve(pose.openHoldDuration, openHoldDuration)
+                        + Resolve(pose.toClosedDuration, toClosedDuration)
+                        + Resolve(pose.closedHoldDuration, closedHoldDuration)
+                        + Resolve(pose.toOpenDuration, toOpenDuration);
+            int cycles = pose.midPoseCycles > 0 ? pose.midPoseCycles : midPoseCycles;
+            float needed = cycle * cycles;
+
+            if (needed > holdTime)
+                Debug.LogWarning(
+                    $"[YogaManager] '{pose.name}': {cycles} cycles x {cycle:F1}s need {needed:F1}s " +
+                    $"but holdTime is {holdTime:F1}s - the last rep will be cut short. Raise holdTime to at " +
+                    $"least {Mathf.Ceil(needed)}, lower that pose's Mid Pose Cycles, or shorten its durations.", pose);
+        }
+    }
+#endif
 
     IEnumerator PoseLoopRoutine()
     {

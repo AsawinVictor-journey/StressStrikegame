@@ -13,7 +13,7 @@ using UnityEngine.Networking;
 // (deploy it once, point BaseUrl at it) - no local model server required.
 public static class GeminiClient
 {
-    private const string DefaultModel = "gemini-2.5-flash-lite";
+    private const string DefaultModel = "gemini-3.5-flash-lite";
     private const int DefaultTimeoutSeconds = 15;
 
     // Override via the STRESSSTRIKE_API_BASE_URL environment variable for a
