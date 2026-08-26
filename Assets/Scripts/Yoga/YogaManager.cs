@@ -178,6 +178,12 @@ public class YogaManager : MonoBehaviour
     /// </summary>
     public enum CalibrationState
     {
+        /// <summary>
+        /// Main pose screen: Demo + Next only, no setup entered yet. Saved-calibration
+        /// seeding deliberately does NOT run for this state, so the main screen looks
+        /// identical whether or not this pose was calibrated in an earlier session.
+        /// </summary>
+        Idle,
         AwaitingOpen,
         AwaitingMid,
         Complete
@@ -190,6 +196,121 @@ public class YogaManager : MonoBehaviour
 
     /// <summary>True once the selected pose has every calibration it needs. Gates the Start button.</summary>
     public bool IsStartReady { get { return calibrationState == CalibrationState.Complete; } }
+
+    /// <summary>
+    /// Whether this pose's setup includes a second (mid) capture. Read from the tracker --
+    /// the same source OnCalibrationFinished branches on -- so the instruction wording can
+    /// never promise a different number of captures than the player actually gets.
+    /// </summary>
+    public bool SelectedPoseNeedsMid
+    {
+        get { return yogaTracker != null && yogaTracker.RequiresMidCalibration; }
+    }
+
+    [Header("MediaPipe Screen")]
+    [Tooltip("'Main Canvas/Container Panel/Body/Annotatable Screen' -- the live camera feed with the " +
+             "pose skeleton drawn over it. Hidden on the pose card, shown from Set Pose onward so the " +
+             "player can see themselves while matching the pose.")]
+    public Transform mediaPipeScreen;
+
+    // LOCAL position, not world: this is the number the Inspector shows on the
+    // Annotatable Screen's Transform, so what you read there is what you paste here.
+    [Tooltip("Local position while calibrating -- small, tucked into the card's hollow right-hand area. " +
+             "Copy this straight off the Annotatable Screen's Transform in the Inspector.")]
+    public Vector3 mediaPipeCalibrateLocalPosition = new Vector3(-1088f, 1509f, 0f);
+
+    public Vector3 mediaPipeCalibrateScale = new Vector3(0.7572f, 0.7572f, 0.7572f);
+
+    [Tooltip("Local position during the exercise -- the full-size screen. Both placements are stored " +
+             "explicitly rather than captured at Awake, so saving the scene while the screen happens to " +
+             "be parked in the calibrate spot cannot silently redefine 'home'.")]
+    public Vector3 mediaPipeGameplayLocalPosition = Vector3.zero;
+
+    public Vector3 mediaPipeGameplayScale = Vector3.one;
+
+    [Tooltip("The calibrate-only copy of the webcam picture, in its own Screen-Space-OVERLAY canvas " +
+             "so it draws ABOVE the pose card. Carries the picture only, no pose skeleton -- the " +
+             "skeleton is LineRenderer-based and cannot render in an Overlay canvas.")]
+    public GameObject calibrateFeed;
+
+    [Tooltip("World position of the CalibrateFeed RawImage while calibrating. Applied every time the " +
+             "feed is shown, so a play-mode nudge cannot be lost on exiting play mode -- change it here, " +
+             "not on the RectTransform.")]
+    public Vector3 calibrateFeedPosition = new Vector3(1291f, 555f, 0f);
+
+    [Tooltip("Uniform scale of the CalibrateFeed RawImage while calibrating.")]
+    public float calibrateFeedScale = 0.7849095463752747f;
+
+    private RectTransform _calibrateFeedRect;
+
+    private void ShowCalibrateFeed(bool visible)
+    {
+        if (calibrateFeed == null) return;
+
+        calibrateFeed.SetActive(visible);
+        if (!visible) return;
+
+        // Looked up by name rather than serialised: this runs while the scene may be in
+        // play mode, where a new inspector reference could not be saved anyway.
+        if (_calibrateFeedRect == null)
+            _calibrateFeedRect = calibrateFeed.transform.Find("CalibrateFeed") as RectTransform;
+
+        if (_calibrateFeedRect == null)
+        {
+            Debug.LogWarning("[YogaManager] 'CalibrateFeed' not found under " + calibrateFeed.name
+                + " -- the feed will show at whatever placement the scene last saved.", this);
+            return;
+        }
+
+        // Re-applied on every show, so the placement is defined in one place and cannot
+        // drift from whatever the RectTransform happens to hold.
+        _calibrateFeedRect.position = calibrateFeedPosition;
+        _calibrateFeedRect.localScale = Vector3.one * calibrateFeedScale;
+    }
+
+    [Tooltip("The 'Main Canvas' Canvas component -- the whole MediaPipe UI, including 'Container Panel', " +
+             "which is an OPAQUE dark grey Image. Hiding only the Annotatable Screen leaves that grey " +
+             "block on screen, so the whole canvas is switched instead.")]
+    public Canvas mediaPipeCanvas;
+
+    // Toggles Canvas.enabled rather than deactivating GameObjects. MediaPipe assigns the
+    // webcam texture from a component ON the Annotatable Screen, so deactivating it stops
+    // the frames -- and CalibrateFeedMirror would then have nothing to copy. Disabling the
+    // Canvas stops all rendering while every script underneath keeps running.
+    private void SetMediaPipeCanvasVisible(bool visible)
+    {
+        if (mediaPipeCanvas != null) mediaPipeCanvas.enabled = visible;
+    }
+
+    private void PlaceMediaPipeScreen(Vector3 localPosition, Vector3 scale)
+    {
+        if (mediaPipeScreen != null)
+        {
+            mediaPipeScreen.localPosition = localPosition;
+            mediaPipeScreen.localScale = scale;
+            // Kept active on purpose -- see SetMediaPipeCanvasVisible.
+            if (!mediaPipeScreen.gameObject.activeSelf) mediaPipeScreen.gameObject.SetActive(true);
+        }
+        SetMediaPipeCanvasVisible(true);
+    }
+
+    private void HideMediaPipeScreen()
+    {
+        SetMediaPipeCanvasVisible(false);
+
+        // Never deactivated: the feed has to keep decoding so the calibrate mirror has a
+        // live texture, and so tracking is already warmed up by the time Start is pressed.
+        if (mediaPipeScreen != null && !mediaPipeScreen.gameObject.activeSelf)
+            mediaPipeScreen.gameObject.SetActive(true);
+    }
+
+    // Hidden from the first frame: neither the pose card nor the demo should show a
+    // live camera feed, and the scene is saved with the screen enabled for editing.
+    private void Start()
+    {
+        HideMediaPipeScreen();
+        ShowCalibrateFeed(false);
+    }
 
     private void OnEnable()
     {
@@ -211,6 +332,8 @@ public class YogaManager : MonoBehaviour
 
         if (wasMid)
         {
+            _fullCaptureRequested = false;   // sequence finished
+
             // Mid captured: done unless open somehow still isn't set (e.g. calibrated
             // out of order), in which case fall back rather than unlock Start early.
             SetCalibrationState(yogaTracker.HasSavedCalibration(false)
@@ -219,9 +342,63 @@ public class YogaManager : MonoBehaviour
         }
         else
         {
-            bool needsMid = yogaTracker.RequiresMidCalibration && !yogaTracker.HasSavedCalibration(true);
+            // Two different questions, deliberately not the same condition:
+            //
+            //  - Entering setup (Next): skip captures already saved, so a returning
+            //    player is not marched through work they did in an earlier session.
+            //  - Pressing Set Pose: the player is explicitly re-doing setup, so the
+            //    whole sequence runs -- including the mid capture even when one is
+            //    already saved. Without this, a pose whose mid was captured once can
+            //    never be re-captured, and the second countdown silently never fires.
+            bool needsMid = yogaTracker.RequiresMidCalibration
+                         && (_fullCaptureRequested || !yogaTracker.HasSavedCalibration(true));
+
+            if (!needsMid) _fullCaptureRequested = false;   // single-capture pose: done here
+
             SetCalibrationState(needsMid ? CalibrationState.AwaitingMid : CalibrationState.Complete);
+
+            // A single "Set Pose" press has to cover BOTH captures, so the mid capture
+            // is chained from here instead of waiting for a second button. Keyed off
+            // the same needsMid computed above rather than re-deriving it, so the chain
+            // can never disagree with the state we just set.
+            if (needsMid) StartMidCaptureChain();
         }
+    }
+
+    [Tooltip("Pause between the open capture's \"Done!\" and the mid capture's 3-2-1, so the checkmark is readable. Matches the tracker's own 2s feedback dwell.")]
+    public float midChainDelaySeconds = 2f;
+
+    private Coroutine _midChainCoroutine;
+
+    private void StartMidCaptureChain()
+    {
+        CancelMidCaptureChain();
+        _midChainCoroutine = StartCoroutine(MidCaptureChainRoutine());
+    }
+
+    private void CancelMidCaptureChain()
+    {
+        if (_midChainCoroutine == null) return;
+        StopCoroutine(_midChainCoroutine);
+        _midChainCoroutine = null;
+    }
+
+    // Deliberately just presses the existing Calibrate-Mid entry point after a pause.
+    // The countdown, the capture, the "Done!"/checkmark and the CalibrationFinished
+    // event are all untouched -- this removes the button press, nothing else.
+    private IEnumerator MidCaptureChainRoutine()
+    {
+        // Realtime to match the tracker's own countdown; a paused timeScale would
+        // otherwise strand the player half way through setup.
+        yield return new WaitForSecondsRealtime(midChainDelaySeconds);
+        _midChainCoroutine = null;
+
+        // Re-checked rather than trusting a 2s-old decision: the player may have
+        // opened the demo, reselected a pose, or left the panel while we waited.
+        if (yogaTracker == null || isDemoPlaying) yield break;
+        if (calibrationState != CalibrationState.AwaitingMid) yield break;
+
+        yogaTracker.CalibrateMidButtonClicked();
     }
 
     private void SetCalibrationState(CalibrationState next)
@@ -263,10 +440,18 @@ public class YogaManager : MonoBehaviour
     {
         selectedPose = pose;
 
+        // A pending mid capture, the reference clip, and the live feed all belong to
+        // the pose we are leaving.
+        CancelMidCaptureChain();
+        _fullCaptureRequested = false;
+        StopDemoVideo();
+        HideMediaPipeScreen();
+        ShowCalibrateFeed(false);
+
         if (pose == null)
         {
             if (yogaTracker != null) yogaTracker.SetTargetPose(null);
-            SetCalibrationState(CalibrationState.AwaitingOpen);
+            SetCalibrationState(CalibrationState.Idle);
             return;
         }
 
@@ -276,11 +461,105 @@ public class YogaManager : MonoBehaviour
         if (yogaTracker != null)
             yogaTracker.SetTargetPose(pose);
 
-        // Seeds the step, which in turn drives the whole button row through
-        // YogaUIFlow. Note this fires CalibrationStateChanged even when the state
-        // is unchanged from the previous pose, which is what re-renders the row
-        // for the newly selected pose (e.g. Prayer has no mid step, Open-Arms does).
+        // Lands on the main screen (Demo + Next) rather than seeding the calibration
+        // step here. The seeding moved into BeginSetup so that Next is always the way
+        // into setup -- including for a pose that is already fully calibrated, which
+        // simply passes straight through to Complete.
+        SetCalibrationState(CalibrationState.Idle);
+    }
+
+    /// <summary>
+    /// Next button on the main pose screen. Enters setup and seeds the step from what
+    /// is ALREADY saved for this pose, so a player who calibrated in an earlier session
+    /// lands directly on Complete instead of being marched through the captures again.
+    /// Reuses ResetCalibrationStateForSelectedPose rather than re-deriving
+    /// "already calibrated" a second time.
+    /// </summary>
+    public void BeginSetup()
+    {
+        if (isDemoPlaying) return;
+
+        _fullCaptureRequested = false;
+
+        // Swap to the setup card: same wide layout, but an empty text box (the copy is
+        // drawn live by YogaUIFlow) and a hollow right-hand area for the clip. A pose
+        // with no setup art yet keeps whatever card is showing, so a missing sprite
+        // degrades to "old card, correct buttons" instead of a blank panel.
+        if (descriptionImage != null && selectedPose != null && selectedPose.setupImage != null)
+            descriptionImage.sprite = selectedPose.setupImage;
+
+        // The card's hollow area shows the LIVE camera feed here, not the demo clip:
+        // calibration is about seeing yourself, so the player can check they are in
+        // frame and in position before the capture fires.
+        StopDemoVideo();
+
+        // The overlay copy, not the real screen: the real one lives in a camera-based
+        // canvas that Unity always draws BENEATH the pose card, so it could never be
+        // seen here. It stays hidden until Start, when the card is gone anyway.
+        ShowCalibrateFeed(true);
+
         ResetCalibrationStateForSelectedPose();
+    }
+
+    /// <summary>
+    /// Back while on the setup screen: returns to the main pose card (Demo + Next),
+    /// drops any pending automatic mid capture, and stops the reference clip.
+    /// Calibration already captured is NOT discarded -- it lives in PlayerPrefs, so
+    /// pressing Next again lands on whatever step is genuinely still outstanding.
+    /// </summary>
+    public void CancelSetup()
+    {
+        CancelMidCaptureChain();
+        _fullCaptureRequested = false;
+        StopDemoVideo();
+        HideMediaPipeScreen();
+        ShowCalibrateFeed(false);   // back on the pose card: no live feed there
+
+        if (descriptionImage != null && selectedPose != null && selectedPose.icon != null)
+            descriptionImage.sprite = selectedPose.icon;
+
+        SetCalibrationState(CalibrationState.Idle);
+    }
+
+    /// <summary>
+    /// The single Back button. Demo and setup both use it, so it has to know which one
+    /// it is closing. Wire the Back button's onClick to THIS rather than to HideDemo.
+    /// </summary>
+    public void BackButtonClicked()
+    {
+        if (isDemoPlaying) { HideDemo(); return; }
+        if (calibrationState != CalibrationState.Idle) CancelSetup();
+    }
+
+    /// <summary>
+    /// The single player-facing "Set Pose" button. Runs whichever capture the current
+    /// step needs, so one button covers the whole sequence -- and so a chain that was
+    /// interrupted (panel disabled, demo opened) can still be finished by hand instead
+    /// of stranding the player on a step with no way forward.
+    /// Wire the Set Pose button's onClick to THIS, not to the tracker directly.
+    /// </summary>
+    // Set by a deliberate Set Pose press on the OPEN capture, so OnCalibrationFinished
+    // knows to chain the mid capture even when a mid is already saved. Cleared once the
+    // sequence ends, so it can never leak into a later entry into setup.
+    private bool _fullCaptureRequested;
+
+    public void SetPoseButtonClicked()
+    {
+        if (yogaTracker == null || isDemoPlaying) return;
+
+        CancelMidCaptureChain(); // a manual press supersedes a pending automatic one
+
+        if (calibrationState == CalibrationState.AwaitingMid)
+        {
+            // Already mid-sequence (or recovering an interrupted chain) -- capture the
+            // mid, do not restart the whole thing.
+            yogaTracker.CalibrateMidButtonClicked();
+        }
+        else
+        {
+            _fullCaptureRequested = true;
+            yogaTracker.CalibrateButtonClicked();
+        }
     }
 
     // ---------------- DEMO ----------------
@@ -351,6 +630,11 @@ public class YogaManager : MonoBehaviour
 
         // Restore Start only if the pose actually earned it; demo must not unlock it.
         if (startButton != null) startButton.SetActive(IsStartReady);
+
+        // The mid chain refuses to fire while the demo is up, so if we were mid-setup
+        // when the demo opened, re-arm it here. Without this the player returns to a
+        // step that shows no button and waits for a capture that will never run.
+        if (calibrationState == CalibrationState.AwaitingMid) StartMidCaptureChain();
 
         var changed = DemoStateChanged;
         if (changed != null) changed(false);
@@ -488,6 +772,16 @@ public class YogaManager : MonoBehaviour
                 (calibrationState == CalibrationState.AwaitingMid ? "its mid" : "an open") + " calibration.", this);
             return;
         }
+
+        // The setup screen's reference clip has done its job. Hiding the panel alone
+        // would leave the VideoPlayer decoding behind it for the whole exercise.
+        StopDemoVideo();
+
+        // The feed stays up for the exercise, but back at full size in its own spot --
+        // leaving it in the small calibrate slot would play the whole session inside
+        // the footprint of a card that is no longer on screen.
+        ShowCalibrateFeed(false);
+        PlaceMediaPipeScreen(mediaPipeGameplayLocalPosition, mediaPipeGameplayScale);
 
         if (HeartRateYogaFlowManager.Instance != null)
         {

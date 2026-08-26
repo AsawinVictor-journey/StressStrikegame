@@ -27,7 +27,17 @@ public class YogaUIFlow : MonoBehaviour
 
     [Header("Buttons (Start is owned by YogaManager)")]
     public GameObject demoButton;
+
+    [Tooltip("Main screen only. Wire onClick to YogaManager.BeginSetup().")]
+    public GameObject nextButton;
+
+    [Tooltip("The single \"Set Pose\" button. Wire onClick to YogaManager.SetPoseButtonClicked(), " +
+             "which picks the open or mid capture from the current step.")]
     public GameObject calibrateButton;
+
+    [Tooltip("Legacy separate Calibrate-Mid button. The mid capture now chains automatically " +
+             "off the single Set Pose button, so this is never shown -- kept only so an existing " +
+             "scene reference does not break, and force-hidden on every render.")]
     public GameObject calibrateMidButton;
 
     [Tooltip("Shown ONLY during Demo, replacing the whole normal row. Returns to the pose card.")]
@@ -72,6 +82,7 @@ public class YogaUIFlow : MonoBehaviour
         if (demoActive)
         {
             Show(demoButton, false);
+            Show(nextButton, false);
             Show(calibrateButton, false);
             Show(calibrateMidButton, false);
             Show(backButton, true);
@@ -89,38 +100,59 @@ public class YogaUIFlow : MonoBehaviour
         // mid-demo must not quietly put Calibrate/Start back on top of it.
         if (yogaManager != null && yogaManager.isDemoPlaying) return;
 
-        Show(backButton, false);
+        // Never offered any more: the mid capture chains automatically off the single
+        // Set Pose button, so a separate Calibrate-Mid would be a second way to do the
+        // same thing -- and a way to restart the countdown on top of a running chain.
+        Show(calibrateMidButton, false);
 
-        bool hasMid = yogaManager != null
-                   && yogaManager.selectedPose != null
-                   && yogaManager.selectedPose.HasGradableMidPose;
+        // Back belongs to every setup step (it returns to the Demo/Next card) but not to
+        // the main screen, where there is nothing behind it to go back to.
+        Show(backButton, state != YogaManager.CalibrationState.Idle);
+
+        // Read from YogaManager, not from selectedPose.HasGradableMidPose: that flag and
+        // the tracker's RequiresMidCalibration can disagree (see YogaPose.cs), and the
+        // copy must promise exactly the number of captures the player will be given.
+        bool hasMid = yogaManager != null && yogaManager.SelectedPoseNeedsMid;
 
         switch (state)
         {
-            case YogaManager.CalibrationState.AwaitingOpen:
-                SetText(hasMid ? "Set Starting Pose" : "Set Your Pose",
-                        hasMid ? "Get into the starting position shown in the demo."
-                               : "Get into the pose shown in the demo.");
+            // Main pose screen. The pose's own description card carries its copy baked
+            // in, so the live text is cleared rather than left showing a stale step.
+            case YogaManager.CalibrationState.Idle:
+                SetText(null, null);
                 Show(demoButton, true);
-                Show(calibrateButton, true);
-                Show(calibrateMidButton, false);
-                break;
-
-            case YogaManager.CalibrationState.AwaitingMid:
-                SetText("Set Mid Pose", "Move into the middle position shown in the demo.");
-                Show(demoButton, true);
+                Show(nextButton, true);
                 Show(calibrateButton, false);
-                Show(calibrateMidButton, true);
                 break;
 
-            case YogaManager.CalibrationState.Complete:
-                SetText("You're Ready!", "Press Start to begin, or Calibrate again to redo your pose.");
-                Show(demoButton, true);
-                // Calibrate stays offered so a bad capture can be redone without
-                // reselecting the pose. Re-running it lands straight back on
-                // Complete, because the mid calibration is already saved.
+            // One button either way. Only the instruction line differs, so a pose with a
+            // mid capture warns that this first one is the STARTING pose.
+            case YogaManager.CalibrationState.AwaitingOpen:
+                SetText("Set Your Pose",
+                        hasMid ? "Get into the starting pose shown in the demo and hold still."
+                               : "Get into the pose shown in the demo and hold still.");
+                Show(demoButton, false);
+                Show(nextButton, false);
                 Show(calibrateButton, true);
-                Show(calibrateMidButton, false);
+                break;
+
+            // Same title, same text area, no new button: the mid capture is part of the
+            // same Set Pose press and is already counting down. Offering a button here
+            // would read as a second step AND could restart the running chain.
+            case YogaManager.CalibrationState.AwaitingMid:
+                SetText("Set Your Pose", "Move into the middle position and hold still.");
+                Show(demoButton, false);
+                Show(nextButton, false);
+                Show(calibrateButton, false);
+                break;
+
+            // Set Pose stays offered so a bad capture can be redone without reselecting
+            // the pose. Start itself is owned by YogaManager.SetCalibrationState.
+            case YogaManager.CalibrationState.Complete:
+                SetText("You're Ready!", null);
+                Show(demoButton, false);
+                Show(nextButton, false);
+                Show(calibrateButton, true);
                 break;
         }
     }
@@ -128,7 +160,18 @@ public class YogaUIFlow : MonoBehaviour
     private void SetText(string heading, string body)
     {
         if (instructionText == null) return;
-        instructionText.text = heading + "\n" + body;
+
+        // One TMP object renders both lines -- the smallest change that gets a title and
+        // a body, rather than adding a second text object and keeping two in sync. The
+        // heading is scaled up with rich text because the whole field is already bold,
+        // so <b> alone would not distinguish it.
+        bool hasHeading = !string.IsNullOrEmpty(heading);
+        bool hasBody = !string.IsNullOrEmpty(body);
+
+        if (!hasHeading && !hasBody) instructionText.text = string.Empty;
+        else if (!hasHeading) instructionText.text = body;
+        else if (!hasBody) instructionText.text = "<size=115%>" + heading + "</size>";
+        else instructionText.text = "<size=115%>" + heading + "</size>\n\n" + body;
     }
 
     // Only touches the object when the state actually differs -- ButtonRowLayout

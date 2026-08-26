@@ -13,6 +13,12 @@ public class YogaPose : ScriptableObject
              "'Side-Band-Left Demo', which is itself a typo of Bend). Null = this pose has no demo.")]
     public Sprite demoImage;
 
+    [Tooltip("The card shown on the Set Pose (calibration) screen -- same wide layout as demoImage, " +
+             "but with an EMPTY text box: the instruction copy is drawn live by YogaUIFlow rather " +
+             "than baked into the art, so the wording can change without a re-export. " +
+             "Null = the setup screen keeps whatever card is already showing.")]
+    public Sprite setupImage;
+
     [Tooltip("Real-person clip shown inside the demo card's empty right-hand area. " +
              "Assigned explicitly, like demoImage. Null = that pose shows the instructor only.")]
     public UnityEngine.Video.VideoClip demoVideo;

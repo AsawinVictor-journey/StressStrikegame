@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>*{margin:0;padding:0}img,svg{display:block;max-width:100%}</style>
+<title>StressStrike AI Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+
+<style>
+  /* ---- Light palette: complete definition on bare :root ---- */
+  :root {
+    --ground:      #FBF7F6;
+    --surface:     #FFFFFF;
+    --surface-alt: #F4EEEC;
+    --ink:         #1F1A1C;
+    --ink-soft:    #574E51;
+    --ink-faint:   #8B8085;
+    --rule:        #E5DBD8;
+    --rule-strong: #D2C4C0;
+
+    --accent:      #D93A41;
+    --accent-ink:  #FFFFFF;
+    --accent-wash: #FBEAEA;
+
+    --ok:          #1F7A52;
+    --ok-wash:     #E4F2EB;
+    --warn:        #9A5B0B;
+    --warn-wash:   #F8EEDD;
+    --bad:         #B3302F;
+    --bad-wash:    #F9E7E6;
+
+    --term-bg:     #211C1F;
+    --term-ink:    #EFE6E4;
+    --term-faint:  #9E8F92;
+
+    --shadow: 0 1px 2px rgba(31,26,28,.05), 0 8px 24px -12px rgba(31,26,28,.18);
+
+    --font-display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+
+  /* ---- Dark: tokens only, guarded so an explicit light choice wins ---- */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #151113;
+      --surface:     #1D181A;
+      --surface-alt: #241E21;
+      --ink:         #F2EAE9;
+      --ink-soft:    #BCADB0;
+      --ink-faint:   #8A7C80;
+      --rule:        #322A2D;
+      --rule-strong: #453A3E;
+
+      --accent:      #FF6B70;
+      --accent-ink:  #2A1113;
+      --accent-wash: #33201F;
+
+      --ok:          #5CC894;
+      --ok-wash:     #1B2B24;
+      --warn:        #E0A94D;
+      --warn-wash:   #2E2517;
+      --bad:         #FF7B72;
+      --bad-wash:    #331D1C;
+
+      --term-bg:     #0F0C0E;
+      --term-ink:    #E7DCDA;
+      --term-faint:  #877A7D;
+
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #151113;
+    --surface:     #1D181A;
+    --surface-alt: #241E21;
+    --ink:         #F2EAE9;
+    --ink-soft:    #BCADB0;
+    --ink-faint:   #8A7C80;
+    --rule:        #322A2D;
+    --rule-strong: #453A3E;
+
+    --accent:      #FF6B70;
+    --accent-ink:  #2A1113;
+    --accent-wash: #33201F;
+
+    --ok:          #5CC894;
+    --ok-wash:     #1B2B24;
+    --warn:        #E0A94D;
+    --warn-wash:   #2E2517;
+    --bad:         #FF7B72;
+    --bad-wash:    #331D1C;
+
+    --term-bg:     #0F0C0E;
+    --term-ink:    #E7DCDA;
+    --term-faint:  #877A7D;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0 1.25rem 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 50rem; margin: 0 auto; }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    padding: 3.5rem 0 2rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 6vw, 3.1rem);
+    line-height: 1.02;
+    letter-spacing: -.022em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.075rem;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 40ch;
+  }
+
+  /* ---------- status board ---------- */
+  .board {
+    margin: 2.25rem 0 0;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .board-head {
+    padding: .8rem 1.15rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-alt);
+    font-family: var(--font-mono);
+    font-size: .705rem;
+    font-weight: 600;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .board-row {
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: .5rem 1.15rem;
+    padding: .85rem 1.15rem;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .board-row:last-child { border-bottom: 0; }
+  .board-row dt {
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    color: var(--ink-faint);
+    padding-top: .12rem;
+  }
+  .board-row dd { margin: 0; font-size: .95rem; }
+  dl { margin: 0; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: .16rem .5rem;
+    border-radius: 2px;
+    margin-right: .5rem;
+    white-space: nowrap;
+  }
+  .pill.ok   { background: var(--ok-wash);   color: var(--ok); }
+  .pill.warn { background: var(--warn-wash); color: var(--warn); }
+  .pill.bad  { background: var(--bad-wash);  color: var(--bad); }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 3.5rem; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.55rem;
+    letter-spacing: -.014em;
+    margin: 0 0 .3rem;
+    text-wrap: balance;
+  }
+  .section-note {
+    color: var(--ink-soft);
+    margin: 0 0 1.6rem;
+    max-width: 62ch;
+  }
+
+  /* ---------- steps ---------- */
+  .step {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0 1.15rem;
+    padding-bottom: 2.4rem;
+    position: relative;
+  }
+  .step::before {
+    content: "";
+    position: absolute;
+    left: 1.09rem;
+    top: 2.5rem;
+    bottom: .4rem;
+    width: 2px;
+    background: var(--rule);
+  }
+  .step:last-child::before { display: none; }
+  .step-num {
+    grid-row: span 2;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: .88rem;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .step-num.done { background: var(--ok); color: var(--ok-wash); }
+  .step h3 {
+    font-family: var(--font-display);
+    font-size: 1.14rem;
+    font-weight: 700;
+    margin: .28rem 0 .55rem;
+    letter-spacing: -.008em;
+  }
+  .step-body > :first-child { margin-top: 0; }
+  .step-body > :last-child { margin-bottom: 0; }
+  .step-body p { margin: 0 0 .85rem; max-width: 62ch; }
+
+  /* ---------- terminal blocks ---------- */
+  .term {
+    background: var(--term-bg);
+    border-radius: 4px;
+    margin: 0 0 .9rem;
+    overflow: hidden;
+    border: 1px solid var(--rule-strong);
+  }
+  .term-label {
+    font-family: var(--font-mono);
+    font-size: .66rem;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--term-faint);
+    padding: .5rem .9rem .3rem;
+  }
+  .term pre {
+    margin: 0;
+    padding: 0 .9rem .8rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: .855rem;
+    line-height: 1.6;
+    color: var(--term-ink);
+  }
+  .term .prompt { color: var(--term-faint); user-select: none; }
+  .term .out { color: var(--term-faint); }
+  .term .good { color: #7BD6A5; }
+  .term .err  { color: #FF8F86; }
+
+  code:not(pre code) {
+    font-family: var(--font-mono);
+    font-size: .855em;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .09em .34em;
+    word-break: break-word;
+  }
+
+  /* ---------- callout ---------- */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-wash);
+    padding: .95rem 1.1rem;
+    border-radius: 0 3px 3px 0;
+    margin: 0 0 .9rem;
+  }
+  .callout p { margin: 0; max-width: 60ch; }
+  .callout p + p { margin-top: .6rem; }
+  .callout-title {
+    font-family: var(--font-mono);
+    font-size: .69rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: .35rem;
+  }
+
+  /* ---------- table ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; background: var(--surface); }
+  th, td { text-align: left; padding: .72rem .9rem; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: .91rem; }
+  th {
+    background: var(--surface-alt);
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+
+  /* ---------- never-do list ---------- */
+  .rules { list-style: none; padding: 0; margin: 0; display: grid; gap: .55rem; }
+  .rules li {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr;
+    gap: .7rem;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .75rem .95rem;
+  }
+  .mark { font-family: var(--font-mono); font-weight: 600; font-size: .95rem; line-height: 1.5; }
+  .mark.no  { color: var(--bad); }
+  .mark.yes { color: var(--ok); }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-faint);
+    font-size: .855rem;
+  }
+  footer p { margin: 0; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  strong { font-weight: 600; }
+
+  @media (max-width: 34rem) {
+    .board-row { grid-template-columns: 1fr; gap: .3rem; }
+    .step { grid-template-columns: 2rem 1fr; gap: 0 .8rem; }
+    .step::before { left: .87rem; }
+    .step-num { width: 1.75rem; height: 1.75rem; font-size: .78rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">StressStrike · Backend</span>
+    <h1>Getting Gemini talking</h1>
+    <p class="standfirst">How the API key reaches Google without ever shipping inside the game — and the four things that have to be true before Coach Byte writes a word.</p>
+  </header>
+
+  <div class="board">
+    <div class="board-head">Where this machine stands right now</div>
+    <dl>
+      <div class="board-row">
+        <dt>server/.env</dt>
+        <dd><span class="pill ok">exists</span>Key is pasted in and Google accepts it.</dd>
+      </div>
+      <div class="board-row">
+        <dt>Model ID</dt>
+        <dd><span class="pill ok">fixed</span>Moved off the retired <code>gemini-2.5-flash-lite</code> in all five places.</dd>
+      </div>
+      <div class="board-row">
+        <dt>MongoDB</dt>
+        <dd><span class="pill ok">optional</span>Server now starts without it. Set up later, when you want the stats board.</dd>
+      </div>
+      <div class="board-row">
+        <dt>Windows variable</dt>
+        <dd><span class="pill bad">blocking</span>A stale <code>GEMINI_API_KEY</code> saved in your user account overrides the file. Until it's removed, every call fails.</dd>
+      </div>
+    </dl>
+  </div>
+
+  <section>
+    <h2>How the key actually travels</h2>
+    <p class="section-note">This is the part worth understanding, because it explains every rule below. The game never holds the key. It only knows the address of a small server you run, and that server is the only thing that talks to Google.</p>
+
+    <div class="term">
+      <div class="term-label">the whole chain</div>
+<pre>  Unity                      your server              Google
+  GeminiClient.cs            server/.env
+  ─────────────              ─────────────            ──────
+  { model, prompt }   ───►   adds GEMINI_API_KEY ───► Gemini API
+  <span class="out">(carries no key)</span>           <span class="out">(the only place</span>
+                             <span class="out">the key exists)</span>
+        ◄───────────────  generated text  ◄──────────────
+</pre>
+    </div>
+
+    <p>A Unity build is just files. Anyone with a copy can open them in a text editor and read every string inside — which is exactly why <code>GeminiClient.cs</code> has no key field, and why you should never add one.</p>
+  </section>
+
+  <section>
+    <h2>The four steps</h2>
+    <p class="section-note">Order matters here: each step's check only means something once the one above it passes.</p>
+
+    <div class="step">
+      <div class="step-num done">1</div>
+      <div class="step-body">
+        <h3>Put the key in <code>server/.env</code></h3>
+        <p>One file, one line. It lives at <code>StressStrikegame\server\.env</code> — outside <code>Assets/</code>, so Unity ignores it completely. It's already listed in <code>.gitignore</code>, so it can't be committed by accident.</p>
+        <div class="term">
+          <div class="term-label">server/.env — line 4</div>
+<pre>GEMINI_API_KEY=<span class="good">your key here</span>
+</pre>
+        </div>
+        <p>No quotes, no spaces around the <code>=</code>. Get a key free at <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Delete the stale Windows variable</h3>
+        <p>This is the one still blocking you. A <code>GEMINI_API_KEY</code> is saved permanently in your Windows user account from an earlier experiment, and <strong>Node gives the environment priority over the file</strong> — so whatever you paste into <code>.env</code> is ignored while it exists.</p>
+        <div class="term">
+          <div class="term-label">powershell</div>
+<pre><span class="prompt">&gt; </span>[Environment]::SetEnvironmentVariable('GEMINI_API_KEY', $null, 'User')
+</pre>
+        </div>
+        <div class="callout">
+          <span class="callout-title">Then close and reopen your terminal</span>
+          <p>Environment changes never reach windows that are already open. If you skip this, nothing will appear to change and you'll assume the command failed.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Start the server</h3>
+        <p>The most common mistake is running this from the wrong folder. <code>--prefix server</code> means <em>“the folder called server, next to where I'm standing”</em> — if you're in <code>C:\Users\User</code>, there isn't one.</p>
+        <div class="term">
+          <div class="term-label">powershell — two lines, run separately</div>
+<pre><span class="prompt">&gt; </span>cd C:\Users\User\Documents\StressStrikegame\server
+<span class="prompt">&gt; </span>npm start
+</pre>
+        </div>
+        <div class="callout">
+          <span class="callout-title">Windows PowerShell has no &amp;&amp;</span>
+          <p><code>cd server &amp;&amp; npm start</code> is Bash syntax and throws a parser error here. Use two separate lines, or a semicolon: <code>cd server; npm start</code>.</p>
+        </div>
+        <p>Leave that window open while you play. Closing it doesn't break the game — the AI text just falls back to its written-in copy.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Verify — and don't trust <code>/health</code> alone</h3>
+        <p>Open <a href="http://localhost:3000/health">localhost:3000/health</a>. You want <code>gemini</code> to read <code>ready</code>:</p>
+        <div class="term">
+          <div class="term-label">localhost:3000/health</div>
+<pre>{"ok":true,<span class="good">"gemini":"ready"</span>,"cloudSync":"not configured"}
+</pre>
+        </div>
+        <p><code>cloudSync: not configured</code> is expected — that's MongoDB, which you're doing later.</p>
+        <div class="callout">
+          <span class="callout-title">This check can lie to you</span>
+          <p><code>ready</code> only means <em>a</em> key was found. It does not mean the key is valid — that's exactly how the stale variable stayed hidden. The real test is asking the server to generate something:</p>
+        </div>
+        <div class="term">
+          <div class="term-label">powershell — the honest check</div>
+<pre><span class="prompt">&gt; </span>Invoke-RestMethod -Method Post http://localhost:3000/api/gemini/generate `
+    -ContentType 'application/json' `
+    -Body '{"prompt":"Reply with exactly: HELLO"}'
+
+<span class="out">text</span>
+<span class="out">----</span>
+<span class="good">HELLO</span>
+</pre>
+        </div>
+        <p>Get <code>HELLO</code> back and the whole chain works. Press Play in <strong>MainMenuScene</strong> and Coach Byte's text will start coming from Gemini.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>When it breaks</h2>
+    <p class="section-note">Every one of these came up while setting this machine up — they're the errors you'll actually hit, not hypotheticals.</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>What you see</th><th>What it means</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>API key not valid</code></td>
+            <td>The stale Windows variable is still winning over <code>.env</code>. Step 2, then reopen the terminal.</td>
+          </tr>
+          <tr>
+            <td><code>ENOENT … \server\package.json</code></td>
+            <td>Wrong folder. You're in your home directory, not the project. Step 3.</td>
+          </tr>
+          <tr>
+            <td><code>The token '&amp;&amp;' is not a valid statement separator</code></td>
+            <td>Bash syntax in PowerShell. Use two lines or a semicolon.</td>
+          </tr>
+          <tr>
+            <td><code>no longer available to new users</code></td>
+            <td>A retired model ID. Already fixed everywhere — but if you add a new call, use <code>gemini-3.5-flash-lite</code>.</td>
+          </tr>
+          <tr>
+            <td><code>EADDRINUSE :3000</code></td>
+            <td>A server is already running. Find the old window and press <kbd>Ctrl+C</kbd>.</td>
+          </tr>
+          <tr>
+            <td>Text works, but reads generic</td>
+            <td>The server isn't running, so the game used its fallback copy. That's by design — start the server.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Rules that keep the key safe</h2>
+    <p class="section-note">The first one is the whole reason the server exists.</p>
+    <ul class="rules">
+      <li><span class="mark no">✕</span><div>Never put the key in <code>GeminiClient.cs</code>, or any file under <code>Assets/</code>. It would compile into the build and be readable by anyone who has it.</div></li>
+      <li><span class="mark no">✕</span><div>Never commit <code>.env</code>. It's gitignored — leave it that way.</div></li>
+      <li><span class="mark no">✕</span><div>Never paste the key into a chat, an issue, or a screenshot.</div></li>
+      <li><span class="mark yes">✓</span><div><code>server/.env</code> is the only place it belongs.</div></li>
+      <li><span class="mark yes">✓</span><div>Share it with teammates over a private message, and have them create their own <code>.env</code>. The same key works on every laptop — it isn't tied to a machine.</div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Later, not now</h2>
+    <p class="section-note">Two things deliberately left undone, so you're only debugging one system at a time.</p>
+    <dl class="board" style="box-shadow:none">
+      <div class="board-row">
+        <dt>Statistics board</dt>
+        <dd>Needs MongoDB Atlas. Uncomment the two lines at the bottom of <code>.env</code> and fill them in — no code changes. Until then <code>/api/stats</code> returns a clear 503 instead of crashing the server.</dd>
+      </div>
+      <div class="board-row">
+        <dt>One shared server</dt>
+        <dd>Deploy <code>server.js</code> once and point every laptop at it with <code>STRESSSTRIKE_API_BASE_URL</code>. Then the key lives in one dashboard instead of on everyone's machine — worth doing before any demo on a borrowed laptop.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <footer>
+    <p>Every command and error on this page was run and verified against this machine. Model IDs current as of August 2026.</p>
+  </footer>
+
+</div>
+</body>
+</html>

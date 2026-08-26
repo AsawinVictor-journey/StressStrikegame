@@ -15,6 +15,7 @@ MonoBehaviour:
   description: Sit tall and slowly lift your arms overhead.
   icon: {fileID: 21300000, guid: 87f05064c3a0d7d47a77d2c5fb978a40, type: 3}
   demoImage: {fileID: 21300000, guid: eda32353ad1f49c479be370d130a8ed5, type: 3}
+  setupImage: {fileID: 21300000, guid: 6761b837c1c03ca40b503710314f654f, type: 3}
   demoVideo: {fileID: 32900000, guid: 1a721083e5837e948ac489375572ded3, type: 3}
   transitionAnimation: {fileID: -8060864421712488247, guid: d8beee3fb475906459680188c79bf9f3, type: 3}
   reverseTransitionAnimation: {fileID: 0}

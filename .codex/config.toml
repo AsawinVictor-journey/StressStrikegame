@@ -10,3 +10,9 @@ approval_mode = "approve"
 
 [mcp_servers.mcp-unity.tools.execute_menu_item]
 approval_mode = "approve"
+
+[mcp_servers.ai-game-developer]
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+url = "http://localhost:23088/p/257a7328"
