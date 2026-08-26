@@ -21,11 +21,11 @@ MonoBehaviour:
   duration: 30
   difficulty: 1
   openHoldDuration: 5.27
-  closedHoldDuration: 1.81
-  toClosedDuration: 1.17
-  toOpenDuration: 1.05
-  blendDuration: 0.35
-  midPoseCycles: 3
+  closedHoldDuration: 3
+  toClosedDuration: 2.5
+  toOpenDuration: 2.5
+  blendDuration: 0.5
+  midPoseCycles: 2
   targetArmRotation: {x: 0, y: 0, z: 0}
   hasMediaPipeTarget: 1
   targetLeftElbowAngle: 180

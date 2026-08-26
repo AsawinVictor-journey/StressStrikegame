@@ -164,6 +164,99 @@ public class YogaManager : MonoBehaviour
              "poses with only one state, and for poses whose mid clip is just a transition/rest pose.")]
     public GameObject calibrateMidButton;
 
+    [Tooltip("Gated by calibration: hidden until the selected pose has every calibration it needs. " +
+             "MUST be assigned -- StartPose() refuses to run uncalibrated either way, so leaving this " +
+             "empty gives a button that stays visible but does nothing except log a warning.")]
+    public GameObject startButton;
+
+    /// <summary>
+    /// Which calibration step the selected pose is waiting on. Owned here rather
+    /// than in YogaUIFlow: the rule for what a pose *requires* (open only, or
+    /// open + mid) is flow logic. YogaUIFlow only renders whatever this says.
+    /// </summary>
+    public enum CalibrationState
+    {
+        AwaitingOpen,
+        AwaitingMid,
+        Complete
+    }
+
+    public CalibrationState calibrationState { get; private set; }
+
+    /// <summary>Raised whenever calibrationState changes, so the UI can re-render without polling.</summary>
+    public event System.Action<CalibrationState> CalibrationStateChanged;
+
+    /// <summary>True once the selected pose has every calibration it needs. Gates the Start button.</summary>
+    public bool IsStartReady { get { return calibrationState == CalibrationState.Complete; } }
+
+    private void OnEnable()
+    {
+        if (yogaTracker != null) yogaTracker.CalibrationFinished += OnCalibrationFinished;
+    }
+
+    private void OnDisable()
+    {
+        if (yogaTracker != null) yogaTracker.CalibrationFinished -= OnCalibrationFinished;
+    }
+
+    // Advances only on a SUCCESSFUL capture, and only once the countdown has
+    // actually finished. CalibrateButtonClicked returns the instant its coroutine
+    // starts, so advancing on the button click itself would move on ~3s early and
+    // would also step past a failed ("get into frame") capture as if it had worked.
+    private void OnCalibrationFinished(bool wasMid, bool succeeded)
+    {
+        if (!succeeded) return;
+
+        if (wasMid)
+        {
+            // Mid captured: done unless open somehow still isn't set (e.g. calibrated
+            // out of order), in which case fall back rather than unlock Start early.
+            SetCalibrationState(yogaTracker.HasSavedCalibration(false)
+                ? CalibrationState.Complete
+                : CalibrationState.AwaitingOpen);
+        }
+        else
+        {
+            bool needsMid = yogaTracker.RequiresMidCalibration && !yogaTracker.HasSavedCalibration(true);
+            SetCalibrationState(needsMid ? CalibrationState.AwaitingMid : CalibrationState.Complete);
+        }
+    }
+
+    private void SetCalibrationState(CalibrationState next)
+    {
+        calibrationState = next;
+
+        if (startButton != null)
+            startButton.SetActive(IsStartReady);
+
+        var changed = CalibrationStateChanged;
+        if (changed != null) changed(next);
+    }
+
+    // Seeds the step from what is ALREADY saved for this pose. Calibrations live in
+    // PlayerPrefs and outlive the session, so a returning player who calibrated
+    // yesterday must not be marched through the whole sequence again -- by this
+    // point SetTargetPose has already restored those saved values into the targets.
+    private void ResetCalibrationStateForSelectedPose()
+    {
+        if (yogaTracker == null || selectedPose == null)
+        {
+            SetCalibrationState(CalibrationState.AwaitingOpen);
+            return;
+        }
+
+        bool hasOpen = yogaTracker.HasSavedCalibration(false);
+        bool needsMid = yogaTracker.RequiresMidCalibration;
+        bool hasMid = needsMid && yogaTracker.HasSavedCalibration(true);
+
+        if (!hasOpen)
+            SetCalibrationState(CalibrationState.AwaitingOpen);
+        else if (needsMid && !hasMid)
+            SetCalibrationState(CalibrationState.AwaitingMid);
+        else
+            SetCalibrationState(CalibrationState.Complete);
+    }
+
     public void SelectPose(YogaPose pose)
     {
         selectedPose = pose;
@@ -172,6 +265,7 @@ public class YogaManager : MonoBehaviour
         {
             if (yogaTracker != null) yogaTracker.SetTargetPose(null);
             if (calibrateMidButton != null) calibrateMidButton.SetActive(false);
+            SetCalibrationState(CalibrationState.AwaitingOpen);
             return;
         }
 
@@ -188,12 +282,25 @@ public class YogaManager : MonoBehaviour
         // 3-2-1 countdown and then does nothing.
         if (calibrateMidButton != null)
             calibrateMidButton.SetActive(pose.HasGradableMidPose);
+
+        ResetCalibrationStateForSelectedPose();
     }
 
     public void StartPose()
     {
         if(selectedPose == null)
             return;
+
+        // Belt-and-braces alongside hiding the button: a pose started before its
+        // targets exist would grade every frame against the baked instructor rig
+        // (or, for an unbaked pose, against nothing at all) and hand back a
+        // meaningless score.
+        if (!IsStartReady)
+        {
+            Debug.LogWarning("[YogaManager] Start blocked: '" + selectedPose.name + "' still needs " +
+                (calibrationState == CalibrationState.AwaitingMid ? "its mid" : "an open") + " calibration.", this);
+            return;
+        }
 
         if (HeartRateYogaFlowManager.Instance != null)
         {

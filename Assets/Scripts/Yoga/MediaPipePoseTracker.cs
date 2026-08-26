@@ -319,6 +319,24 @@ public class MediaPipePoseTracker : MonoBehaviour
         return t;
     }
 
+    /// <summary>
+    /// Whether the CURRENTLY selected pose already has a player calibration saved
+    /// for that state. Calibrations live in PlayerPrefs and outlive the session,
+    /// so a flow that sequences calibration steps has to seed itself from this --
+    /// otherwise a player who calibrated yesterday is marched through the whole
+    /// sequence again even though LoadTarget has already restored their values.
+    /// False whenever no pose is selected, or the pose failed to load a target.
+    /// </summary>
+    public bool HasSavedCalibration(bool mid)
+    {
+        if (string.IsNullOrEmpty(_currentPoseKey)) return false;
+        if (mid && !_hasMidTarget) return false;
+        return PlayerPrefs.GetInt(CalibrationPrefPrefix + _currentPoseKey + "_Has" + (mid ? "Mid" : ""), 0) == 1;
+    }
+
+    /// <summary>True when this pose has a second held state that needs its own calibration (see YogaPose.HasGradableMidPose).</summary>
+    public bool RequiresMidCalibration { get { return _hasMidTarget; } }
+
     private void SaveCalibration(YogaJointAngles.JointAngles values, string suffix)
     {
         if (string.IsNullOrEmpty(_currentPoseKey)) return;
@@ -521,22 +539,31 @@ public class MediaPipePoseTracker : MonoBehaviour
     /// </summary>
     public void CalibrateButtonClicked()
     {
-        StartCalibrationCountdown(CalibrateFromCurrentPose);
+        StartCalibrationCountdown(CalibrateFromCurrentPose, false);
     }
 
     /// <summary>UnityEvent-friendly wrapper for the Calibrate Mid button -- same countdown, captures the second state instead.</summary>
     public void CalibrateMidButtonClicked()
     {
-        StartCalibrationCountdown(CalibrateMidFromCurrentPose);
+        StartCalibrationCountdown(CalibrateMidFromCurrentPose, true);
     }
 
-    private void StartCalibrationCountdown(System.Func<bool> onComplete)
+    /// <summary>
+    /// Raised once a calibration attempt has actually finished: (wasMid, succeeded).
+    /// The Calibrate*ButtonClicked methods start a 3-2-1 countdown coroutine and
+    /// return immediately, so a caller that advances its own state on the call
+    /// itself would advance ~3s early AND on a failed capture ("no joints
+    /// tracked"). Anything sequencing calibration steps must key off this instead.
+    /// </summary>
+    public event System.Action<bool, bool> CalibrationFinished;
+
+    private void StartCalibrationCountdown(System.Func<bool> onComplete, bool isMid)
     {
         if (_calibrateCountdownCoroutine != null) StopCoroutine(_calibrateCountdownCoroutine);
-        _calibrateCountdownCoroutine = StartCoroutine(CalibrateCountdownRoutine(onComplete));
+        _calibrateCountdownCoroutine = StartCoroutine(CalibrateCountdownRoutine(onComplete, isMid));
     }
 
-    private IEnumerator CalibrateCountdownRoutine(System.Func<bool> onComplete)
+    private IEnumerator CalibrateCountdownRoutine(System.Func<bool> onComplete, bool isMid)
     {
         if (accuracyCheckmark != null) accuracyCheckmark.SetActive(false); // clear any leftover checkmark from a prior calibration before this one runs
 
@@ -548,7 +575,13 @@ public class MediaPipePoseTracker : MonoBehaviour
             yield return new WaitForSecondsRealtime(calibrateCountdownStepSeconds);
         }
 
-        onComplete(); // sets accuracyText + shows accuracyCheckmark on success, or a failure message on its own
+        bool succeeded = onComplete(); // sets accuracyText + shows accuracyCheckmark on success, or a failure message on its own
+
+        // Fired here, not in the button handler: this is the first moment the
+        // outcome is actually known. Listeners advance their own step only on
+        // success, so a failed capture leaves the player on the same step to retry.
+        var finished = CalibrationFinished;
+        if (finished != null) finished(isMid, succeeded);
 
         // "Done!"/failure text is transient feedback, not a persistent state --
         // revert back to the normal accuracy readout on its own instead of
