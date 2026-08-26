@@ -49,7 +49,19 @@ public class MediaPipePoseTracker : MonoBehaviour
     // in a typical desk/laptop webcam framing (see design notes) -- 0.5 rejected
     // almost every frame. 0.25 is a deliberately forgiving starting point.
     [Range(0f, 1f)] public float minLandmarkConfidence = 0.25f;
-    public float smoothSpeed = 5f;
+    [Tooltip("DEPRECATED -- kept only so old serialized scenes/prefabs don't lose a value on load. " +
+             "Use accuracyRiseSpeed / accuracyFallSpeed instead.")]
+    [HideInInspector] public float smoothSpeed = 5f;
+
+    [Tooltip("How fast 'accuracy' climbs toward a BETTER (higher) reading. Moderately paced -- fast " +
+             "enough that getting into position clearly reads as progress, slow enough that the number " +
+             "still feels earned rather than snapping. Must stay ABOVE accuracyFallSpeed.")]
+    public float accuracyRiseSpeed = 6f;
+
+    [Tooltip("How fast 'accuracy' settles toward a WORSE (lower) reading, e.g. a momentary wobble or " +
+             "MediaPipe jitter. Deliberately slower than the rise speed -- a brief dip drains gradually " +
+             "instead of instantly punishing the player, so small tracking noise doesn't read as failure.")]
+    public float accuracyFallSpeed = 1.5f;
     [Tooltip("How quickly the live joint angles (used for scoring AND target-circle placement) settle toward each new MediaPipe reading, damping frame-to-frame landmark jitter before it reaches the accuracy score. Higher = snappier but jitterier; lower = smoother but laggier.")]
     public float jointSmoothSpeed = 10f;
 
@@ -78,6 +90,14 @@ public class MediaPipePoseTracker : MonoBehaviour
     public ActualPositionDotView rightElbowDot;
     public ActualPositionDotView leftWristDot;
     public ActualPositionDotView rightWristDot;
+
+    [Header("Skeleton Bones")]
+    [Tooltip("Draws red MediaPipe-style connections between the live joints, as UI lines in the " +
+        "same canvas as the dots. MediaPipe's own skeleton is LineRenderer-based (world-space " +
+        "geometry) and cannot render inside a UI canvas at all, which is why its connections are " +
+        "invisible over the camera picture even though the dots show. Optional -- leave empty and " +
+        "only the dots and rings are drawn, exactly as before.")]
+    public SkeletonLineView skeletonLines;
 
     private readonly List<float> _accuracySamples = new List<float>();
     private float _sampleTimer;
@@ -125,6 +145,13 @@ public class MediaPipePoseTracker : MonoBehaviour
     // Live (un-rotated) 2D positions for the solid actual-position dots.
     private Vector2 _livePosLeftElbow, _livePosRightElbow, _livePosLeftWrist, _livePosRightWrist;
     private bool _hasSmLeftElbowLive, _hasSmRightElbowLive, _hasSmLeftWristLive, _hasSmRightWristLive;
+
+    // Shoulders and hips get live screen positions ONLY to draw the skeleton bones --
+    // they have no dot or target ring of their own, and nothing here feeds scoring.
+    // Without them the skeleton would be two floating forearms, since elbows and
+    // wrists alone contain no torso.
+    private Vector2 _livePosLeftShoulder, _livePosRightShoulder, _livePosLeftHip, _livePosRightHip;
+    private bool _hasSmLeftShoulderLive, _hasSmRightShoulderLive, _hasSmLeftHipLive, _hasSmRightHipLive;
 
     // Fixed calibrated-target screen positions -- captured (a snapshot of the
     // live position fields above) once at Calibrate/Calibrate Mid time, then
@@ -642,7 +669,13 @@ public class MediaPipePoseTracker : MonoBehaviour
 
         if (tracking)
         {
-            accuracy = Mathf.Lerp(accuracy, _rawAccuracy, Time.deltaTime * smoothSpeed);
+            // Asymmetric on purpose: climbs at a moderate pace (getting into position reads
+            // as steady progress), drains noticeably slower (a momentary wobble or MediaPipe
+            // jitter doesn't feel like instant failure). Picking the rate BEFORE lerping,
+            // rather than lerping once and clamping, keeps the curve exponential in both
+            // directions instead of a fast-lerp-then-hard-clamp shape.
+            float rate = _rawAccuracy >= accuracy ? accuracyRiseSpeed : accuracyFallSpeed;
+            accuracy = Mathf.Lerp(accuracy, _rawAccuracy, Time.deltaTime * rate);
 
             // Suppressed while a calibration countdown owns the label: this write
             // runs every frame and would otherwise stomp the 3-2-1 / "Done!" text
@@ -909,6 +942,19 @@ public class MediaPipePoseTracker : MonoBehaviour
         _livePosRightElbow = SmoothCirclePos(ref _livePosRightElbow, elbowR, ref _hasSmRightElbowLive, circleSmoothSpeed);
         _livePosLeftWrist = SmoothCirclePos(ref _livePosLeftWrist, wristL, ref _hasSmLeftWristLive, circleSmoothSpeed);
         _livePosRightWrist = SmoothCirclePos(ref _livePosRightWrist, wristR, ref _hasSmRightWristLive, circleSmoothSpeed);
+
+        // Skeleton-only joints (no dot, no ring, no scoring) -- smoothed through the
+        // same path so the bones settle in step with the dots they connect rather
+        // than jittering independently of them.
+        Vector2 shoulderL = new Vector2(norm[LeftShoulder].x, norm[LeftShoulder].y);
+        Vector2 shoulderR = new Vector2(norm[RightShoulder].x, norm[RightShoulder].y);
+        Vector2 hipL = new Vector2(norm[LeftHip].x, norm[LeftHip].y);
+        Vector2 hipR = new Vector2(norm[RightHip].x, norm[RightHip].y);
+
+        _livePosLeftShoulder = SmoothCirclePos(ref _livePosLeftShoulder, shoulderL, ref _hasSmLeftShoulderLive, circleSmoothSpeed);
+        _livePosRightShoulder = SmoothCirclePos(ref _livePosRightShoulder, shoulderR, ref _hasSmRightShoulderLive, circleSmoothSpeed);
+        _livePosLeftHip = SmoothCirclePos(ref _livePosLeftHip, hipL, ref _hasSmLeftHipLive, circleSmoothSpeed);
+        _livePosRightHip = SmoothCirclePos(ref _livePosRightHip, hipR, ref _hasSmRightHipLive, circleSmoothSpeed);
     }
 
     private bool TryGetPoint(List<Landmark> landmarks, int index, out Vector3 point)
@@ -963,14 +1009,66 @@ public class MediaPipePoseTracker : MonoBehaviour
         SetDot(rightElbowDot, show, _livePosRightElbow);
         SetDot(leftWristDot, show, _livePosLeftWrist);
         SetDot(rightWristDot, show, _livePosRightWrist);
+
+        UpdateSkeletonBones(show);
+    }
+
+    // The upper-body skeleton, matching the connections MediaPipe itself draws.
+    // Each bone is emitted only when BOTH ends have actually been seen -- a joint
+    // that has never tracked still holds (0,0), which would otherwise anchor a
+    // bone to the centre of the frame and read as a limb shooting off-screen.
+    private void UpdateSkeletonBones(bool show)
+    {
+        if (skeletonLines == null) return;
+
+        if (!show)
+        {
+            skeletonLines.HideAll();
+            return;
+        }
+
+        skeletonLines.BeginBones();
+
+        AddBone(_hasSmLeftShoulderLive, _livePosLeftShoulder, _hasSmRightShoulderLive, _livePosRightShoulder);
+        AddBone(_hasSmLeftShoulderLive, _livePosLeftShoulder, _hasSmLeftElbowLive, _livePosLeftElbow);
+        AddBone(_hasSmLeftElbowLive, _livePosLeftElbow, _hasSmLeftWristLive, _livePosLeftWrist);
+        AddBone(_hasSmRightShoulderLive, _livePosRightShoulder, _hasSmRightElbowLive, _livePosRightElbow);
+        AddBone(_hasSmRightElbowLive, _livePosRightElbow, _hasSmRightWristLive, _livePosRightWrist);
+        AddBone(_hasSmLeftShoulderLive, _livePosLeftShoulder, _hasSmLeftHipLive, _livePosLeftHip);
+        AddBone(_hasSmRightShoulderLive, _livePosRightShoulder, _hasSmRightHipLive, _livePosRightHip);
+        AddBone(_hasSmLeftHipLive, _livePosLeftHip, _hasSmRightHipLive, _livePosRightHip);
+
+        skeletonLines.EndBones();
+    }
+
+    private void AddBone(bool hasA, Vector2 normA, bool hasB, Vector2 normB)
+    {
+        if (!hasA || !hasB) return;
+        skeletonLines.AddBone(NormToLocal(normA), NormToLocal(normB));
+    }
+
+    // Same normalized-image-coords -> target-space mapping SetDot/SetCircle use.
+    // Shared rather than re-derived so the bones cannot drift from the markers
+    // they connect if that mapping is ever changed.
+    private Vector2 NormToLocal(Vector2 normPos)
+    {
+        float w = targetSpace.rect.width;
+        float h = targetSpace.rect.height;
+        return new Vector2((normPos.x - 0.5f) * w, (0.5f - normPos.y) * h);
     }
 
     // SetCircle sizes its radius from a "tolerance" value (Mathf.Clamp(tol*2, 20,
-    // 120)) originally meant for the old live rotation-math circle's
-    // accuracy-zone sizing. The fixed dot isn't a zone, just a pinpoint marker --
-    // this constant picks a fixed 44px radius (88x88 -- matches the solid dot's
-    // size) via the same code path, rather than duplicating the sizing logic.
-    private const float FixedTargetToleranceEquivalent = 22f;
+    // 120)) originally meant for the old live rotation-math circle's accuracy-zone
+    // sizing. That framing is vestigial now -- this is just a ring size, expressed
+    // through the existing code path rather than duplicating the sizing logic.
+    //
+    // 37.5 -> 75px radius (150x150). Widened in two passes from the original 22
+    // (44px): 30 (60px), then +15px to 75px for a more forgiving-LOOKING target.
+    //
+    // PURELY COSMETIC. Scoring runs off elbowTolerance/shoulderTolerance/
+    // torsoLeanTolerance, which this does NOT feed -- a bigger ring does not make
+    // the pose easier to hit. Raise those separately if the leniency should be real.
+    private const float FixedTargetToleranceEquivalent = 37.5f;
 
     private void SetDot(ActualPositionDotView dot, bool show, Vector2 normPos)
     {
@@ -978,10 +1076,7 @@ public class MediaPipePoseTracker : MonoBehaviour
         dot.SetVisible(show);
         if (!show) return;
 
-        float w = targetSpace.rect.width;
-        float h = targetSpace.rect.height;
-        Vector2 local = new Vector2((normPos.x - 0.5f) * w, (0.5f - normPos.y) * h);
-        dot.SetPosition(local);
+        dot.SetPosition(NormToLocal(normPos));
     }
 
     private void SetCircle(TargetCircleView circle, bool show, Vector2 normPos, float score, float toleranceDeg)
@@ -990,11 +1085,8 @@ public class MediaPipePoseTracker : MonoBehaviour
         circle.SetVisible(show);
         if (!show) return;
 
-        float w = targetSpace.rect.width;
-        float h = targetSpace.rect.height;
-        Vector2 local = new Vector2((normPos.x - 0.5f) * w, (0.5f - normPos.y) * h);
         float radius = Mathf.Clamp(toleranceDeg * 2f, 20f, 120f);
-        circle.SetState(local, radius, score);
+        circle.SetState(NormToLocal(normPos), radius, score);
     }
 
     private void CalculateSessionResult()
