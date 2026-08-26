@@ -233,12 +233,22 @@ public class YogaManager : MonoBehaviour
              "skeleton is LineRenderer-based and cannot render in an Overlay canvas.")]
     public GameObject calibrateFeed;
 
-    [Tooltip("World position of the CalibrateFeed RawImage while calibrating. Applied every time the " +
-             "feed is shown, so a play-mode nudge cannot be lost on exiting play mode -- change it here, " +
-             "not on the RectTransform.")]
-    public Vector3 calibrateFeedPosition = new Vector3(1291f, 555f, 0f);
+    [Tooltip("Anchored position (canvas reference-resolution units, NOT screen pixels) of the " +
+             "CalibrateFeed RawImage while calibrating. Applied every time the feed is shown, so a " +
+             "play-mode nudge cannot be lost on exiting play mode -- change it here, not on the " +
+             "RectTransform. " +
+             "MUST be anchoredPosition, not world position: for a Screen-Space-Overlay canvas, " +
+             "RectTransform.position is raw DEVICE PIXELS, which only lines up with the card at the " +
+             "exact window resolution it was read at. Real Fullscreen (FullscreenGameView.Toggle in " +
+             "FullScreen.cs) opens at the desktop's native resolution (e.g. 2560x1600), not the Editor " +
+             "Game view's (e.g. 1920x1080) -- so a world-position fix drifted to a different spot the " +
+             "moment the window size changed. anchoredPosition is defined in CanvasScaler's reference-" +
+             "resolution units, which is exactly what makes it resolution-independent.")]
+    public Vector2 calibrateFeedAnchoredPosition = new Vector2(331f, 15f);
 
-    [Tooltip("Uniform scale of the CalibrateFeed RawImage while calibrating.")]
+    [Tooltip("Uniform scale of the CalibrateFeed RawImage while calibrating. localScale is already " +
+             "resolution-independent (CanvasScaler scales the whole canvas uniformly), so this one was " +
+             "never the problem.")]
     public float calibrateFeedScale = 0.7849095463752747f;
 
     private RectTransform _calibrateFeedRect;
@@ -263,8 +273,10 @@ public class YogaManager : MonoBehaviour
         }
 
         // Re-applied on every show, so the placement is defined in one place and cannot
-        // drift from whatever the RectTransform happens to hold.
-        _calibrateFeedRect.position = calibrateFeedPosition;
+        // drift from whatever the RectTransform happens to hold. anchoredPosition (not
+        // .position) so it stays correct at any window/desktop resolution -- see the
+        // tooltip on calibrateFeedAnchoredPosition for why that distinction matters.
+        _calibrateFeedRect.anchoredPosition = calibrateFeedAnchoredPosition;
         _calibrateFeedRect.localScale = Vector3.one * calibrateFeedScale;
     }
 
