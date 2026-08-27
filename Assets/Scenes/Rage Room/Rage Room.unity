@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 350
+  Health: 250
   minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
@@ -209,7 +209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.035
+  forceMultiplier: 0.75
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -397,9 +397,9 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 6
   maxPushDist: 0.15
-  punchDistance: 1.5
-  minPunchSpeed: 8
-  punchSpeed: 14
+  punchDistance: 3
+  minPunchSpeed: 4
+  punchSpeed: 7
   retractDuration: 0.15
   useAuthoredStartAsHome: 1
   homeLocalPosition: {x: 0, y: 0, z: 0}
@@ -1130,7 +1130,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 350
+  Health: 250
   minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
@@ -1155,7 +1155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.035
+  forceMultiplier: 0.75
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -9106,11 +9106,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4306643203051859313, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.82
+      value: 1.22
+      objectReference: {fileID: 0}
+    - target: {fileID: 4306643203051859313, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.91
       objectReference: {fileID: 0}
     - target: {fileID: 4306643203051859313, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.1431026
+      value: -4.14
       objectReference: {fileID: 0}
     - target: {fileID: 4306643203051859313, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -9276,6 +9280,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1932902869}
+    - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1932902873}
     - targetCorrespondingSourceObject: {fileID: -466329591000292508, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2050901835}
@@ -15463,9 +15470,9 @@ MonoBehaviour:
   maxRight: 2
   recoverySpringStrength: 6
   maxPushDist: 0.15
-  punchDistance: 1.5
-  minPunchSpeed: 8
-  punchSpeed: 14
+  punchDistance: 3
+  minPunchSpeed: 4
+  punchSpeed: 7
   retractDuration: 0.15
   useAuthoredStartAsHome: 1
   homeLocalPosition: {x: 0, y: 0, z: 0}
@@ -15634,7 +15641,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 300
+  Health: 200
   minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
@@ -15690,6 +15697,23 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2212009239438826721, guid: 80e2a251be632e74d8bec3f687df088c, type: 3}
+--- !u!114 &1932902873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1932902860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  forceMultiplier: 1
+  forceExponent: 2
+  minImpactSpeed: 1.5
+  maxImpactSpeed: 12
+  requireHandTag: 1
 --- !u!1 &1941054043
 GameObject:
   m_ObjectHideFlags: 0
@@ -16129,7 +16153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 350
+  Health: 250
   minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
@@ -16154,7 +16178,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.035
+  forceMultiplier: 0.75
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
@@ -16280,7 +16304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 1000
+  Health: 500
   minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
@@ -16305,7 +16329,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22243c097b314124085e1bfad35713f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forceMultiplier: 0.035
+  forceMultiplier: 1
   forceExponent: 2
   minImpactSpeed: 1.5
   maxImpactSpeed: 12
