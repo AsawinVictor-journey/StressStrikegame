@@ -17,12 +17,15 @@ public class CheckInResultPanel : MonoBehaviour
     [SerializeField] private Sprite rageRoomWordmark;
     [SerializeField] private Sprite yogaWordmark;
     [SerializeField] private Button continueButton;
+    [SerializeField] private Button skipButton;
 
     public event Action onContinue;
+    public event Action onSkip;
 
     private void Awake()
     {
         if (continueButton != null) continueButton.onClick.AddListener(() => onContinue?.Invoke());
+        if (skipButton != null) skipButton.onClick.AddListener(() => onSkip?.Invoke());
         // Not calling Hide() here: resultPanel is this component's own GameObject
         // (self-referencing field), and it starts inactive already (set by the
         // scene builder). Awake() only runs the first time it's activated - which
