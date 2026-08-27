@@ -14,12 +14,14 @@ public class CheckInSceneRouter : MonoBehaviour
     {
         if (checkInManager != null) checkInManager.onModeDecided += HandleModeDecided;
         if (resultPanel != null) resultPanel.onContinue += LoadPendingScene;
+        if (resultPanel != null) resultPanel.onPickAnother += ReturnToMenu;
     }
 
     private void OnDisable()
     {
         if (checkInManager != null) checkInManager.onModeDecided -= HandleModeDecided;
         if (resultPanel != null) resultPanel.onContinue -= LoadPendingScene;
+        if (resultPanel != null) resultPanel.onPickAnother -= ReturnToMenu;
     }
 
     private void HandleModeDecided(string mode, string reason)
@@ -47,5 +49,21 @@ public class CheckInSceneRouter : MonoBehaviour
         }
 
         SceneTransitionManager.Instance.LoadScene(GameModeRecommendation.SceneNames[pendingGameMode]);
+    }
+
+    private void ReturnToMenu()
+    {
+        if (resultPanel != null) resultPanel.Hide();
+
+#if UNITY_2023_1_OR_NEWER
+        var highlighter = FindFirstObjectByType<RecommendedModeHighlighter>();
+#else
+        var highlighter = FindObjectOfType<RecommendedModeHighlighter>();
+#endif
+        if (highlighter != null) highlighter.ClearHighlight();
+
+        // The check-in canvas is an overlay in MainMenuScene. Hiding its root
+        // returns control to the carousel without changing the selected mode.
+        transform.root.gameObject.SetActive(false);
     }
 }

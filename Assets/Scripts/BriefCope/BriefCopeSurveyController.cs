@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -52,11 +53,32 @@ public class BriefCopeSurveyController : MonoBehaviour
     [SerializeField] private string geminiModel = "gemini-3.5-flash-lite";
 
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
+    private readonly List<int> currentBatchQuestionIds = new List<int>();
     private int currentQuestionIndex;
     private int pendingNextIndex;
     private int? pendingAnswer;
     private string currentSurveyId;
     private const string PrefsKey = "BriefCope_LastResult";
+    private const string LastCompletedDateKey = "BriefCope_LastCompletedDate";
+    private const string QuestionOrderKey = "BriefCope_QuestionOrder";
+    private const string QuestionCursorKey = "BriefCope_QuestionCursor";
+    private const string CurrentBatchKey = "BriefCope_CurrentBatch";
+    private const string CurrentBatchDateKey = "BriefCope_CurrentBatchDate";
+    private const string AccumulatedAnswersKey = "BriefCope_AccumulatedAnswers";
+    private const int QuestionsPerDay = 5;
+
+    [Serializable]
+    private class AnswerEntry
+    {
+        public int id;
+        public int value;
+    }
+
+    [Serializable]
+    private class AnswerStore
+    {
+        public List<AnswerEntry> entries = new List<AnswerEntry>();
+    }
 
     private void Start()
     {
@@ -86,11 +108,21 @@ public class BriefCopeSurveyController : MonoBehaviour
         }
 
         var previous = LoadPreviousResult();
-        bool returning = previous != null && !previous.skipped && !string.IsNullOrEmpty(previous.mode);
+        string today = LocalDateString();
+        string completedDate = PlayerPrefs.GetString(LastCompletedDateKey, "");
 
-        // Brief-COPE only ever runs once. A returning player never sees the survey
-        // popup again - skip straight past it into this session's AI check-in.
-        if (returning)
+        // Older builds only stored the result timestamp. Migrate that value to the
+        // date gate so an old result suppresses the survey only for its actual day.
+        if (string.IsNullOrEmpty(completedDate) && previous != null && previous.timestamp > 0)
+        {
+            completedDate = LocalDateString(previous.timestamp);
+            PlayerPrefs.SetString(LastCompletedDateKey, completedDate);
+            PlayerPrefs.Save();
+        }
+
+        // A completed batch is a daily event, not a lifetime event. On a new day we
+        // show the next persisted batch and keep the old recommendation as fallback.
+        if (completedDate == today)
         {
             HideSurveyPopup();
             GoToCheckInIfNeeded();
@@ -154,6 +186,8 @@ public class BriefCopeSurveyController : MonoBehaviour
     private void BeginSurvey()
     {
         answers.Clear();
+        foreach (var entry in LoadAccumulatedAnswers()) answers[entry.Key] = entry.Value;
+        EnsureTodayBatch();
         currentQuestionIndex = 0;
         ShowOnly(questionPanel);
         ShowQuestion(0);
@@ -161,9 +195,9 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     private void ShowQuestion(int index)
     {
-        var q = BriefCopeData.Questions[index];
+        var q = QuestionById(currentBatchQuestionIds[index]);
         if (questionText != null) questionText.text = q.text;
-        if (progressLabel != null) progressLabel.text = $"Question {index + 1} of {BriefCopeData.Questions.Length}";
+        if (progressLabel != null) progressLabel.text = $"Question {index + 1} of {currentBatchQuestionIds.Count}";
 
         // Answer bar art has its label baked in, so only the selection tint is driven here.
         pendingAnswer = null;
@@ -203,13 +237,14 @@ public class BriefCopeSurveyController : MonoBehaviour
     {
         if (!pendingAnswer.HasValue) return;
 
-        var q = BriefCopeData.Questions[currentQuestionIndex];
+        var q = QuestionById(currentBatchQuestionIds[currentQuestionIndex]);
         answers[q.id] = pendingAnswer.Value;
         int nextIndex = currentQuestionIndex + 1;
 
         // Halfway beat fires by position (middle of the list), not by a specific
         // question id - keeps working regardless of how many questions are in play.
-        if (nextIndex == BriefCopeData.Questions.Length / 2)
+        int halfwayIndex = currentBatchQuestionIds.Count / 2;
+        if (halfwayIndex > 0 && nextIndex == halfwayIndex)
         {
             pendingNextIndex = nextIndex;
             ShowOnly(halfwayPanel);
@@ -217,7 +252,7 @@ public class BriefCopeSurveyController : MonoBehaviour
             return;
         }
 
-        if (nextIndex >= BriefCopeData.Questions.Length)
+        if (nextIndex >= currentBatchQuestionIds.Count)
         {
             Finish();
         }
@@ -278,7 +313,13 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     private void SkipSurvey()
     {
-        SaveResult(null, skipped: true);
+        var accumulatedAnswers = LoadAccumulatedAnswers();
+        foreach (var answer in answers)
+        {
+            accumulatedAnswers[answer.Key] = answer.Value;
+        }
+        SaveAccumulatedAnswers(accumulatedAnswers);
+        SaveDailyResult(null, skipped: true);
 
         // Skip rate is worth measuring - if most players bail, the survey is too long.
         StressStrike.Cloud.CloudSyncService.Instance?.RecordSurvey(
@@ -289,13 +330,17 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     private void Finish()
     {
-        var rec = GameModeRecommendation.Recommend(answers);
+        SaveAccumulatedAnswers(answers);
 
-        SaveResult(rec.mode, skipped: false, rec.topBucket);
+        ModeRecommendation? rec = null;
+        if (HasAnsweredEverySubscale(answers))
+            rec = GameModeRecommendation.Recommend(answers);
+
+        SaveDailyResult(rec);
 
         // Local save above is the source of truth; this is the opt-in cloud mirror.
         currentSurveyId = Guid.NewGuid().ToString("N");
-        SyncSurvey(rec, null);
+        if (rec.HasValue) SyncSurvey(rec.Value, null);
 
         // No result screen here anymore - CheckInResultPanel shows the result,
         // once the check-in that follows actually decides a mode.
@@ -369,16 +414,160 @@ public class BriefCopeSurveyController : MonoBehaviour
         if (halfwayPanel != null) halfwayPanel.SetActive(panel == halfwayPanel);
     }
 
-    private void SaveResult(GameMode? mode, bool skipped, CopeBucket? dominantCopingStyle = null)
+    private void EnsureTodayBatch()
     {
+        string today = LocalDateString();
+        string batchDate = PlayerPrefs.GetString(CurrentBatchDateKey, "");
+        string savedBatch = PlayerPrefs.GetString(CurrentBatchKey, "");
+
+        if (batchDate == today && !string.IsNullOrEmpty(savedBatch))
+        {
+            currentBatchQuestionIds.Clear();
+            foreach (string token in savedBatch.Split(','))
+            {
+                if (int.TryParse(token, out int id) && ContainsQuestionId(id) &&
+                    !currentBatchQuestionIds.Contains(id))
+                    currentBatchQuestionIds.Add(id);
+            }
+            if (currentBatchQuestionIds.Count == QuestionsPerDay) return;
+        }
+
+        var order = LoadQuestionOrder();
+        int cursor = Mathf.Clamp(PlayerPrefs.GetInt(QuestionCursorKey, 0), 0, order.Count);
+        currentBatchQuestionIds.Clear();
+        while (currentBatchQuestionIds.Count < QuestionsPerDay)
+        {
+            if (cursor >= order.Count)
+            {
+                order = ShuffleQuestionIds();
+                cursor = 0;
+            }
+
+            currentBatchQuestionIds.Add(order[cursor]);
+            cursor++;
+        }
+
+        SaveQuestionOrder(order);
+        PlayerPrefs.SetInt(QuestionCursorKey, cursor);
+        PlayerPrefs.SetString(CurrentBatchKey, string.Join(",", currentBatchQuestionIds));
+        PlayerPrefs.SetString(CurrentBatchDateKey, today);
+        PlayerPrefs.Save();
+    }
+
+    private static List<int> LoadQuestionOrder()
+    {
+        var order = new List<int>();
+        string saved = PlayerPrefs.GetString(QuestionOrderKey, "");
+        foreach (string token in saved.Split(','))
+        {
+            if (int.TryParse(token, out int id) && ContainsQuestionId(id) && !order.Contains(id))
+                order.Add(id);
+        }
+
+        if (order.Count != BriefCopeData.Questions.Length)
+            order = ShuffleQuestionIds();
+        return order;
+    }
+
+    private static List<int> ShuffleQuestionIds()
+    {
+        var order = new List<int>();
+        foreach (var q in BriefCopeData.Questions) order.Add(q.id);
+        for (int i = order.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            int temp = order[i];
+            order[i] = order[j];
+            order[j] = temp;
+        }
+        return order;
+    }
+
+    private static void SaveQuestionOrder(List<int> order)
+    {
+        PlayerPrefs.SetString(QuestionOrderKey, string.Join(",", order));
+    }
+
+    private static bool ContainsQuestionId(int id)
+    {
+        foreach (var q in BriefCopeData.Questions)
+            if (q.id == id) return true;
+        return false;
+    }
+
+    private static CopeQuestion QuestionById(int id)
+    {
+        foreach (var q in BriefCopeData.Questions)
+            if (q.id == id) return q;
+        throw new InvalidOperationException($"Brief-COPE question id {id} is not registered.");
+    }
+
+    private static Dictionary<int, int> LoadAccumulatedAnswers()
+    {
+        var answers = new Dictionary<int, int>();
+        string json = PlayerPrefs.GetString(AccumulatedAnswersKey, "");
+        if (string.IsNullOrEmpty(json)) return answers;
+
+        try
+        {
+            var store = JsonUtility.FromJson<AnswerStore>(json);
+            if (store?.entries == null) return answers;
+            foreach (var entry in store.entries)
+                if (entry != null && ContainsQuestionId(entry.id) && entry.value >= 1 && entry.value <= 4)
+                    answers[entry.id] = entry.value;
+        }
+        catch { /* Corrupt optional state should never block the survey. */ }
+        return answers;
+    }
+
+    private static void SaveAccumulatedAnswers(Dictionary<int, int> answers)
+    {
+        var store = new AnswerStore();
+        foreach (var pair in answers)
+            store.entries.Add(new AnswerEntry { id = pair.Key, value = pair.Value });
+        PlayerPrefs.SetString(AccumulatedAnswersKey, JsonUtility.ToJson(store));
+    }
+
+    private static bool HasAnsweredEverySubscale(Dictionary<int, int> answers)
+    {
+        var covered = new HashSet<CopeSubscale>();
+        foreach (var q in BriefCopeData.Questions)
+            if (answers.ContainsKey(q.id)) covered.Add(q.subscale);
+        return covered.Count == 14;
+    }
+
+    private void SaveDailyResult(ModeRecommendation? recommendation, bool skipped = false)
+    {
+        var previous = LoadPreviousResult();
+        if (!recommendation.HasValue && previous != null && !previous.skipped && !string.IsNullOrEmpty(previous.mode))
+        {
+            // Preserve the last complete recommendation while the 14-subscale
+            // profile is still being accumulated across daily five-question batches.
+            PlayerPrefs.SetString(LastCompletedDateKey, LocalDateString());
+            PlayerPrefs.Save();
+            return;
+        }
+
         var result = new BriefCopeResult
         {
             timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            mode = mode?.ToString() ?? "",
+            mode = recommendation?.mode.ToString() ?? "",
             skipped = skipped,
-            dominantCopingStyle = dominantCopingStyle?.ToString() ?? "",
+            dominantCopingStyle = recommendation?.topBucket.ToString() ?? "",
         };
         PlayerPrefs.SetString(PrefsKey, JsonUtility.ToJson(result));
+        PlayerPrefs.SetString(LastCompletedDateKey, LocalDateString());
         PlayerPrefs.Save();
+    }
+
+    private static string LocalDateString()
+    {
+        return DateTimeOffset.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    }
+
+    private static string LocalDateString(long unixTimestamp)
+    {
+        return DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime()
+            .ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 }

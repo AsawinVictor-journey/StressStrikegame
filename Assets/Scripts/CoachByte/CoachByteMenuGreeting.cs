@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using TMPro;
 
@@ -9,12 +10,17 @@ using TMPro;
 public class CoachByteMenuGreeting : MonoBehaviour
 {
     private const string PrefsKey = "BriefCope_LastResult";
+    private const string HighScoreKey = "Player_HighScore";
 
     [SerializeField] private TMP_Text greetingText;
     [SerializeField] private string geminiModel = "gemini-3.5-flash-lite";
 
     private void Start()
     {
+        // High score lives with the gameplay stats, not on the survey record -
+        // ScoreManager owns this key (ScoreManager.HIGH_SCORE_KEY).
+        int highScore = PlayerPrefs.GetInt(HighScoreKey, 0);
+
         string mode = null;
         string copingStyle = null;
         long lastTimestamp = 0;
@@ -52,8 +58,12 @@ public class CoachByteMenuGreeting : MonoBehaviour
                 _ => "are working on managing stress"
             };
 
+            string scoreBonus = highScore > 0
+                ? $" You're on fire — {highScore} hits is your personal best!"
+                : "";
+
             context = $"The player last chose '{mode}' and tends to {copingDescription}. " +
-                     $"It's been {daysSince} days since they last played. ";
+                     $"It's been {daysSince} days since they last played.{scoreBonus}";
         }
 
         string prompt = mode != null
