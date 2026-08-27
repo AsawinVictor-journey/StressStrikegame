@@ -8098,14 +8098,14 @@ RectTransform:
   m_GameObject: {fileID: 779538465}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.137, y: 1.137, z: 1.137}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 852033937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 708, y: -333}
+  m_AnchoredPosition: {x: 719.9336, y: -348}
   m_SizeDelta: {x: 459.7838, y: 347.5481}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &779538467
@@ -8209,14 +8209,14 @@ RectTransform:
   m_GameObject: {fileID: 793395775}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.137, y: 1.137, z: 1.137}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 852033937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 392.33698, y: -333}
+  m_AnchoredPosition: {x: 404.27057, y: -348}
   m_SizeDelta: {x: 524.1919, y: 153.6864}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &793395777
@@ -9358,6 +9358,7 @@ GameObject:
   - component: {fileID: 852033936}
   - component: {fileID: 852033935}
   - component: {fileID: 852033934}
+  - component: {fileID: 852033938}
   m_Layer: 5
   m_Name: AICoachByte
   m_TagString: Untagged
@@ -9394,10 +9395,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -9426,7 +9427,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 510
+  m_SortingOrder: 453
   m_TargetDisplay: 0
 --- !u!224 &852033937
 RectTransform:
@@ -9450,6 +9451,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &852033938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 852033933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3a5d4c16349f2544bfe23870b872af7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  greetingText: {fileID: 1919517200}
+  geminiModel: gemini-3.5-flash-lite
+  minSecondsBetweenRegenerations: 5
 --- !u!1 &853414846 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6689036041284674117, guid: d0e8f573c27281848be76befad5de221, type: 3}
@@ -15934,7 +15950,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 6, y: -387}
+  m_AnchoredPosition: {x: 23, y: -345}
   m_SizeDelta: {x: 321, y: 119}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1542073041
@@ -19516,7 +19532,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1919517198}
   m_LocalRotation: {x: -0, y: -0, z: 0.03229927, w: 0.9994782}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -42}
   m_LocalScale: {x: 1.137, y: 1.137, z: 1.137}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19524,8 +19540,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 3.702}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 355, y: -297}
-  m_SizeDelta: {x: 341.2701, y: 50}
+  m_AnchoredPosition: {x: 375.9336, y: -318}
+  m_SizeDelta: {x: 332.3876, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1919517200
 MonoBehaviour:
@@ -19574,8 +19590,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 23.1
-  m_fontSizeBase: 23.1
+  m_fontSize: 20.3
+  m_fontSizeBase: 20.3
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -21294,6 +21310,7 @@ MonoBehaviour:
   rageRoomWordmark: {fileID: 21300000, guid: 7559c6540c9505c43975441de1cc783f, type: 3}
   yogaWordmark: {fileID: 21300000, guid: 8ad4091199dfe824e9fa8070158df10c, type: 3}
   continueButton: {fileID: 1540433543}
+  skipButton: {fileID: 0}
 --- !u!1 &2042728658
 GameObject:
   m_ObjectHideFlags: 0
