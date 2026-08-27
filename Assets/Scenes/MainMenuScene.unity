@@ -19547,8 +19547,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Hey I'm AI CoachByte. Nice to meet you. Lorem ipsum Lorem ipsum Lorem ipsum
-    Lorem Ipsum
+  m_text: 'Hey I''m AI CoachByte. '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
   m_sharedMaterial: {fileID: 403073073374022699, guid: 3403f004e1ddd53408dcc558bc8375ec, type: 2}
@@ -21295,7 +21294,6 @@ MonoBehaviour:
   rageRoomWordmark: {fileID: 21300000, guid: 7559c6540c9505c43975441de1cc783f, type: 3}
   yogaWordmark: {fileID: 21300000, guid: 8ad4091199dfe824e9fa8070158df10c, type: 3}
   continueButton: {fileID: 1540433543}
-  pickAnotherButton: {fileID: 0}
 --- !u!1 &2042728658
 GameObject:
   m_ObjectHideFlags: 0

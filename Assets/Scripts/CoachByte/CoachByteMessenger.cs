@@ -75,7 +75,12 @@ public static class CoachByteMessenger
 
                 accepted = cleaned;
             },
-            onError: err => Debug.LogWarning("[CoachByte] " + contextName + ": " + err));
+            onError: err => Debug.LogWarning("[CoachByte] " + contextName + ": " + err),
+
+            // Coach Byte's whole point is not repeating itself. At the client's
+            // default 0.2 the same context yields almost the same sentence every
+            // menu load; the history hint alone could not shift it far enough.
+            temperature: GeminiClient.ConversationalTemperature);
 
         bool fromAi = !string.IsNullOrEmpty(accepted);
         string message = fromAi ? accepted : CoachBytePromptBuilder.Fallback(contextName, ctx);

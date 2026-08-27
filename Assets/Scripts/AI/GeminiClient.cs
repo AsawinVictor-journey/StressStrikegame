@@ -16,6 +16,14 @@ public static class GeminiClient
     private const string DefaultModel = "gemini-3.5-flash-lite";
     private const int DefaultTimeoutSeconds = 15;
 
+    // 0.2 is right for the STRUCTURED callers (CheckInManager asks for
+    // "mode: <x>; feeling: <y>" and parses the answer - it wants the same answer
+    // every time). It is wrong for conversational lines: at 0.2 the same context
+    // produces near-identical wording on every menu load, which is the repetition
+    // Coach Byte is supposed to avoid. Conversational callers pass a higher value.
+    public const float DefaultTemperature = 0.2f;
+    public const float ConversationalTemperature = 0.95f;
+
     // Override via the STRESSSTRIKE_API_BASE_URL environment variable for a
     // build that should talk to a deployed backend instead of localhost.
     private static string BaseUrl
@@ -46,20 +54,22 @@ public static class GeminiClient
     public static IEnumerator Generate(string prompt, Action<string> onSuccess, Action<string> onError = null)
         => Generate(DefaultModel, prompt, DefaultTimeoutSeconds, onSuccess, onError);
 
-    public static IEnumerator Generate(string model, string prompt, Action<string> onSuccess, Action<string> onError = null)
-        => Generate(model, prompt, DefaultTimeoutSeconds, onSuccess, onError);
+    public static IEnumerator Generate(string model, string prompt, Action<string> onSuccess,
+        Action<string> onError = null, float temperature = DefaultTemperature)
+        => Generate(model, prompt, DefaultTimeoutSeconds, onSuccess, onError, temperature);
 
     public static IEnumerator Generate(string prompt, float timeoutSeconds, Action<string> onSuccess, Action<string> onError = null)
         => Generate(DefaultModel, prompt, timeoutSeconds, onSuccess, onError);
 
-    public static IEnumerator Generate(string model, string prompt, float timeoutSeconds, Action<string> onSuccess, Action<string> onError = null)
+    public static IEnumerator Generate(string model, string prompt, float timeoutSeconds,
+        Action<string> onSuccess, Action<string> onError = null, float temperature = DefaultTemperature)
     {
         var request = new Request
         {
             model = model,
             prompt = prompt,
             maxOutputTokens = 64,
-            temperature = 0.2f,
+            temperature = temperature,
         };
         string body = JsonUtility.ToJson(request);
         byte[] bytes = Encoding.UTF8.GetBytes(body);

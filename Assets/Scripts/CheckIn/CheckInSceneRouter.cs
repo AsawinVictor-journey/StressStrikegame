@@ -14,12 +14,23 @@ public class CheckInSceneRouter : MonoBehaviour
     {
         if (checkInManager != null) checkInManager.onModeDecided += HandleModeDecided;
         if (resultPanel != null) resultPanel.onContinue += LoadPendingScene;
+        if (resultPanel != null) resultPanel.onSkip += HandleSkip;
     }
 
     private void OnDisable()
     {
         if (checkInManager != null) checkInManager.onModeDecided -= HandleModeDecided;
         if (resultPanel != null) resultPanel.onContinue -= LoadPendingScene;
+        if (resultPanel != null) resultPanel.onSkip -= HandleSkip;
+    }
+
+    // Skipping the result screen means the player opted out after a mode was
+    // already decided - reuses CheckInManager.Skip() so it closes the overlay
+    // the exact same way skipping the input phase does, instead of loading
+    // the decided scene.
+    private void HandleSkip()
+    {
+        if (checkInManager != null) checkInManager.Skip();
     }
 
     private void HandleModeDecided(string mode, string reason)
