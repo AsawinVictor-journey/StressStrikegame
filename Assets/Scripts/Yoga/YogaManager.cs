@@ -377,8 +377,23 @@ public class YogaManager : MonoBehaviour
         }
     }
 
-    [Tooltip("Pause between the open capture's \"Done!\" and the mid capture's 3-2-1, so the checkmark is readable. Matches the tracker's own 2s feedback dwell.")]
-    public float midChainDelaySeconds = 2f;
+    [Tooltip("Pause between the open capture's \"Done!\" and the mid capture's 3-2-1. The step copy " +
+             "(\"Move into the middle position and hold still.\") is already on screen for this whole " +
+             "gap, so this is the time the player actually has to MOVE into the mid pose -- not just " +
+             "time to read the checkmark. The tracker's own \"Done!\" dwell is ~2s, so anything at or " +
+             "below 2 gives the player no moving time at all once the checkmark clears.")]
+    public float midChainDelaySeconds = 4f;
+
+    [Tooltip("Shown on the COUNTDOWN text (not the step label) during the gap between the two " +
+             "captures, so setup reads as one continuous sequence on a single line. Keep it SHORT: " +
+             "that field is 800x60 and set to Overflow, so a longer line spills outside the box " +
+             "instead of shrinking -- the original wording needed 1008x81 and visibly overflowed.")]
+    public string midPosePrompt = "Move into the mid pose";
+
+    [Tooltip("How long the open capture's \"Done!\" and checkmark stay up before the mid prompt " +
+             "replaces them. Below about 2s the tracker's own dwell is still running and the " +
+             "prompt lands on top of the checkmark.")]
+    public float midDoneHoldSeconds = 2.5f;
 
     private Coroutine _midChainCoroutine;
 
@@ -400,9 +415,34 @@ public class YogaManager : MonoBehaviour
     // event are all untouched -- this removes the button press, nothing else.
     private IEnumerator MidCaptureChainRoutine()
     {
-        // Realtime to match the tracker's own countdown; a paused timeScale would
-        // otherwise strand the player half way through setup.
-        yield return new WaitForSecondsRealtime(midChainDelaySeconds);
+        // Two distinct phases sharing one text field, so setup reads as a single
+        // continuous line:  3-2-1 -> Done!+check -> move prompt -> 3-2-1 -> Done!+check
+        //
+        // Phase 1 writes NOTHING. The open capture's "Done!" and its checkmark are
+        // already on screen and need their moment; the previous version wrote the
+        // prompt at t=0, which erased "Done!" instantly and left the checkmark
+        // sitting on top of the prompt.
+        var promptText = yogaTracker != null ? yogaTracker.accuracyText : null;
+
+        yield return new WaitForSecondsRealtime(midDoneHoldSeconds);
+
+        // Phase 2: the prompt. Checkmark forced off first -- it belongs to the capture
+        // that just succeeded, not to the instruction to move.
+        if (yogaTracker != null && yogaTracker.accuracyCheckmark != null)
+            yogaTracker.accuracyCheckmark.SetActive(false);
+
+        // Held every frame rather than written once: the tracker's own "Done!" dwell
+        // clears this field, and Update() can write to it too, so a single write
+        // would be wiped before the player ever read it.
+        float elapsed = 0f;
+        while (elapsed < midChainDelaySeconds)
+        {
+            if (promptText != null && promptText.text != midPosePrompt)
+                promptText.text = midPosePrompt;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
         _midChainCoroutine = null;
 
         // Re-checked rather than trusting a 2s-old decision: the player may have

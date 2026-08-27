@@ -16,6 +16,9 @@ public class CoachByteMenuGreeting : MonoBehaviour
     private void Start()
     {
         string mode = null;
+        string copingStyle = null;
+        long lastTimestamp = 0;
+
         string json = PlayerPrefs.GetString(PrefsKey, "");
         if (!string.IsNullOrEmpty(json))
         {
@@ -23,18 +26,41 @@ public class CoachByteMenuGreeting : MonoBehaviour
             {
                 var result = JsonUtility.FromJson<BriefCopeResult>(json);
                 if (result != null && !result.skipped && !string.IsNullOrEmpty(result.mode))
+                {
                     mode = result.mode;
+                    copingStyle = result.dominantCopingStyle;
+                    lastTimestamp = result.timestamp;
+                }
             }
             catch
             {
-                // Corrupt/old PlayerPrefs value - just skip the mode callout.
+                // Corrupt/old PlayerPrefs value - just skip the personalization.
             }
+        }
+
+        // Build richer context for the prompt
+        string context = "";
+        if (mode != null && copingStyle != null)
+        {
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long daysSince = (now - lastTimestamp) / 86400;
+            string copingDescription = copingStyle switch
+            {
+                "Approach" => "usually face problems head-on",
+                "Avoidant" => "sometimes need to take a break from stress",
+                "Context" => "mix different strategies depending on the situation",
+                _ => "are working on managing stress"
+            };
+
+            context = $"The player last chose '{mode}' and tends to {copingDescription}. " +
+                     $"It's been {daysSince} days since they last played. ";
         }
 
         string prompt = mode != null
             ? "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief boxing game. " +
-              $"In one short, punchy sentence (max 20 words), welcome the player back to the main menu and " +
-              $"casually reference that you last recommended the '{mode}' mode. No emojis, no quotation marks."
+              context +
+              "In one short, punchy sentence (max 20 words), welcome them back warmly. " +
+              "No emojis, no quotation marks."
             : "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief boxing game. " +
               "In one short, punchy sentence (max 20 words), welcome the player to the main menu. " +
               "No emojis, no quotation marks.";

@@ -569,6 +569,7 @@ public class MediaPipePoseTracker : MonoBehaviour
         StartCalibrationCountdown(CalibrateFromCurrentPose, false);
     }
 
+
     /// <summary>UnityEvent-friendly wrapper for the Calibrate Mid button -- same countdown, captures the second state instead.</summary>
     public void CalibrateMidButtonClicked()
     {

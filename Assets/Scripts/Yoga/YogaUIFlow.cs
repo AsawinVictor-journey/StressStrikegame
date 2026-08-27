@@ -109,10 +109,11 @@ public class YogaUIFlow : MonoBehaviour
         // the main screen, where there is nothing behind it to go back to.
         Show(backButton, state != YogaManager.CalibrationState.Idle);
 
-        // Read from YogaManager, not from selectedPose.HasGradableMidPose: that flag and
-        // the tracker's RequiresMidCalibration can disagree (see YogaPose.cs), and the
-        // copy must promise exactly the number of captures the player will be given.
-        bool hasMid = yogaManager != null && yogaManager.SelectedPoseNeedsMid;
+        // (The open-step copy used to branch on whether the pose has a mid capture. That
+        // copy is gone -- the card art carries it -- so there is nothing left to branch on.
+        // If live copy is ever reintroduced here, read "does this pose need a mid" from
+        // YogaManager.SelectedPoseNeedsMid, NOT selectedPose.HasGradableMidPose: those two
+        // can disagree, and the copy must promise exactly the captures the player gets.)
 
         switch (state)
         {
@@ -127,10 +128,11 @@ public class YogaUIFlow : MonoBehaviour
 
             // One button either way. Only the instruction line differs, so a pose with a
             // mid capture warns that this first one is the STARTING pose.
+            // No live copy: the setup card's own ART already carries this instruction
+            // ("Get into the pose shown in the demo..."), baked into the Figma sprite.
+            // Drawing our own version on top produced two overlapping paragraphs.
             case YogaManager.CalibrationState.AwaitingOpen:
-                SetText("Set Your Pose",
-                        hasMid ? "Get into the starting pose shown in the demo and hold still."
-                               : "Get into the pose shown in the demo and hold still.");
+                SetText(null, null);
                 Show(demoButton, false);
                 Show(nextButton, false);
                 Show(calibrateButton, true);
@@ -139,8 +141,15 @@ public class YogaUIFlow : MonoBehaviour
             // Same title, same text area, no new button: the mid capture is part of the
             // same Set Pose press and is already counting down. Offering a button here
             // would read as a second step AND could restart the running chain.
+            // The ONLY step that draws live copy. Nothing in the card art covers the mid
+            // capture, so without this the player is given no cue to move at all. No
+            // heading -- a bare line reads as a prompt rather than competing with the
+            // card's own baked-in title.
             case YogaManager.CalibrationState.AwaitingMid:
-                SetText("Set Your Pose", "Move into the middle position and hold still.");
+                // No live copy here any more. The prompt now takes its turn on the
+                // COUNTDOWN text (YogaManager.midPosePrompt) so the whole sequence reads
+                // on one line; drawing it here as well put it over the card's paragraph.
+                SetText(null, null);
                 Show(demoButton, false);
                 Show(nextButton, false);
                 Show(calibrateButton, false);
@@ -148,8 +157,10 @@ public class YogaUIFlow : MonoBehaviour
 
             // Set Pose stays offered so a bad capture can be redone without reselecting
             // the pose. Start itself is owned by YogaManager.SetCalibrationState.
+            // Cleared, not "You're Ready!": Start appearing IS the ready signal, and the
+            // banner sat on top of the card's baked paragraph.
             case YogaManager.CalibrationState.Complete:
-                SetText("You're Ready!", null);
+                SetText(null, null);
                 Show(demoButton, false);
                 Show(nextButton, false);
                 Show(calibrateButton, true);
