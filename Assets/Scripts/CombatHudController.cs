@@ -79,6 +79,9 @@ public class CombatHudController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _koComboStreakText;
     [SerializeField] private TextMeshProUGUI _koCoinsEarnedText;
     [SerializeField] private Image _koLevelBarFill;
+    [Tooltip("Optional. Coach Byte's reaction to this match. Leave empty to skip the AI line " +
+             "entirely - the rest of the result screen is unaffected either way.")]
+    [SerializeField] private TextMeshProUGUI _koCoachByteText;
     [SerializeField] private AudioClip _playerWinSound;
     [SerializeField] private AudioClip _playerLoseSound;
 
@@ -465,6 +468,12 @@ public class CombatHudController : MonoBehaviour
         }
         int coinsAwarded = reward.CoinsAwarded;
 
+        // Persist what just happened so it survives to the next launch, then let
+        // Coach Byte react to it. PlayerStats is the only thing that remembers the
+        // combo - ScoreManager's _highestCombo is private and dies with the match.
+        PlayerStats.RecordSession("Boxing", finalScore, highestCombo, isNewHighScore);
+        SpeakCoachByteResult(finalScore, highestCombo, isNewHighScore, reward);
+
         if (_koScreenPanel != null)
         {
             _koScreenPanel.SetActive(true);
@@ -614,5 +623,33 @@ public class CombatHudController : MonoBehaviour
         _playerStaminaSequence?.Kill();
         _opponentHealthSequence?.Kill();
         _opponentStaminaSequence?.Kill();
+    }
+
+    [Header("Coach Byte")]
+    [SerializeField] private string _coachByteModel = "gemini-3.5-flash-lite";
+
+    /// <summary>
+    /// Hands this match's result to Coach Byte. Entirely optional - with no text
+    /// object assigned nothing is generated and no request is made, so the KO
+    /// screen behaves exactly as it did before Coach Byte existed.
+    /// </summary>
+    private void SpeakCoachByteResult(int finalScore, int highestCombo, bool isNewHighScore,
+        PlayerProgression.SessionRewardResult reward)
+    {
+        if (_koCoachByteText == null) return;
+
+        var ctx = CoachByteContext.Gather(CoachBytePromptBuilder.BoxingResult);
+        ctx.currentMode = "Boxing";
+        ctx.sessionScore = finalScore;
+        ctx.isNewPersonalBest = isNewHighScore;
+        ctx.leveledUp = reward.LeveledUp;
+        if (reward.LeveledUp) ctx.newLevel = reward.Level;
+
+        // A combo of 0 or 1 is not a combo. Leaving it null keeps the prompt
+        // builder from offering "they hit a 1-hit combo" as something to celebrate.
+        if (highestCombo > 1) ctx.sessionCombo = highestCombo;
+
+        CoachByteMessenger.Speak(this, CoachBytePromptBuilder.BoxingResult, ctx,
+            _koCoachByteText, _coachByteModel);
     }
 }

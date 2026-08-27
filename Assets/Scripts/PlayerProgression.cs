@@ -7,10 +7,12 @@ using UnityEngine;
 /// class never reads/writes PlayerPrefs, files, or a database directly.
 ///
 /// NOTE: the daily-login Streak feature (CurrentStreak/LongestStreak, the CheckAndUpdateStreak
-/// date logic, and the streak bonus in the coin formula) was intentionally removed system-wide
-/// — there's no persistence backing it yet, and a streak that resets every app restart would
-/// just be confusing/wrong. Don't reintroduce it here; that's a separate future task once real
-/// persistence (a non-InMemoryDataStore IPlayerDataStore) exists.
+/// date logic, and the streak bonus in the coin formula) was intentionally removed from THIS
+/// class and has not come back to it. The reason given was that nothing persisted it. That
+/// persistence now exists — see PlayerStats (Assets/Scripts/CoachByte/PlayerStats.cs), which
+/// tracks currentStreak/longestStreak against a stored local calendar date and is what Coach
+/// Byte reads. Still don't reintroduce a streak here: PlayerStats owns it, and the coin
+/// formula below deliberately remains streak-free.
 ///
 /// FORMULA RATIONALE
 /// ------------------
@@ -110,9 +112,10 @@ public class PlayerProgression : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Swap InMemoryDataStore for a real backend (JSON file, Firebase, SQL, etc.) later —
-        // PlayerProgression and all UI code should need zero changes when that happens.
-        store = new InMemoryDataStore();
+        // The "real backend" the note below used to defer: PlayerPrefsDataStore persists
+        // XP/Level across app launches. InMemoryDataStore reset them every restart, which
+        // meant Level was always 1 outside the session that earned it.
+        store = new PlayerPrefsDataStore();
 
         data = store.Load();
     }

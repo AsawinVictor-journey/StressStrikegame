@@ -54,6 +54,12 @@ public class ScoreSystem : MonoBehaviour
     public Image resultLevelBarFill;
     public GameObject levelUpBanner;
 
+    [Header("Coach Byte")]
+    [Tooltip("Optional. Coach Byte's reaction to this session. Leave empty and no AI " +
+             "request is made - the result panel is unaffected either way.")]
+    public TMP_Text resultCoachByteText;
+    public string coachByteModel = "gemini-3.5-flash-lite";
+
     void Awake()
     {
         Instance = this;
@@ -120,6 +126,13 @@ public class ScoreSystem : MonoBehaviour
         }
 
         coin = reward.CoinsAwarded;
+
+        // Rage Room persisted nothing before this - no high score, no best streak,
+        // nothing that outlived the scene. Checked BEFORE RecordSession, since that
+        // call is what moves the stored best.
+        bool isNewBest = score > PlayerStats.Data.rageBestScore;
+        PlayerStats.RecordSession("RageRoom", score, highestStreak, isNewBest);
+        SpeakCoachByteResult(isNewBest, reward);
 
         if (resultPanel != null)
             resultPanel.SetActive(true);
@@ -188,5 +201,27 @@ public class ScoreSystem : MonoBehaviour
     {
         scoreText.text = score.ToString();
         streakText.text = streak.ToString();
+    }
+
+    /// <summary>
+    /// Hands this session's result to Coach Byte. No text object assigned means no
+    /// request and no message - the result panel works exactly as before.
+    /// </summary>
+    private void SpeakCoachByteResult(bool isNewBest, PlayerProgression.SessionRewardResult reward)
+    {
+        if (resultCoachByteText == null) return;
+
+        var ctx = CoachByteContext.Gather(CoachBytePromptBuilder.RageRoomResult);
+        ctx.currentMode = "RageRoom";
+        ctx.sessionScore = score;
+        ctx.isNewPersonalBest = isNewBest;
+        ctx.leveledUp = reward.LeveledUp;
+        if (reward.LeveledUp) ctx.newLevel = reward.Level;
+
+        // Rage Room's hit streak is this mode's combo. Below 2 it is just a hit.
+        if (highestStreak > 1) ctx.sessionCombo = highestStreak;
+
+        CoachByteMessenger.Speak(this, CoachBytePromptBuilder.RageRoomResult, ctx,
+            resultCoachByteText, coachByteModel);
     }
 }

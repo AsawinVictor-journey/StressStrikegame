@@ -1259,6 +1259,11 @@ public class YogaManager : MonoBehaviour
 
         finalScore = finalCalmScore;
 
+        // Counts toward the day streak and becomes "last mode" for Coach Byte's
+        // menu greeting. No score/combo is recorded: Yoga is graded on alignment
+        // and steadiness, which are not comparable to a Boxing or Rage Room score.
+        PlayerStats.RecordSession("Meditate");
+
         sessionReward = default;
         if (PlayerProgression.Instance != null)
         {

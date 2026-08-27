@@ -151,6 +151,13 @@ public class CheckInManager : MonoBehaviour
         requestInFlight = false;
         if (statusText != null) statusText.text = "";
 
+        // Persist how they said they felt so Coach Byte can acknowledge it on the
+        // menu. Previously the mood lived only in a private field and was gone the
+        // moment this overlay closed. The tapped chip wins over the AI's guess;
+        // PlayerStats itself expires the value after a few hours so a stale mood is
+        // never spoken about as if it were current.
+        PlayerStats.RecordMood(!string.IsNullOrEmpty(mood) ? mood : aiStressType);
+
         if (!string.IsNullOrEmpty(decidedMode))
         {
             string finalMode = ApplyCopeModifier(decidedMode, out bool steppedDown);

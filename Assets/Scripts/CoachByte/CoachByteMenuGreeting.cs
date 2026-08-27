@@ -1,80 +1,74 @@
 using UnityEngine;
 using TMPro;
 
-// Drop this on a GameObject near CoachByteWordmark in the main menu and assign
-// greetingText. On menu load it asks Gemini (via the StressStrike backend
-// proxy - see GeminiClient) for a short, personalized greeting referencing
-// the player's last Brief-COPE recommendation (if any), and shows it.
-// Silently does nothing if the backend isn't reachable.
+/// <summary>
+/// Coach Byte's main-menu greeting. Lives on the AICoachByte canvas in
+/// MainMenuScene and writes into its speech-bubble text.
+///
+/// Runs from OnEnable, not Start, ON PURPOSE. Start fires once per object
+/// lifetime, which meant the greeting was generated a single time and then sat
+/// there unchanged - including after finishing a match and walking back into the
+/// menu, exactly the moment there is something new worth saying. OnEnable fires
+/// every time the canvas is shown, so the line is regenerated on each visit and
+/// can react to the round that just happened.
+///
+/// Everything about WHAT it says lives in CoachByteContext (what is known) and
+/// CoachBytePromptBuilder (what is worth mentioning). This component only owns
+/// when to speak and where the text goes.
+/// </summary>
 public class CoachByteMenuGreeting : MonoBehaviour
 {
-    private const string PrefsKey = "BriefCope_LastResult";
-
+    [Header("UI")]
+    [Tooltip("The TMP text inside Coach Byte's chat bubble. Keep messages short - " +
+             "the bubble fits roughly 14 words, which CoachByteMessenger enforces.")]
     [SerializeField] private TMP_Text greetingText;
+
+    [Header("AI")]
     [SerializeField] private string geminiModel = "gemini-3.5-flash-lite";
 
-    private void Start()
+    [Tooltip("Smallest gap between two generations, in seconds. This is only a guard " +
+             "against the canvas being toggled several times in quick succession (rig " +
+             "switching, a panel opening and closing) firing a burst of identical " +
+             "requests. Set to 0 to regenerate on every single enable.")]
+    [SerializeField] private float minSecondsBetweenRegenerations = 5f;
+
+    // Static so the cooldown survives this object being disabled and re-enabled,
+    // and even the menu scene being reloaded - which is precisely the case it
+    // exists to cover.
+    private static float _lastGeneratedRealtime = -999f;
+
+    private void OnEnable()
     {
-        string mode = null;
-        string copingStyle = null;
-        long lastTimestamp = 0;
-
-        string json = PlayerPrefs.GetString(PrefsKey, "");
-        if (!string.IsNullOrEmpty(json))
+        if (greetingText == null)
         {
-            try
-            {
-                var result = JsonUtility.FromJson<BriefCopeResult>(json);
-                if (result != null && !result.skipped && !string.IsNullOrEmpty(result.mode))
-                {
-                    mode = result.mode;
-                    copingStyle = result.dominantCopingStyle;
-                    lastTimestamp = result.timestamp;
-                }
-            }
-            catch
-            {
-                // Corrupt/old PlayerPrefs value - just skip the personalization.
-            }
+            Debug.LogWarning("[CoachByte] greetingText is not assigned - nothing to write the greeting into.", this);
+            return;
         }
 
-        // Build richer context for the prompt
-        string context = "";
-        if (mode != null && copingStyle != null)
+        // Unscaled: a paused or slowed menu must not stretch this cooldown.
+        if (minSecondsBetweenRegenerations > 0f &&
+            Time.unscaledTime - _lastGeneratedRealtime < minSecondsBetweenRegenerations)
         {
-            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            long daysSince = (now - lastTimestamp) / 86400;
-            string copingDescription = copingStyle switch
-            {
-                "Approach" => "usually face problems head-on",
-                "Avoidant" => "sometimes need to take a break from stress",
-                "Context" => "mix different strategies depending on the situation",
-                _ => "are working on managing stress"
-            };
-
-            context = $"The player last chose '{mode}' and tends to {copingDescription}. " +
-                     $"It's been {daysSince} days since they last played. ";
+            return; // leave the existing line up rather than replacing it with an identical one
         }
 
-        string prompt = mode != null
-            ? "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief boxing game. " +
-              context +
-              "In one short, punchy sentence (max 20 words), welcome them back warmly. " +
-              "No emojis, no quotation marks."
-            : "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief boxing game. " +
-              "In one short, punchy sentence (max 20 words), welcome the player to the main menu. " +
-              "No emojis, no quotation marks.";
+        _lastGeneratedRealtime = Time.unscaledTime;
 
-        StartCoroutine(GeminiClient.Generate(
-            geminiModel,
-            prompt,
-            onSuccess: text =>
-            {
-                if (string.IsNullOrWhiteSpace(text)) return;
-                if (greetingText != null) greetingText.text = text;
-                CoachByteHistory.Append("MainMenuGreeting", mode, text);
-            },
-            onError: err => Debug.LogWarning("[CoachByte] " + err)
-        ));
+        var ctx = CoachByteContext.Gather(CoachBytePromptBuilder.MainMenuGreeting);
+        CoachByteMessenger.Speak(this, CoachBytePromptBuilder.MainMenuGreeting, ctx, greetingText, geminiModel);
+    }
+
+    /// <summary>
+    /// Forces a fresh greeting, ignoring the cooldown. For a UI button that wants
+    /// to nudge Coach Byte into saying something new on demand.
+    /// </summary>
+    public void RegenerateNow()
+    {
+        if (greetingText == null) return;
+
+        _lastGeneratedRealtime = Time.unscaledTime;
+
+        var ctx = CoachByteContext.Gather(CoachBytePromptBuilder.MainMenuGreeting);
+        CoachByteMessenger.Speak(this, CoachBytePromptBuilder.MainMenuGreeting, ctx, greetingText, geminiModel);
     }
 }

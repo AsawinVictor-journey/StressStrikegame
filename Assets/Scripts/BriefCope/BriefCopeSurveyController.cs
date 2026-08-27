@@ -108,7 +108,7 @@ public class BriefCopeSurveyController : MonoBehaviour
     // Intro line is personalised from the PREVIOUS session (last saved result +
     // last coaching message), because at this point the player hasn't answered
     // anything yet. Deterministic copy shows first so the panel is never blank
-    // or half-written while Ollama thinks.
+    // or half-written while the AI line is still being fetched.
     private void PrepareIntro()
     {
         if (introTextTop == null) return;
@@ -122,25 +122,11 @@ public class BriefCopeSurveyController : MonoBehaviour
 
         if (!useAiCoachMessage) return;
 
-        string prompt =
-            "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief game. " +
-            (returning
-                ? $"The player is returning; last time their recommended mode was '{previous.mode}'. " +
-                  "Greet them back and say you want to check in on how they're coping today. "
-                : "The player is about to take a short coping-style check-in for the first time. Introduce yourself warmly. ") +
-            "Write 1 short sentence (max 25 words) to show above the survey intro. " +
-            "Do not diagnose them or use clinical language. No emojis, no quotation marks.";
-
-        StartCoroutine(GeminiClient.Generate(
-            geminiModel, prompt,
-            onSuccess: aiText =>
-            {
-                if (string.IsNullOrWhiteSpace(aiText) || introTextTop == null) return;
-                introTextTop.text = aiText;
-                CoachByteHistory.Append("BriefCopeIntro", previous?.mode ?? "", aiText);
-            },
-            onError: err => Debug.LogWarning("[CoachByte] " + err)
-        ));
+        // Routed through CoachByteMessenger so this line obeys the same 14-word
+        // chat-bubble limit and anti-repetition history as every other Coach Byte
+        // moment, instead of writing its own prompt with its own rules.
+        var ctx = CoachByteContext.Gather(CoachBytePromptBuilder.BriefCopeIntro);
+        CoachByteMessenger.Speak(this, CoachBytePromptBuilder.BriefCopeIntro, ctx, introTextTop, geminiModel);
     }
 
     private BriefCopeResult LoadPreviousResult()
@@ -239,34 +225,12 @@ public class BriefCopeSurveyController : MonoBehaviour
 
         if (!useAiCoachMessage) return;
 
-        string leaning = "";
-        try
-        {
-            var partialRec = GameModeRecommendation.Recommend(answers);
-            leaning = $"So far their answers lean toward: {partialRec.reason} ";
-        }
-        catch
-        {
-            // Partial scoring can be inconclusive this early; the generic prompt is fine.
-        }
-
-        string prompt =
-            "You are Coach Byte, a friendly, upbeat AI coach in a stress-relief game. " +
-            "A player is exactly halfway through a short coping-style check-in. " + leaning +
-            "Write 1 short encouraging sentence (max 25 words) to keep them going. " +
-            "Do NOT name or suggest any game mode yet. Do not diagnose them or use clinical " +
-            "language. No emojis, no quotation marks.";
-
-        StartCoroutine(GeminiClient.Generate(
-            geminiModel, prompt,
-            onSuccess: aiText =>
-            {
-                if (string.IsNullOrWhiteSpace(aiText) || halfwayText == null) return;
-                halfwayText.text = aiText;
-                CoachByteHistory.Append("BriefCopeHalfway", "", aiText);
-            },
-            onError: err => Debug.LogWarning("[CoachByte] " + err)
-        ));
+        // Deliberately NOT given the mode recommendation: the back half of the
+        // survey can still flip it, so naming a mode here would be guessing.
+        // Situation() for this context tells the model the same thing.
+        var ctx = CoachByteContext.Gather(CoachBytePromptBuilder.BriefCopeHalfway);
+        ctx.recommendedMode = null;
+        CoachByteMessenger.Speak(this, CoachBytePromptBuilder.BriefCopeHalfway, ctx, halfwayText, geminiModel);
     }
 
     private void OnHalfwayContinue()
