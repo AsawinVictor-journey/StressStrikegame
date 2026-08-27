@@ -399,7 +399,7 @@ MonoBehaviour:
   maxPushDist: 0.15
   punchDistance: 3
   minPunchSpeed: 4
-  punchSpeed: 7
+  punchSpeed: 10
   retractDuration: 0.15
   useAuthoredStartAsHome: 1
   homeLocalPosition: {x: 0, y: 0, z: 0}
@@ -15472,7 +15472,7 @@ MonoBehaviour:
   maxPushDist: 0.15
   punchDistance: 3
   minPunchSpeed: 4
-  punchSpeed: 7
+  punchSpeed: 10
   retractDuration: 0.15
   useAuthoredStartAsHome: 1
   homeLocalPosition: {x: 0, y: 0, z: 0}
@@ -16304,7 +16304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae7711b15f30c0048a76494bd54944fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Health: 500
+  Health: 350
   minImpactSpeed: 4
   damageExponent: 2
   damageMultiplier: 0.1
