@@ -43,7 +43,16 @@ public class RecommendedModeHighlighter : MonoBehaviour
         // Stop any running coroutines first
         StopAllCoroutines();
 
-        ClearGeneratedHighlights();
+        // Clean up any legacy highlights
+        var oldGlows = new System.Collections.Generic.List<GameObject>();
+        if (boxingTarget != null) FindLegacyHighlights(boxingTarget, oldGlows);
+        if (rageRoomTarget != null) FindLegacyHighlights(rageRoomTarget, oldGlows);
+        if (yogaTarget != null) FindLegacyHighlights(yogaTarget, oldGlows);
+        
+        foreach (var og in oldGlows)
+        {
+            DestroyImmediate(og);
+        }
 
         RectTransform target = ResolveTarget();
         if (target == null) return;
@@ -51,23 +60,6 @@ public class RecommendedModeHighlighter : MonoBehaviour
         var glow = BuildGlow(target);
         BuildStars(target);
         StartCoroutine(Pulse(glow));
-    }
-
-    public void ClearHighlight()
-    {
-        StopAllCoroutines();
-        ClearGeneratedHighlights();
-    }
-
-    private void ClearGeneratedHighlights()
-    {
-        var oldGlows = new System.Collections.Generic.List<GameObject>();
-        if (boxingTarget != null) FindLegacyHighlights(boxingTarget, oldGlows);
-        if (rageRoomTarget != null) FindLegacyHighlights(rageRoomTarget, oldGlows);
-        if (yogaTarget != null) FindLegacyHighlights(yogaTarget, oldGlows);
-
-        foreach (var og in oldGlows)
-            DestroyImmediate(og);
     }
 
     private void FindLegacyHighlights(RectTransform target, System.Collections.Generic.List<GameObject> list)
