@@ -51,7 +51,13 @@ public class BriefCopeSurveyController : MonoBehaviour
     [SerializeField] private bool useAiCoachMessage = true;
     [SerializeField] private string geminiModel = "gemini-3.5-flash-lite";
 
+    // Was all 14 items in one sitting, once ever. Now a short round of this many
+    // items, at most once per day - see BriefCopeProgress for the rotation/repeat
+    // algorithm that picks which ones.
+    private const int QuestionsPerDay = 5;
+
     private readonly Dictionary<int, int> answers = new Dictionary<int, int>();
+    private List<CopeQuestion> todaysQuestions;
     private int currentQuestionIndex;
     private int pendingNextIndex;
     private int? pendingAnswer;
@@ -85,12 +91,10 @@ public class BriefCopeSurveyController : MonoBehaviour
             return;
         }
 
-        var previous = LoadPreviousResult();
-        bool returning = previous != null && !previous.skipped && !string.IsNullOrEmpty(previous.mode);
-
-        // Brief-COPE only ever runs once. A returning player never sees the survey
-        // popup again - skip straight past it into this session's AI check-in.
-        if (returning)
+        // Brief-COPE now runs at most once per calendar day (a short round of
+        // QuestionsPerDay items, not the full 14). Already done today - whether
+        // answered or skipped - skip straight past it into this session's check-in.
+        if (BriefCopeProgress.HasCompletedToday())
         {
             HideSurveyPopup();
             GoToCheckInIfNeeded();
@@ -141,15 +145,16 @@ public class BriefCopeSurveyController : MonoBehaviour
     {
         answers.Clear();
         currentQuestionIndex = 0;
+        todaysQuestions = BriefCopeProgress.SelectTodaysQuestions(QuestionsPerDay);
         ShowOnly(questionPanel);
         ShowQuestion(0);
     }
 
     private void ShowQuestion(int index)
     {
-        var q = BriefCopeData.Questions[index];
+        var q = todaysQuestions[index];
         if (questionText != null) questionText.text = q.text;
-        if (progressLabel != null) progressLabel.text = $"Question {index + 1} of {BriefCopeData.Questions.Length}";
+        if (progressLabel != null) progressLabel.text = $"Question {index + 1} of {todaysQuestions.Count}";
 
         // Answer bar art has its label baked in, so only the selection tint is driven here.
         pendingAnswer = null;
@@ -189,13 +194,15 @@ public class BriefCopeSurveyController : MonoBehaviour
     {
         if (!pendingAnswer.HasValue) return;
 
-        var q = BriefCopeData.Questions[currentQuestionIndex];
+        var q = todaysQuestions[currentQuestionIndex];
         answers[q.id] = pendingAnswer.Value;
         int nextIndex = currentQuestionIndex + 1;
 
         // Halfway beat fires by position (middle of the list), not by a specific
         // question id - keeps working regardless of how many questions are in play.
-        if (nextIndex == BriefCopeData.Questions.Length / 2)
+        // Ceil, not floor: for an odd count like 5, that's after question 3 (2 left),
+        // not after question 2.
+        if (nextIndex == Mathf.CeilToInt(todaysQuestions.Count / 2f))
         {
             pendingNextIndex = nextIndex;
             ShowOnly(halfwayPanel);
@@ -203,7 +210,7 @@ public class BriefCopeSurveyController : MonoBehaviour
             return;
         }
 
-        if (nextIndex >= BriefCopeData.Questions.Length)
+        if (nextIndex >= todaysQuestions.Count)
         {
             Finish();
         }
@@ -242,6 +249,9 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     private void SkipSurvey()
     {
+        // Advances the daily gate without touching any question's rotation state -
+        // skipping today shouldn't burn through the unused pool or fake a score.
+        BriefCopeProgress.MarkSkippedToday();
         SaveResult(null, skipped: true);
 
         // Skip rate is worth measuring - if most players bail, the survey is too long.
@@ -253,7 +263,12 @@ public class BriefCopeSurveyController : MonoBehaviour
 
     private void Finish()
     {
-        var rec = GameModeRecommendation.Recommend(answers);
+        // Record today's slice first, then recommend off the FULL merged history
+        // (every subscale's most recent known score, not just today's 5) - otherwise
+        // the bucket comparison would be skewed toward whichever handful of
+        // subscales happened to be in today's round.
+        BriefCopeProgress.RecordAnswers(answers);
+        var rec = GameModeRecommendation.Recommend(BriefCopeProgress.AllKnownAnswers());
 
         SaveResult(rec.mode, skipped: false, rec.topBucket);
 
